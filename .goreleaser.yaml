@@ -19,6 +19,14 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
+      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.ProjectName=unigo'
+      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.Author=Snowdream Tech <snowdreamtech@qq.com>'
+      - -X github.com/snowdreamtech/unigo/internal/pkg/env.BuildTime={{.Date}}
+      - -X github.com/snowdreamtech/unigo/internal/pkg/env.CommitHash={{.ShortCommit}}
+      - -X github.com/snowdreamtech/unigo/internal/pkg/env.CommitHashFull={{.FullCommit}}
+      - -X github.com/snowdreamtech/unigo/internal/pkg/env.GitTag={{.Tag}}
+      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.COPYRIGHT=Copyright (c) 2023-present SnowdreamTech Inc.'
+      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.LICENSE=MIT <https://github.com/snowdreamtech/unigo/blob/main/LICENSE>'
 
 archives:
   - id: unigo
