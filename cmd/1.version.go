@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/sysinfo"
 	"github.com/spf13/cobra"
 )
 
@@ -26,6 +27,9 @@ var versionCmd = &cobra.Command{
 
 func runVersion(cmd *cobra.Command, args []string) {
 	osArch := runtime.GOOS + "/" + runtime.GOARCH
+	if sysinfo.IsMusl() {
+		osArch += " (musl)"
+	}
 	buildVersion := fmt.Sprintf("%s version %s-%s %s\n", env.ProjectName, env.GitTag, env.CommitHash, osArch)
 	copyrightDetail := fmt.Sprintf("%s\n", env.COPYRIGHT)
 	licenseDetail := fmt.Sprintf("License: %s\n", env.LICENSE)

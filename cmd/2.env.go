@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/sysinfo"
 	"github.com/spf13/cobra"
 )
 
@@ -31,6 +32,7 @@ func runEnv(cmd *cobra.Command, args []string) error {
 		fmt.Sprintf("%s_CONFIG_DIR=%s", strings.ToUpper(env.ProjectName), env.GetConfigDir()),
 		fmt.Sprintf("%s_DATA_DIR=%s", strings.ToUpper(env.ProjectName), env.GetDataDir()),
 		fmt.Sprintf("%s_CACHE_DIR=%s", strings.ToUpper(env.ProjectName), env.GetCacheDir()),
+		fmt.Sprintf("%s_IS_MUSL=%t", strings.ToUpper(env.ProjectName), sysinfo.IsMusl()),
 	}
 
 	for _, v := range vars {
