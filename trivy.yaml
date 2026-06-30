@@ -4,5 +4,5 @@
 ---
 scan:
   skip-dirs:
-    - "unirtm_data"
-    - "cmd/unirtm_data"
+    - "unigo_data"
+    - "cmd/unigo_data"
