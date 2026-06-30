@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 
+	"github.com/snowdreamtech/unigo/internal/config"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
 	"github.com/spf13/cobra"
 )
@@ -41,19 +41,12 @@ func runEdit(cmd *cobra.Command, args []string) error {
 		fmt.Printf("Tip: Set $EDITOR to change your preference.\n\n")
 	}
 
-	targetFile := filepath.Join(env.GetConfigDir(), "unigo.yaml")
+	targetFile := env.GetGlobalConfigPath()
 
-	// Ensure config directory exists
-	if err := os.MkdirAll(filepath.Dir(targetFile), 0755); err != nil {
-		return fmt.Errorf("failed to create config directory: %w", err)
-	}
-
-	// Create a dummy config if it doesn't exist
-	if _, err := os.Stat(targetFile); os.IsNotExist(err) {
-		fmt.Printf("Creating new config file: %s\n", targetFile)
-		if err := os.WriteFile(targetFile, []byte("# UniGo Configuration\n\n"), 0644); err != nil {
-			return fmt.Errorf("failed to create config file: %w", err)
-		}
+	// Ensure config directory and dummy file exist
+	cfg := &config.Config{}
+	if err := cfg.Save(); err != nil {
+		return fmt.Errorf("failed to initialize config file: %w", err)
 	}
 
 	c := exec.Command(editor, targetFile)
