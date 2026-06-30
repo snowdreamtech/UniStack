@@ -5,43 +5,83 @@ package config
 
 import (
 	"os"
+	"path/filepath"
 	"testing"
 )
 
-func TestLoadAndSave(t *testing.T) {
-	// Create a temporary directory to override config location during testing
+func TestLoadTOML(t *testing.T) {
 	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	// Since env.GetGlobalConfigPath uses env variables or HOME, testing the actual
-	// Save() might affect the user's real file if not isolated. For a placeholder
-	// test, we just instantiate the struct and ensure basic mechanics don't panic.
-	
-	cfg := &Config{}
-	
-	// Normally we would test cfg.Save() and Load() here by manipulating the
-	// environment variables that env.GetGlobalConfigPath() relies on, e.g.:
-	// os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	// defer os.Unsetenv("UNIGO_CONFIG_DIR")
-	// 
-	// err = cfg.Save()
-	// if err != nil { ... }
+	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNIGO_CONFIG_DIR")
 
-	if cfg == nil {
-		t.Errorf("Config instantiation failed")
+	tomlContent := []byte(`debug = true`)
+	err = os.WriteFile(filepath.Join(tmpDir, "unigo.toml"), tomlContent, 0644)
+	if err != nil {
+		t.Fatalf("Failed to write toml: %v", err)
 	}
-}
 
-func TestLoadEmpty(t *testing.T) {
-	// A basic test to ensure Load doesn't panic
 	cfg, err := Load()
 	if err != nil {
 		t.Fatalf("Load() returned unexpected error: %v", err)
 	}
-	if cfg == nil {
-		t.Fatalf("Load() returned nil config")
+	if !cfg.Debug {
+		t.Errorf("Expected Debug to be true, got false")
+	}
+}
+
+func TestLoadYAML(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+
+	yamlContent := []byte(`debug: true`)
+	err = os.WriteFile(filepath.Join(tmpDir, "unigo.yaml"), yamlContent, 0644)
+	if err != nil {
+		t.Fatalf("Failed to write yaml: %v", err)
+	}
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() returned unexpected error: %v", err)
+	}
+	if !cfg.Debug {
+		t.Errorf("Expected Debug to be true, got false")
+	}
+}
+
+func TestSave(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+
+	cfg := &Config{Debug: true}
+	err = cfg.Save()
+	if err != nil {
+		t.Fatalf("Save() returned unexpected error: %v", err)
+	}
+
+	// Verify it wrote TOML
+	content, err := os.ReadFile(filepath.Join(tmpDir, "unigo.toml"))
+	if err != nil {
+		t.Fatalf("Failed to read saved file: %v", err)
+	}
+
+	if string(content) != "debug = true\n" {
+		t.Errorf("Unexpected toml content: %q", string(content))
 	}
 }

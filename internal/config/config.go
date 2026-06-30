@@ -8,45 +8,66 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/pelletier/go-toml/v2"
+	"gopkg.in/yaml.v3"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
 )
 
 // Config represents the application configuration.
-// This is a placeholder struct that can be expanded with real configuration fields.
 type Config struct {
-	// Add configuration fields here, for example:
-	// Debug bool `json:"debug" yaml:"debug" toml:"debug"`
+	Debug bool `json:"debug" yaml:"debug" toml:"debug"`
 }
 
-// Load reads the configuration from the global config file.
-// Currently acts as a placeholder that returns an empty config.
+// Load reads the configuration from the global config directory.
+// It prioritizes TOML (unigo.toml) over YAML (unigo.yaml/unigo.yml).
 func Load() (*Config, error) {
-	configPath := env.GetGlobalConfigPath()
+	configDir := env.GetConfigDir()
+	cfg := &Config{}
 
-	// If the file doesn't exist, we can just return a default configuration.
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return &Config{}, nil
+	// Check TOML
+	tomlPath := filepath.Join(configDir, "unigo.toml")
+	if data, err := os.ReadFile(tomlPath); err == nil {
+		if err := toml.Unmarshal(data, cfg); err != nil {
+			return nil, fmt.Errorf("failed to parse TOML config: %w", err)
+		}
+		return cfg, nil
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("error reading TOML config: %w", err)
 	}
 
-	// TODO: Implement actual configuration parsing (e.g., using Viper, go-yaml, go-toml)
-	// For now, return a placeholder
-	return &Config{}, nil
+	// Check YAML
+	yamlPaths := []string{"unigo.yaml", "unigo.yml"}
+	for _, yp := range yamlPaths {
+		yamlPath := filepath.Join(configDir, yp)
+		if data, err := os.ReadFile(yamlPath); err == nil {
+			if err := yaml.Unmarshal(data, cfg); err != nil {
+				return nil, fmt.Errorf("failed to parse YAML config: %w", err)
+			}
+			return cfg, nil
+		} else if !os.IsNotExist(err) {
+			return nil, fmt.Errorf("error reading YAML config: %w", err)
+		}
+	}
+
+	// Default config
+	return cfg, nil
 }
 
-// Save writes the current configuration to the global config file.
-// Currently acts as a placeholder that just ensures the file exists.
+// Save writes the current configuration to unigo.toml in the global config directory.
 func (c *Config) Save() error {
-	configPath := env.GetGlobalConfigPath()
+	configPath := env.GetGlobalConfigPath() // Defaults to unigo.toml
 
-	// Ensure the parent directory exists
 	if err := os.MkdirAll(filepath.Dir(configPath), 0755); err != nil {
 		return fmt.Errorf("failed to create config directory: %w", err)
 	}
 
-	// TODO: Implement actual configuration serialization.
-	// For now, write a dummy file if it doesn't exist.
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		return os.WriteFile(configPath, []byte("# UniGo Configuration\n\n"), 0644)
+	data, err := toml.Marshal(c)
+	if err != nil {
+		return fmt.Errorf("failed to marshal config: %w", err)
+	}
+
+	if err := os.WriteFile(configPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write config file: %w", err)
 	}
 
 	return nil
