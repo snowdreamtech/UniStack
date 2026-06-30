@@ -6,11 +6,22 @@
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
 version: 2
-project_name: template
+project_name: unigo
 
 report_sizes: true
+
+builds:
+  - id: unigo
+    binary: unigo
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+
 archives:
-  - id: template
+  - id: unigo
     formats: [tar.gz]
     # This name template makes the OS and Arch compatible with uname and includes the version.
     name_template: >-
@@ -59,7 +70,7 @@ release:
   prerelease: auto
   github:
     owner: snowdreamtech
-    name: template
+    name: unigo
   header: |
     **Snowdream Tech AI IDE Template** is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
 
