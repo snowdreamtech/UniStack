@@ -1,0 +1,176 @@
+#!/usr/bin/env sh
+# Copyright (c) 2026 SnowdreamTech. All rights reserved.
+# Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
+# build.sh - Build npm platform packages from GoReleaser dist/ output
+#
+# Usage:
+#   sh npm/scripts/build.sh [--version <version>] [--dist-dir <path>] [--npm-dir <path>]
+#
+# Must be run from the project root.
+
+set -eu
+
+# ---------------------------------------------------------------------------
+# Script location & project root detection
+# ---------------------------------------------------------------------------
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
+
+# ---------------------------------------------------------------------------
+# Default paths
+# ---------------------------------------------------------------------------
+DIST_DIR="${PROJECT_ROOT}/dist"
+NPM_DIR="${PROJECT_ROOT}/npm"
+
+# ---------------------------------------------------------------------------
+# Parse arguments
+# ---------------------------------------------------------------------------
+VERSION=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+  --version)
+    VERSION="$2"
+    shift 2
+    ;;
+  --dist-dir)
+    DIST_DIR="$2"
+    shift 2
+    ;;
+  --npm-dir)
+    NPM_DIR="$2"
+    shift 2
+    ;;
+  *)
+    printf 'Unknown argument: %s\n' "$1" >&2
+    exit 1
+    ;;
+  esac
+done
+
+# ---------------------------------------------------------------------------
+# Resolve version
+# ---------------------------------------------------------------------------
+if [ -z "${VERSION}" ]; then
+  printf 'ERROR: --version not specified.\n' >&2
+  exit 1
+fi
+
+# Strip leading 'v' for npm semver compatibility
+VERSION_NPM="${VERSION#v}"
+
+printf '✅ Building npm packages for version: %s\n' "${VERSION_NPM}"
+printf '   dist: %s\n' "${DIST_DIR}"
+printf '   npm:  %s\n' "${NPM_DIR}"
+
+# ---------------------------------------------------------------------------
+# Platform mapping: <npm-package-dir>:<dist-subdir>:<binary-name>
+# Format: "npm_dir|dist_dir|binary"
+# ---------------------------------------------------------------------------
+PLATFORMS="
+unigo-darwin-arm64|unigo_darwin_arm64_v8.0|unigo
+unigo-darwin-x64|unigo_darwin_amd64_v1|unigo
+unigo-linux-x64|unigo_linux_amd64_v1|unigo
+unigo-linux-arm64|unigo_linux_arm64_v8.0|unigo
+unigo-linux-ia32|unigo_linux_386_sse2|unigo
+unigo-linux-arm|unigo_linux_arm_7|unigo
+unigo-linux-loong64|unigo_linux_loong64|unigo
+unigo-linux-ppc64le|unigo_linux_ppc64le_power8|unigo
+unigo-linux-riscv64|unigo_linux_riscv64_rva20u64|unigo
+unigo-linux-s390x|unigo_linux_s390x|unigo
+unigo-windows-x64|unigo_windows_amd64_v1|unigo.exe
+unigo-windows-arm64|unigo_windows_arm64_v8.0|unigo.exe
+unigo-windows-ia32|unigo_windows_386_sse2|unigo.exe
+"
+
+# ---------------------------------------------------------------------------
+# Helper: generate package.json from .tpl file
+# ---------------------------------------------------------------------------
+generate_package_json() {
+  local _pkg_dir="$1"
+  local _version="$2"
+  local _tpl="${_pkg_dir}/package.json.tpl"
+  local _out="${_pkg_dir}/package.json"
+
+  if [ ! -f "${_tpl}" ]; then
+    printf '  ⚠️  Template not found: %s (skipping package.json generation)\n' "${_tpl}"
+    return 0
+  fi
+
+  # Replace {{VERSION}} placeholder
+  sed "s/{{VERSION}}/${_version}/g" "${_tpl}" >"${_out}"
+  printf '  ✅ Generated: %s\n' "${_out#"${PROJECT_ROOT}"/}"
+}
+
+# ---------------------------------------------------------------------------
+# Helper: copy documentation files
+# ---------------------------------------------------------------------------
+copy_docs() {
+  local _pkg_dir="$1"
+
+  for _doc in LICENSE README.md README_zh-CN.md; do
+    if [ -f "${PROJECT_ROOT}/${_doc}" ]; then
+      cp "${PROJECT_ROOT}/${_doc}" "${_pkg_dir}/${_doc}"
+    fi
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Process each platform
+# ---------------------------------------------------------------------------
+printf '\n📦 Processing platform packages...\n'
+
+printf '%s' "${PLATFORMS}" | grep -v '^$' | while IFS='|' read -r _npm_pkg _dist_subdir _binary; do
+  _pkg_dir="${NPM_DIR}/${_npm_pkg}"
+  _src_binary="${DIST_DIR}/${_dist_subdir}/${_binary}"
+  _bin_dir="${_pkg_dir}/bin"
+  _dst_binary="${_bin_dir}/${_binary}"
+
+  printf '\n🔧 %s\n' "${_npm_pkg}"
+
+  # Verify source binary exists
+  if [ ! -f "${_src_binary}" ]; then
+    printf '  ❌ Source binary not found: %s\n' "${_src_binary}"
+    printf '     Skipping (run GoReleaser build first)\n'
+    continue
+  fi
+
+  # Create bin directory
+  mkdir -p "${_bin_dir}"
+
+  # Copy binary
+  cp "${_src_binary}" "${_dst_binary}"
+
+  # Set executable permission (no-op on Windows binaries, harmless)
+  chmod +x "${_dst_binary}"
+
+  printf '  ✅ Binary: %s -> %s\n' \
+    "${_src_binary#"${PROJECT_ROOT}"/}" \
+    "${_dst_binary#"${PROJECT_ROOT}"/}"
+
+  # Generate package.json from template
+  generate_package_json "${_pkg_dir}" "${VERSION_NPM}"
+
+  # Copy documentation
+  copy_docs "${_pkg_dir}"
+done
+
+# ---------------------------------------------------------------------------
+# Process root package
+# ---------------------------------------------------------------------------
+printf '\n🔧 unigo (root package)\n'
+_root_pkg_dir="${NPM_DIR}/unigo"
+generate_package_json "${_root_pkg_dir}" "${VERSION_NPM}"
+copy_docs "${_root_pkg_dir}"
+
+# ---------------------------------------------------------------------------
+# Summary
+# ---------------------------------------------------------------------------
+printf '\n✨ npm package build complete!\n'
+printf '   Version: %s\n' "${VERSION_NPM}"
+printf '\nNext steps:\n'
+printf '  1. Publish platform packages first:\n'
+# shellcheck disable=SC2016
+printf '%s\n' '       for pkg in npm/unigo-*/; do npm publish "$pkg" --access public --registry=https://registry.npmjs.org; done'
+printf '  2. Then publish root package:\n'
+printf '       npm publish npm/unigo/ --access public --registry=https://registry.npmjs.org\n'

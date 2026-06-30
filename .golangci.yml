@@ -92,7 +92,7 @@ linters-settings:
     sections:
       - standard # standard library
       - default # everything else
-      - prefix(github.com/snowdreamtech/unirtm) # project imports
+      - prefix(github.com/snowdreamtech/unigo) # project imports
 
   gofumpt:
     extra-rules: true
