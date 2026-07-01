@@ -309,3 +309,30 @@ func TestAuditRepository_Query_MultipleFilters(t *testing.T) {
 	assert.Equal(t, "success", results[0].Status)
 	assert.Equal(t, "18.0.0", results[0].Version)
 }
+
+func TestAuditRepository_Errors(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo, err := NewAuditRepository(db.Conn())
+	require.NoError(t, err)
+
+	// Close the DB to simulate errors
+	db.Close()
+
+	ctx := context.Background()
+	err = repo.Log(ctx, &repository.AuditEntry{})
+	assert.Error(t, err)
+
+	_, err = repo.Query(ctx, repository.AuditFilter{})
+	assert.Error(t, err)
+}
+
+func TestAuditRepository_PrepareError(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+	db.Close() // Close immediately to fail Prepare
+
+	_, err := NewAuditRepository(db.Conn())
+	assert.Error(t, err)
+}

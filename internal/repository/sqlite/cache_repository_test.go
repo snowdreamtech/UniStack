@@ -206,3 +206,36 @@ func TestCacheRepository_BinaryData(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, value, retrieved)
 }
+
+func TestCacheRepository_Errors(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	repo, err := NewCacheRepository(db.Conn())
+	require.NoError(t, err)
+
+	// Close the DB to simulate errors
+	db.Close()
+
+	ctx := context.Background()
+	err = repo.Set(ctx, "key", []byte("value"), time.Hour)
+	assert.Error(t, err)
+
+	_, err = repo.Get(ctx, "key")
+	assert.Error(t, err)
+
+	err = repo.Delete(ctx, "key")
+	assert.Error(t, err)
+
+	err = repo.Purge(ctx)
+	assert.Error(t, err)
+}
+
+func TestCacheRepository_PrepareError(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+	defer cleanup()
+	db.Close() // Close immediately to fail Prepare
+
+	_, err := NewCacheRepository(db.Conn())
+	assert.Error(t, err)
+}
