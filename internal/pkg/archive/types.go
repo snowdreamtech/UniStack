@@ -83,4 +83,14 @@ type FileEntry struct {
 	Data    []byte
 	Mode    os.FileMode
 	ModTime time.Time
+
+	// Tar specific metadata
+	Uid        int
+	Gid        int
+	Uname      string
+	Gname      string
+	PAXRecords map[string]string // Custom key-value extensions
+
+	// Zip specific metadata
+	Comment string
 }
