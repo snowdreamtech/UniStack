@@ -220,3 +220,31 @@ func TestTransaction_RollbackOnError(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, audits, 0)
 }
+
+func TestTransaction_Errors(t *testing.T) {
+	db, cleanup := setupTestDB(t)
+
+	tm := NewSQLiteTransactionManager(db.Conn())
+	ctx := context.Background()
+
+	// 1. Begin success, test Commit and Rollback errors by double calling
+	tx, err := tm.Begin(ctx)
+	require.NoError(t, err)
+	
+	err = tx.Commit()
+	require.NoError(t, err)
+	
+	// Double commit should error
+	err = tx.Commit()
+	require.Error(t, err)
+
+	// Rollback after commit should error
+	err = tx.Rollback()
+	require.Error(t, err)
+
+	// 2. Test Begin error (db closed)
+	cleanup() // This closes the DB
+
+	_, err = tm.Begin(ctx)
+	require.Error(t, err)
+}
