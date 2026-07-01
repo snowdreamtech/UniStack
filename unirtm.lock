@@ -633,7 +633,7 @@ backend = "go"
 [tools."go:golang.org/x/vuln/cmd/govulncheck"."platforms.windows-arm64"]
 
 [[tools."go:mvdan.cc/sh/v3/cmd/shfmt"]]
-version = "v3.13.1"
+version = "v3.12.0"
 backend = "go"
 
 [tools."go:mvdan.cc/sh/v3/cmd/shfmt"."platforms.linux-amd64"]
