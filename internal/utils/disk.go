@@ -9,12 +9,13 @@ import (
 	"path/filepath"
 )
 
-// CalculateDirectorySize recursively calculates the size of a directory in bytes.
+// CalculateDirectorySize recursively calculates the size of a directory.
 func CalculateDirectorySize(path string) (int64, error) {
 	var size int64
 	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
 		if err != nil {
-			return err
+			// If there's an error accessing a path (e.g. permission denied), just skip it and continue
+			return nil
 		}
 		if !info.IsDir() {
 			size += info.Size()
@@ -24,19 +25,16 @@ func CalculateDirectorySize(path string) (int64, error) {
 	return size, err
 }
 
-// FormatBytes converts a size in bytes to a human-readable format.
-func FormatBytes(size int64) string {
-	if size == 0 {
-		return "0 B"
-	}
+// FormatBytes converts bytes to a human-readable string in powers of 1024.
+func FormatBytes(bytes int64) string {
 	const unit = 1024
-	if size < unit {
-		return fmt.Sprintf("%d B", size)
+	if bytes < unit {
+		return fmt.Sprintf("%d B", bytes)
 	}
 	div, exp := int64(unit), 0
-	for n := size / unit; n >= unit; n /= unit {
+	for n := bytes / unit; n >= unit; n /= unit {
 		div *= unit
 		exp++
 	}
-	return fmt.Sprintf("%.1f %cB", float64(size)/float64(div), "KMGTPE"[exp])
+	return fmt.Sprintf("%.1f %c", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
