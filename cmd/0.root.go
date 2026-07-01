@@ -75,6 +75,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "V", false, "enable verbose output (debug logging)")
 	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "display version information")
 	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "answer yes to all confirmation prompts")
+	rootCmd.PersistentFlags().Bool("help", false, "help for this command")
 
 	// Set DisableFlagsInUseLine to match typical Cobra help output
 	rootCmd.DisableFlagsInUseLine = true
