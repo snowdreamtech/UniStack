@@ -4,15 +4,9 @@
 package cmd
 
 import (
-	"archive/tar"
-	"archive/zip"
-	"bytes"
-	"compress/bzip2"
-	"compress/gzip"
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -21,11 +15,10 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/klauspost/compress/zstd"
-	"github.com/pierrec/lz4/v4"
+	"github.com/snowdreamtech/unigo/internal/pkg/archive"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/updater"
 	"github.com/spf13/cobra"
-	"github.com/ulikunitz/xz"
 )
 
 var skipChecksum bool
@@ -42,11 +35,6 @@ var selfUpdateCmd = &cobra.Command{
 	RunE:  runSelfUpdate,
 }
 
-type releaseAsset struct {
-	Name               string `json:"name"`
-	BrowserDownloadURL string `json:"browser_download_url"`
-}
-
 func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	if ctx == nil {
@@ -55,37 +43,12 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Checking for updates to %s...\n", env.ProjectName)
 
-	apiURL := "https://api.github.com/repos/snowdreamtech/UniGo/releases/latest"
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Accept", "application/vnd.github.v3+json")
-
-	resp, err := http.DefaultClient.Do(req)
+	releaseInfo, err := updater.FetchLatestReleaseInfo(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to check for updates: %w", err)
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("GitHub API returned status %d", resp.StatusCode)
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("failed to read response: %w", err)
-	}
-
-	var release struct {
-		TagName string         `json:"tag_name"`
-		Assets  []releaseAsset `json:"assets"`
-	}
-	if err := json.Unmarshal(body, &release); err != nil {
-		return fmt.Errorf("failed to parse release info: %w", err)
-	}
-
-	latestVer := strings.TrimPrefix(release.TagName, "v")
+	latestVer := strings.TrimPrefix(releaseInfo.TagName, "v")
 	currentVer := strings.TrimPrefix(env.GitTag, "v")
 
 	fmt.Printf("Current version: %s\n", currentVer)
@@ -103,7 +66,7 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	var assetName string
 	var checksumsURL string
 
-	for _, asset := range release.Assets {
+	for _, asset := range releaseInfo.Assets {
 		name := strings.ToLower(asset.Name)
 		if strings.Contains(name, "checksums.txt") {
 			checksumsURL = asset.BrowserDownloadURL
@@ -195,86 +158,9 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		binaryName = "unigo.exe"
 	}
 
-	var binaryData []byte
-	var decompressed io.Reader
-
-	// Intelligent extraction based on magic bytes
-	if len(archiveData) > 2 && bytes.HasPrefix(archiveData, []byte{0x1f, 0x8b}) {
-		// Gzip
-		gzr, err := gzip.NewReader(bytes.NewReader(archiveData))
-		if err != nil {
-			return fmt.Errorf("failed to create gzip reader: %w", err)
-		}
-		defer gzr.Close()
-		decompressed = gzr
-	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte("BZh")) {
-		// Bzip2
-		decompressed = bzip2.NewReader(bytes.NewReader(archiveData))
-	} else if len(archiveData) > 5 && bytes.HasPrefix(archiveData, []byte{0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00}) {
-		// XZ
-		xzr, err := xz.NewReader(bytes.NewReader(archiveData))
-		if err != nil {
-			return fmt.Errorf("failed to create xz reader: %w", err)
-		}
-		decompressed = xzr
-	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte{0x28, 0xb5, 0x2f, 0xfd}) {
-		// Zstd
-		zstdr, err := zstd.NewReader(bytes.NewReader(archiveData))
-		if err != nil {
-			return fmt.Errorf("failed to create zstd reader: %w", err)
-		}
-		defer zstdr.Close()
-		decompressed = zstdr
-	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte{0x04, 0x22, 0x4d, 0x18}) {
-		// LZ4
-		decompressed = lz4.NewReader(bytes.NewReader(archiveData))
-	}
-
-	if decompressed != nil {
-		tr := tar.NewReader(decompressed)
-		for {
-			hdr, err := tr.Next()
-			if err == io.EOF {
-				break
-			}
-			if err != nil {
-				return fmt.Errorf("failed to read tar archive: %w", err)
-			}
-			if filepath.Base(hdr.Name) == binaryName && !hdr.FileInfo().IsDir() {
-				binaryData, err = io.ReadAll(tr)
-				if err != nil {
-					return fmt.Errorf("failed to read binary from tar: %w", err)
-				}
-				break
-			}
-		}
-	} else if len(archiveData) > 4 && bytes.HasPrefix(archiveData, []byte{0x50, 0x4b, 0x03, 0x04}) {
-		// Zip
-		zr, err := zip.NewReader(bytes.NewReader(archiveData), int64(len(archiveData)))
-		if err != nil {
-			return fmt.Errorf("failed to create zip reader: %w", err)
-		}
-		for _, f := range zr.File {
-			if filepath.Base(f.Name) == binaryName && !f.FileInfo().IsDir() {
-				rc, err := f.Open()
-				if err != nil {
-					return fmt.Errorf("failed to open file in zip: %w", err)
-				}
-				binaryData, err = io.ReadAll(rc)
-				rc.Close()
-				if err != nil {
-					return fmt.Errorf("failed to read binary from zip: %w", err)
-				}
-				break
-			}
-		}
-	} else {
-		// Try treating it as raw binary data just in case
-		binaryData = archiveData
-	}
-
-	if len(binaryData) == 0 {
-		return fmt.Errorf("failed to find %s inside the downloaded archive", binaryName)
+	binaryData, err := archive.ExtractBinary(archiveData, binaryName)
+	if err != nil {
+		return err
 	}
 
 	execPath, err := os.Executable()
@@ -304,6 +190,9 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		os.Remove(tmpPath)
 		return fmt.Errorf("failed to replace binary: %w", err)
 	}
+
+	// Clear update cache after successful update
+	_ = updater.ClearCache()
 
 	fmt.Printf("Successfully updated to version %s!\n", latestVer)
 	return nil

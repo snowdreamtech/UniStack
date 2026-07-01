@@ -90,14 +90,34 @@ func writeCache(cache *UpdateCache) error {
 	return os.WriteFile(getCachePath(), data, 0644)
 }
 
-// fetchLatestRelease fetches the latest release version from GitHub API.
-func fetchLatestRelease() (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+// ClearCache clears the update cache from disk.
+func ClearCache() error {
+	cacheMutex.Lock()
+	defer cacheMutex.Unlock()
+
+	return os.Remove(getCachePath())
+}
+
+// ReleaseAsset represents an asset in a GitHub release.
+type ReleaseAsset struct {
+	Name               string `json:"name"`
+	BrowserDownloadURL string `json:"browser_download_url"`
+}
+
+// ReleaseInfo represents the GitHub release information.
+type ReleaseInfo struct {
+	TagName string         `json:"tag_name"`
+	Assets  []ReleaseAsset `json:"assets"`
+}
+
+// FetchLatestReleaseInfo fetches the latest release information from GitHub API.
+func FetchLatestReleaseInfo(ctx context.Context) (*ReleaseInfo, error) {
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, githubAPIURL, nil)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
@@ -107,27 +127,25 @@ func fetchLatestRelease() (string, error) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+		return nil, fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var release struct {
-		TagName string `json:"tag_name"`
-	}
+	var release ReleaseInfo
 	if err := json.Unmarshal(body, &release); err != nil {
-		return "", err
+		return nil, err
 	}
 
-	return strings.TrimPrefix(release.TagName, "v"), nil
+	return &release, nil
 }
 
 // CheckUpdateAsync asynchronously checks for an update if 24 hours have passed since the last check.
@@ -151,7 +169,10 @@ func CheckUpdateAsync(currentVersion string) {
 			return
 		}
 
-		latest, err := fetchLatestRelease()
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		releaseInfo, err := FetchLatestReleaseInfo(ctx)
 		if err != nil {
 			// On error, just update the check time to avoid spamming the API
 			cache.LastChecked = time.Now()
@@ -159,7 +180,7 @@ func CheckUpdateAsync(currentVersion string) {
 			return
 		}
 
-		cache.LatestVersion = latest
+		cache.LatestVersion = strings.TrimPrefix(releaseInfo.TagName, "v")
 		cache.LastChecked = time.Now()
 		_ = writeCache(cache)
 	}()
