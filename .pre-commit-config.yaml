@@ -733,15 +733,6 @@ repos:
       #          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
       #        description: "Comprehensive Go linter aggregator."
 
-      - id: cargo-fmt
-        name: cargo format
-        language: system
-        entry: unirtm hook-exec cargo fmt --all --
-        types: [rust]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
-        pass_filenames: false
-        description: "Format Rust code using the official Cargo toolchain."
 
       # -- Secret Scanning ----------------------------------------------------
       - id: gitleaks
