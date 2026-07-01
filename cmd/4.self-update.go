@@ -7,6 +7,7 @@ import (
 	"archive/tar"
 	"archive/zip"
 	"bytes"
+	"compress/bzip2"
 	"compress/gzip"
 	"context"
 	"crypto/sha256"
@@ -20,8 +21,11 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/klauspost/compress/zstd"
+	"github.com/pierrec/lz4/v4"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
 	"github.com/spf13/cobra"
+	"github.com/ulikunitz/xz"
 )
 
 var skipChecksum bool
@@ -106,7 +110,9 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 			continue
 		}
 		if strings.Contains(name, goos) && strings.Contains(name, goarch) {
-			if strings.HasSuffix(name, ".tar.gz") || strings.HasSuffix(name, ".zip") {
+			if strings.HasSuffix(name, ".tar.gz") || strings.HasSuffix(name, ".zip") ||
+				strings.HasSuffix(name, ".tar.xz") || strings.HasSuffix(name, ".tar.zst") ||
+				strings.HasSuffix(name, ".tar.bz2") || strings.HasSuffix(name, ".tar.lz4") {
 				downloadURL = asset.BrowserDownloadURL
 				assetName = asset.Name
 			}
@@ -190,17 +196,42 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	var binaryData []byte
+	var decompressed io.Reader
 
 	// Intelligent extraction based on magic bytes
 	if len(archiveData) > 2 && bytes.HasPrefix(archiveData, []byte{0x1f, 0x8b}) {
-		// Gzip (tar.gz)
+		// Gzip
 		gzr, err := gzip.NewReader(bytes.NewReader(archiveData))
 		if err != nil {
 			return fmt.Errorf("failed to create gzip reader: %w", err)
 		}
 		defer gzr.Close()
+		decompressed = gzr
+	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte("BZh")) {
+		// Bzip2
+		decompressed = bzip2.NewReader(bytes.NewReader(archiveData))
+	} else if len(archiveData) > 5 && bytes.HasPrefix(archiveData, []byte{0xfd, 0x37, 0x7a, 0x58, 0x5a, 0x00}) {
+		// XZ
+		xzr, err := xz.NewReader(bytes.NewReader(archiveData))
+		if err != nil {
+			return fmt.Errorf("failed to create xz reader: %w", err)
+		}
+		decompressed = xzr
+	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte{0x28, 0xb5, 0x2f, 0xfd}) {
+		// Zstd
+		zstdr, err := zstd.NewReader(bytes.NewReader(archiveData))
+		if err != nil {
+			return fmt.Errorf("failed to create zstd reader: %w", err)
+		}
+		defer zstdr.Close()
+		decompressed = zstdr
+	} else if len(archiveData) > 3 && bytes.HasPrefix(archiveData, []byte{0x04, 0x22, 0x4d, 0x18}) {
+		// LZ4
+		decompressed = lz4.NewReader(bytes.NewReader(archiveData))
+	}
 
-		tr := tar.NewReader(gzr)
+	if decompressed != nil {
+		tr := tar.NewReader(decompressed)
 		for {
 			hdr, err := tr.Next()
 			if err == io.EOF {

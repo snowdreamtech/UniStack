@@ -7,13 +7,16 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.10.0
 	github.com/bmatcuk/doublestar/v4 v4.10.0
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
+	github.com/klauspost/compress v1.18.7
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml/v2 v2.4.2
+	github.com/pierrec/lz4/v4 v4.1.27
 	github.com/pterm/pterm v0.12.83
 	github.com/rs/zerolog v1.35.1
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
+	github.com/ulikunitz/xz v0.5.15
 	github.com/zeebo/blake3 v0.2.4
 	golang.org/x/crypto v0.53.0
 	golang.org/x/net v0.56.0
