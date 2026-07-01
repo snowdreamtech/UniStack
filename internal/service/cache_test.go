@@ -45,6 +45,41 @@ func (m *MockCacheRepository) Purge(ctx context.Context) error {
 	return args.Error(0)
 }
 
+// MockAuditRepository is a mock implementation of repository.AuditRepository
+type MockAuditRepository struct {
+	mock.Mock
+}
+
+func (m *MockAuditRepository) Log(ctx context.Context, entry *repository.AuditEntry) error {
+	// If Log is not explicitly mocked, just return nil (it's safe for cache tests)
+	if len(m.ExpectedCalls) == 0 {
+		return nil
+	}
+	
+	// Check if this specific method is mocked
+	mocked := false
+	for _, call := range m.ExpectedCalls {
+		if call.Method == "Log" {
+			mocked = true
+			break
+		}
+	}
+	if !mocked {
+		return nil
+	}
+
+	args := m.Called(ctx, entry)
+	return args.Error(0)
+}
+
+func (m *MockAuditRepository) Query(ctx context.Context, filter repository.AuditFilter) ([]*repository.AuditEntry, error) {
+	args := m.Called(ctx, filter)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]*repository.AuditEntry), args.Error(1)
+}
+
 func TestNewCacheManager(t *testing.T) {
 	t.Run("creates cache manager with valid config", func(t *testing.T) {
 		tmpDir := t.TempDir()
