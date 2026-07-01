@@ -87,6 +87,12 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no release asset found for %s/%s", goos, goarch)
 	}
 
+	proxyPrefix := env.GithubProxy()
+	downloadURL = proxyPrefix + downloadURL
+	if checksumsURL != "" {
+		checksumsURL = proxyPrefix + checksumsURL
+	}
+
 	var expectedHash string
 	if !skipChecksum {
 		if checksumsURL == "" {
