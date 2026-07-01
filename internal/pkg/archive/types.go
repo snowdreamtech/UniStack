@@ -3,7 +3,10 @@
 
 package archive
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 // Format represents an archive or compression format.
 type Format string
@@ -73,3 +76,9 @@ var (
 	ErrFileNotFound      = fmt.Errorf("file not found in archive")
 	ErrInvalidData       = fmt.Errorf("invalid archive data")
 )
+
+// FileEntry represents a file to be added to an archive.
+type FileEntry struct {
+	Data []byte
+	Mode os.FileMode
+}

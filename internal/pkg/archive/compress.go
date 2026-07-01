@@ -13,11 +13,12 @@ import (
 
 	"github.com/klauspost/compress/zstd"
 	"github.com/pierrec/lz4/v4"
+	"github.com/ulikunitz/xz"
 )
 
-// CompressFiles creates an archive containing the given files map (filename -> content)
+// CompressFiles creates an archive containing the given files map (filename -> FileEntry)
 // and writes it to the destination io.Writer using the specified format.
-func CompressFiles(w io.Writer, format Format, files map[string][]byte) error {
+func CompressFiles(w io.Writer, format Format, files map[string]FileEntry) error {
 	switch format {
 	case FormatZip:
 		return writeZip(w, files)
@@ -46,36 +47,43 @@ func CompressFiles(w io.Writer, format Format, files map[string][]byte) error {
 	}
 }
 
-func writeZip(w io.Writer, files map[string][]byte) error {
+func writeZip(w io.Writer, files map[string]FileEntry) error {
 	zw := zip.NewWriter(w)
 	defer zw.Close()
 
-	for name, data := range files {
-		fw, err := zw.Create(name)
+	for name, entry := range files {
+		// Use CreateHeader to preserve file mode
+		hdr := &zip.FileHeader{
+			Name:   name,
+			Method: zip.Deflate,
+		}
+		hdr.SetMode(entry.Mode)
+
+		fw, err := zw.CreateHeader(hdr)
 		if err != nil {
 			return fmt.Errorf("failed to create zip entry %s: %w", name, err)
 		}
-		if _, err := io.Copy(fw, bytes.NewReader(data)); err != nil {
+		if _, err := io.Copy(fw, bytes.NewReader(entry.Data)); err != nil {
 			return fmt.Errorf("failed to write zip entry %s: %w", name, err)
 		}
 	}
 	return nil
 }
 
-func writeTar(w io.Writer, files map[string][]byte) error {
+func writeTar(w io.Writer, files map[string]FileEntry) error {
 	tw := tar.NewWriter(w)
 	defer tw.Close()
 
-	for name, data := range files {
+	for name, entry := range files {
 		hdr := &tar.Header{
 			Name: name,
-			Mode: 0600,
-			Size: int64(len(data)),
+			Mode: int64(entry.Mode),
+			Size: int64(len(entry.Data)),
 		}
 		if err := tw.WriteHeader(hdr); err != nil {
 			return fmt.Errorf("failed to write tar header for %s: %w", name, err)
 		}
-		if _, err := io.Copy(tw, bytes.NewReader(data)); err != nil {
+		if _, err := io.Copy(tw, bytes.NewReader(entry.Data)); err != nil {
 			return fmt.Errorf("failed to write tar entry %s: %w", name, err)
 		}
 	}
@@ -84,7 +92,7 @@ func writeTar(w io.Writer, files map[string][]byte) error {
 
 type compressWriterFactory func(io.Writer) (io.WriteCloser, error)
 
-func writeCompressedTar(w io.Writer, files map[string][]byte, factory compressWriterFactory) error {
+func writeCompressedTar(w io.Writer, files map[string]FileEntry, factory compressWriterFactory) error {
 	cw, err := factory(w)
 	if err != nil {
 		return fmt.Errorf("failed to initialize compressor: %w", err)
