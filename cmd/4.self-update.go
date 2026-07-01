@@ -4,7 +4,13 @@
 package cmd
 
 import (
+	"archive/tar"
+	"archive/zip"
+	"bytes"
+	"compress/gzip"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,7 +24,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var skipChecksum bool
+
 func init() {
+	selfUpdateCmd.Flags().BoolVar(&skipChecksum, "skip-checksum", false, "Skip checksum verification")
 	rootCmd.AddCommand(selfUpdateCmd)
 }
 
@@ -29,6 +38,11 @@ var selfUpdateCmd = &cobra.Command{
 	RunE:  runSelfUpdate,
 }
 
+type releaseAsset struct {
+	Name               string `json:"name"`
+	BrowserDownloadURL string `json:"browser_download_url"`
+}
+
 func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	ctx := cmd.Context()
 	if ctx == nil {
@@ -37,7 +51,6 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Checking for updates to %s...\n", env.ProjectName)
 
-	// Fetch latest release info from GitHub
 	apiURL := "https://api.github.com/repos/snowdreamtech/UniGo/releases/latest"
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
 	if err != nil {
@@ -61,11 +74,8 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	var release struct {
-		TagName string `json:"tag_name"`
-		Assets  []struct {
-			Name               string `json:"name"`
-			BrowserDownloadURL string `json:"browser_download_url"`
-		} `json:"assets"`
+		TagName string         `json:"tag_name"`
+		Assets  []releaseAsset `json:"assets"`
 	}
 	if err := json.Unmarshal(body, &release); err != nil {
 		return fmt.Errorf("failed to parse release info: %w", err)
@@ -82,15 +92,24 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		return nil
 	}
 
-	// Find matching asset for current OS/Arch
 	goos := runtime.GOOS
 	goarch := runtime.GOARCH
+
 	var downloadURL string
+	var assetName string
+	var checksumsURL string
+
 	for _, asset := range release.Assets {
 		name := strings.ToLower(asset.Name)
+		if strings.Contains(name, "checksums.txt") {
+			checksumsURL = asset.BrowserDownloadURL
+			continue
+		}
 		if strings.Contains(name, goos) && strings.Contains(name, goarch) {
-			downloadURL = asset.BrowserDownloadURL
-			break
+			if strings.HasSuffix(name, ".tar.gz") || strings.HasSuffix(name, ".zip") {
+				downloadURL = asset.BrowserDownloadURL
+				assetName = asset.Name
+			}
 		}
 	}
 
@@ -98,9 +117,46 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("no release asset found for %s/%s", goos, goarch)
 	}
 
-	fmt.Printf("Downloading %s...\n", downloadURL)
+	var expectedHash string
+	if !skipChecksum {
+		if checksumsURL == "" {
+			return fmt.Errorf("checksums.txt not found in release assets")
+		}
+		fmt.Printf("Downloading checksums...\n")
+		chkReq, err := http.NewRequestWithContext(ctx, http.MethodGet, checksumsURL, nil)
+		if err != nil {
+			return fmt.Errorf("failed to create checksum request: %w", err)
+		}
+		chkResp, err := http.DefaultClient.Do(chkReq)
+		if err != nil {
+			return fmt.Errorf("failed to download checksums: %w", err)
+		}
+		defer chkResp.Body.Close()
 
-	// Download the new binary
+		chkBody, err := io.ReadAll(chkResp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read checksums: %w", err)
+		}
+
+		// Find the hash for our assetName
+		lines := strings.Split(string(chkBody), "\n")
+		for _, line := range lines {
+			if strings.Contains(line, assetName) {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 && parts[1] == assetName {
+					expectedHash = parts[0]
+					break
+				}
+			}
+		}
+		if expectedHash == "" {
+			return fmt.Errorf("hash for %s not found in checksums.txt", assetName)
+		}
+	} else {
+		fmt.Printf("Skipping checksum verification due to --skip-checksum flag.\n")
+	}
+
+	fmt.Printf("Downloading %s...\n", downloadURL)
 	dlReq, err := http.NewRequestWithContext(ctx, http.MethodGet, downloadURL, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create download request: %w", err)
@@ -111,7 +167,85 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	}
 	defer dlResp.Body.Close()
 
-	// Write to a temp file next to the current binary
+	archiveData, err := io.ReadAll(dlResp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read downloaded archive: %w", err)
+	}
+
+	if !skipChecksum {
+		fmt.Printf("Verifying checksum...\n")
+		hasher := sha256.New()
+		hasher.Write(archiveData)
+		actualHash := hex.EncodeToString(hasher.Sum(nil))
+		if actualHash != expectedHash {
+			return fmt.Errorf("checksum verification failed: expected %s, got %s", expectedHash, actualHash)
+		}
+		fmt.Printf("Checksum verified successfully.\n")
+	}
+
+	fmt.Printf("Extracting binary...\n")
+	binaryName := "unigo"
+	if goos == "windows" {
+		binaryName = "unigo.exe"
+	}
+
+	var binaryData []byte
+
+	// Intelligent extraction based on magic bytes
+	if len(archiveData) > 2 && bytes.HasPrefix(archiveData, []byte{0x1f, 0x8b}) {
+		// Gzip (tar.gz)
+		gzr, err := gzip.NewReader(bytes.NewReader(archiveData))
+		if err != nil {
+			return fmt.Errorf("failed to create gzip reader: %w", err)
+		}
+		defer gzr.Close()
+
+		tr := tar.NewReader(gzr)
+		for {
+			hdr, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				return fmt.Errorf("failed to read tar archive: %w", err)
+			}
+			if filepath.Base(hdr.Name) == binaryName && !hdr.FileInfo().IsDir() {
+				binaryData, err = io.ReadAll(tr)
+				if err != nil {
+					return fmt.Errorf("failed to read binary from tar: %w", err)
+				}
+				break
+			}
+		}
+	} else if len(archiveData) > 4 && bytes.HasPrefix(archiveData, []byte{0x50, 0x4b, 0x03, 0x04}) {
+		// Zip
+		zr, err := zip.NewReader(bytes.NewReader(archiveData), int64(len(archiveData)))
+		if err != nil {
+			return fmt.Errorf("failed to create zip reader: %w", err)
+		}
+		for _, f := range zr.File {
+			if filepath.Base(f.Name) == binaryName && !f.FileInfo().IsDir() {
+				rc, err := f.Open()
+				if err != nil {
+					return fmt.Errorf("failed to open file in zip: %w", err)
+				}
+				binaryData, err = io.ReadAll(rc)
+				rc.Close()
+				if err != nil {
+					return fmt.Errorf("failed to read binary from zip: %w", err)
+				}
+				break
+			}
+		}
+	} else {
+		// Try treating it as raw binary data just in case
+		binaryData = archiveData
+	}
+
+	if len(binaryData) == 0 {
+		return fmt.Errorf("failed to find %s inside the downloaded archive", binaryName)
+	}
+
 	execPath, err := os.Executable()
 	if err != nil {
 		return fmt.Errorf("failed to determine executable path: %w", err)
@@ -127,7 +261,7 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create temp file: %w", err)
 	}
 
-	if _, err := io.Copy(tmpFile, dlResp.Body); err != nil {
+	if _, err := tmpFile.Write(binaryData); err != nil {
 		tmpFile.Close()
 		os.Remove(tmpPath)
 		return fmt.Errorf("failed to write binary: %w", err)
