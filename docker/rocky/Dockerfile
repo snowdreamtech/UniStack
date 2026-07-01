@@ -63,7 +63,7 @@ COPY --from=builder /root/go/bin/unigo /usr/local/bin/
 RUN chmod +x /usr/local/bin/unigo
 
 # Container Orchestration Files
-COPY entrypoint.d /usr/local/bin/entrypoint.d
+COPY docker/rocky/entrypoint.d /usr/local/bin/entrypoint.d
 
 RUN chmod +x /usr/local/bin/entrypoint.d/*
 
