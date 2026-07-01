@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/snowdreamtech/unigo/internal/hello"
+	"github.com/snowdreamtech/unigo/internal/pkg/errors"
 	"github.com/snowdreamtech/unigo/internal/pkg/logger"
 	"github.com/spf13/cobra"
 )
@@ -34,7 +35,7 @@ var rootCmd = &cobra.Command{
 		// Change directory if --cd is provided
 		if cdDir != "" {
 			if err := os.Chdir(cdDir); err != nil {
-				return fmt.Errorf("failed to change directory to %s: %w", cdDir, err)
+				return errors.NewSystemError(fmt.Sprintf("failed to change directory to %s", cdDir), err)
 			}
 		}
 
@@ -65,7 +66,6 @@ func init() {
 // Execute adds all child commands to the root command and sets flags appropriately.
 func Execute() {
 	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		os.Exit(errors.ExitCode(err))
 	}
 }
