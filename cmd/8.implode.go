@@ -98,7 +98,7 @@ func runImplode(cmd *cobra.Command, args []string) error {
 		fmt.Println()
 	}
 
-	fmt.Println("Self-destruct sequence active...\n")
+	fmt.Println("Self-destruct sequence active...")
 
 	for _, t := range targets {
 		fmt.Printf("Destroying %s... ", t.name)

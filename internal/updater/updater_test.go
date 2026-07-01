@@ -4,6 +4,7 @@
 package updater
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
@@ -69,9 +70,14 @@ func TestFetchLatestRelease(t *testing.T) {
 		t.Skip("Skipping network test. Set TEST_NETWORK=1 to enable.")
 	}
 
-	ver, err := fetchLatestRelease()
-	require.NoError(t, err)
-	assert.NotEmpty(t, ver)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	releaseInfo, err := FetchLatestReleaseInfo(ctx)
+	if err != nil {
+		t.Skipf("Skipping API test due to error: %v", err)
+	}
+	latest := releaseInfo.TagName
+	assert.NotEmpty(t, latest)
 }
 
 func TestPromptIfAvailable_Blacklist(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	"compress/gzip"
 	"fmt"
 	"io"
+	"os"
 	"path/filepath"
 
 	"github.com/klauspost/compress/zstd"
@@ -109,4 +110,88 @@ func ExtractBinary(archiveData []byte, binaryName string) ([]byte, error) {
 	}
 
 	return nil, fmt.Errorf("%w: %s", ErrFileNotFound, binaryName)
+}
+
+// ExtractArchive intelligently extracts all contents of an archive into the specified destination directory.
+func ExtractArchive(archiveData []byte, destDir string) error {
+	format := DetectFormat(archiveData)
+
+	if format == FormatZip {
+		zr, err := zip.NewReader(bytes.NewReader(archiveData), int64(len(archiveData)))
+		if err != nil {
+			return fmt.Errorf("failed to create zip reader: %w", err)
+		}
+		for _, f := range zr.File {
+			if err := extractZipFile(f, destDir); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	decompressed, err := NewDecompressReader(bytes.NewReader(archiveData), format)
+	if err != nil {
+		return err
+	}
+
+	if format == FormatRaw {
+		// Just write the raw file
+		return writeToFile(filepath.Join(destDir, "data.bin"), bytes.NewReader(archiveData), 0644)
+	}
+
+	tr := tar.NewReader(decompressed)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			// If not a tar, treat it as a single compressed file
+			decompressedAgain, _ := NewDecompressReader(bytes.NewReader(archiveData), format)
+			return writeToFile(filepath.Join(destDir, "data.bin"), decompressedAgain, 0644)
+		}
+		if err := extractTarFile(tr, hdr, destDir); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func extractZipFile(f *zip.File, destDir string) error {
+	rc, err := f.Open()
+	if err != nil {
+		return err
+	}
+	defer rc.Close()
+
+	path := filepath.Join(destDir, f.Name)
+	if f.FileInfo().IsDir() {
+		return os.MkdirAll(path, f.Mode())
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	return writeToFile(path, rc, f.Mode())
+}
+
+func extractTarFile(tr *tar.Reader, hdr *tar.Header, destDir string) error {
+	path := filepath.Join(destDir, hdr.Name)
+	if hdr.FileInfo().IsDir() {
+		return os.MkdirAll(path, os.FileMode(hdr.Mode))
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	return writeToFile(path, tr, os.FileMode(hdr.Mode))
+}
+
+func writeToFile(path string, r io.Reader, mode os.FileMode) error {
+	out, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, mode)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+	_, err = io.Copy(out, r)
+	return err
 }
