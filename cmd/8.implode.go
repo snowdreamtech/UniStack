@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/pterm/pterm"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
 	"github.com/spf13/cobra"
 )
@@ -19,14 +20,23 @@ var (
 	implodeConfig bool
 )
 
+func init() {
+	implodeCmd.Flags().BoolVarP(&implodeYes, "yes", "y", false, "skip confirmation prompt")
+	implodeCmd.Flags().BoolVar(&implodeConfig, "config", false, "also remove configuration directory (~/.config/unigo)")
+
+	if rootCmd != nil {
+		rootCmd.AddCommand(implodeCmd)
+	}
+}
+
+// implodeCmd removes all UniGo data, cache, and configuration.
 var implodeCmd = &cobra.Command{
 	Use:   "implode",
-	Short: "Completely remove all UniGo data and installations",
-	Long: `Completely remove all UniGo data and installations.
+	Short: "Completely remove all UniGo data and configurations",
+	Long: `Completely remove all UniGo data and configurations.
 
 This command will internal-combust and erase:
-  • All data directories
-  • All caches and temporary files
+  • All download caches and temporary files
   • (Optional) Your configuration directory (~/.config/unigo)
 
 WARNING: This action is permanent and IRREVERSIBLE.`,
@@ -34,28 +44,22 @@ WARNING: This action is permanent and IRREVERSIBLE.`,
 	RunE: runImplode,
 }
 
-func init() {
-	if rootCmd != nil {
-		rootCmd.AddCommand(implodeCmd)
-	}
-	implodeCmd.Flags().BoolVarP(&implodeYes, "yes", "y", false, "skip confirmation prompt")
-	implodeCmd.Flags().BoolVar(&implodeConfig, "config", false, "also remove configuration directory (~/.config/unigo)")
-}
-
 func runImplode(cmd *cobra.Command, args []string) error {
-	fmt.Println("!!! DANGER ZONE !!!")
-	fmt.Println("IMPLODE SEQUENCE INITIATED")
-	fmt.Println()
+	// 1. Visual Banner
+	pterm.DefaultCenter.Println(pterm.Red("!!! DANGER ZONE !!!"))
+	pterm.DefaultBigText.WithLetters(
+		pterm.NewLettersFromStringWithStyle("IM", pterm.NewStyle(pterm.FgRed)),
+		pterm.NewLettersFromStringWithStyle("PLODE", pterm.NewStyle(pterm.FgWhite)),
+	).Render()
 
-	dataDir := env.GetDataDir()
 	configDir := env.GetConfigDir()
+	cacheDir := env.GetCacheDir()
 
 	targets := []struct {
 		name string
 		path string
 	}{
-		{"Data Directory", dataDir},
-		{"Cache Directory", env.GetCacheDir()},
+		{"Cache Directory", cacheDir},
 	}
 
 	if implodeConfig {
@@ -65,11 +69,15 @@ func runImplode(cmd *cobra.Command, args []string) error {
 		}{"Configuration Directory", configDir})
 	}
 
+	// 2. Confirmation
 	if !implodeYes {
-		fmt.Println("WARNING: This will permanently destroy ALL UniGo data.")
-		fmt.Println("\nSelected Targets:")
+		pterm.Warning.Prefix = pterm.Prefix{Text: "WARNING", Style: pterm.NewStyle(pterm.BgRed, pterm.FgWhite)}
+		pterm.Warning.Println("This will permanently destroy ALL UniGo data.")
+		fmt.Printf("\nSelected Targets:\n")
 		for _, t := range targets {
-			fmt.Printf("  • %s (%s)\n", t.name, t.path)
+			pterm.BulletListPrinter{}.WithItems([]pterm.BulletListItem{
+				{Level: 0, Text: fmt.Sprintf("%s (%s)", pterm.Bold.Sprint(t.name), t.path), Bullet: "•", BulletStyle: pterm.NewStyle(pterm.FgRed)},
+			}).Render()
 		}
 
 		fmt.Print("\nType 'yes' to proceed with self-destruction: ")
