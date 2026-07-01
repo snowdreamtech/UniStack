@@ -6,7 +6,10 @@ require (
 	github.com/ProtonMail/go-crypto v1.4.1
 	github.com/ProtonMail/gopenpgp/v2 v2.10.0
 	github.com/bmatcuk/doublestar/v4 v4.10.0
+	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
+	github.com/mattn/go-isatty v0.0.20
 	github.com/pelletier/go-toml/v2 v2.4.2
+	github.com/pterm/pterm v0.12.83
 	github.com/spf13/cobra v1.10.2
 	github.com/stretchr/testify v1.11.1
 	github.com/zeebo/blake3 v0.2.4
@@ -32,12 +35,10 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/lithammer/fuzzysearch v1.1.8 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.20 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
-	github.com/pterm/pterm v0.12.83 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect

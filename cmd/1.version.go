@@ -8,15 +8,18 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/common-nighthawk/go-figure"
 	"github.com/snowdreamtech/unigo/internal/pkg/env"
 	"github.com/snowdreamtech/unigo/internal/sysinfo"
 	"github.com/spf13/cobra"
 )
 
+// init registers the version command to the root command.
 func init() {
 	rootCmd.AddCommand(versionCmd)
 }
 
+// versionCmd represents the version command which displays the application version information.
 var versionCmd = &cobra.Command{
 	Use:     "version",
 	Short:   "Print the version number of " + env.ProjectName,
@@ -25,7 +28,15 @@ var versionCmd = &cobra.Command{
 	Run:     runVersion,
 }
 
+// welcome prints a stylized title in green color.
+func welcome() {
+	title := figure.NewColorFigure(strings.ToUpper(env.ProjectName), "larry3d", "green", true)
+	title.Print()
+}
+
 func runVersion(cmd *cobra.Command, args []string) {
+	welcome()
+
 	osArch := runtime.GOOS + "/" + runtime.GOARCH
 	if sysinfo.IsMusl() {
 		osArch += " (musl)"
