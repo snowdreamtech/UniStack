@@ -168,19 +168,40 @@ func ExtractArchive(archiveData []byte, destDir string) error {
 }
 
 func extractZipFile(f *zip.File, destDir string) error {
+	path := filepath.Join(destDir, f.Name)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+
+	if f.FileInfo().IsDir() {
+		return os.MkdirAll(path, f.Mode())
+	}
+
+	// Handle symlinks in ZIP
+	if f.Mode()&os.ModeSymlink != 0 {
+		rc, err := f.Open()
+		if err != nil {
+			return err
+		}
+		defer rc.Close()
+		target, err := io.ReadAll(rc)
+		if err != nil {
+			return err
+		}
+		if err := os.Symlink(string(target), path); err != nil {
+			return fmt.Errorf("failed to create zip symlink %s: %w", path, err)
+		}
+		// For symlinks, Lchown is best effort
+		// os.Lchown(path, os.Getuid(), os.Getgid()) // Zip doesn't natively store UID/GID well
+		return nil
+	}
+
 	rc, err := f.Open()
 	if err != nil {
 		return err
 	}
 	defer rc.Close()
 
-	path := filepath.Join(destDir, f.Name)
-	if f.FileInfo().IsDir() {
-		return os.MkdirAll(path, f.Mode())
-	}
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
 	if err := writeToFile(path, rc); err != nil {
 		return err
 	}
@@ -199,24 +220,49 @@ func extractTarFile(tr *tar.Reader, hdr *tar.Header, destDir string) error {
 	path := filepath.Join(destDir, hdr.Name)
 	mode := os.FileMode(hdr.Mode)
 
-	if hdr.FileInfo().IsDir() {
-		return os.MkdirAll(path, mode)
-	}
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	if err := writeToFile(path, tr); err != nil {
-		return err
-	}
 
-	// Preserve permissions and modified time
-	if err := os.Chmod(path, mode); err != nil {
-		return fmt.Errorf("failed to chmod: %w", err)
+	switch hdr.Typeflag {
+	case tar.TypeDir:
+		if err := os.MkdirAll(path, mode); err != nil {
+			return err
+		}
+		// Best effort chown
+		os.Chown(path, hdr.Uid, hdr.Gid)
+		return nil
+	case tar.TypeSymlink:
+		if err := os.Symlink(hdr.Linkname, path); err != nil {
+			return fmt.Errorf("failed to create symlink %s: %w", path, err)
+		}
+		os.Lchown(path, hdr.Uid, hdr.Gid) // Best effort
+		return nil
+	case tar.TypeLink:
+		linkPath := filepath.Join(destDir, hdr.Linkname)
+		if err := os.Link(linkPath, path); err != nil {
+			return fmt.Errorf("failed to create hardlink %s: %w", path, err)
+		}
+		return nil
+	case tar.TypeReg, tar.TypeRegA:
+		if err := writeToFile(path, tr); err != nil {
+			return err
+		}
+
+		// Preserve permissions, times, and ownership
+		if err := os.Chmod(path, mode); err != nil {
+			return fmt.Errorf("failed to chmod: %w", err)
+		}
+		if err := os.Chtimes(path, hdr.AccessTime, hdr.ModTime); err != nil {
+			return fmt.Errorf("failed to chtimes: %w", err)
+		}
+		// Chown is best-effort since it usually requires root
+		os.Chown(path, hdr.Uid, hdr.Gid)
+		return nil
+	default:
+		// Ignore other types like block, char, fifo
+		return nil
 	}
-	if err := os.Chtimes(path, hdr.AccessTime, hdr.ModTime); err != nil {
-		return fmt.Errorf("failed to chtimes: %w", err)
-	}
-	return nil
 }
 
 func writeToFile(path string, r io.Reader) error {
