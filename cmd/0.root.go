@@ -8,8 +8,10 @@ import (
 	"os"
 
 	"github.com/snowdreamtech/unigo/internal/hello"
+	"github.com/snowdreamtech/unigo/internal/pkg/env"
 	"github.com/snowdreamtech/unigo/internal/pkg/errors"
 	"github.com/snowdreamtech/unigo/internal/pkg/logger"
+	"github.com/snowdreamtech/unigo/internal/updater"
 	"github.com/spf13/cobra"
 )
 
@@ -42,6 +44,14 @@ var rootCmd = &cobra.Command{
 		// Initialize the global logger before any command runs.
 		// If --verbose is set, treat it as --debug
 		logger.Init(debug || verbose, quiet, silent, jsonFmt)
+
+		// Asynchronously check for a newer version (non-blocking).
+		updater.CheckUpdateAsync(env.GitTag)
+		return nil
+	},
+	PersistentPostRunE: func(cmd *cobra.Command, args []string) error {
+		// Prompt if a newer version is available (once per day, TTY only).
+		updater.PromptIfAvailable(env.GitTag, cmd.Name())
 		return nil
 	},
 	Run: func(cmd *cobra.Command, args []string) {
