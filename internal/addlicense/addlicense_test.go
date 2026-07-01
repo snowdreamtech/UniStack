@@ -19,6 +19,7 @@ package addlicense
 import (
 	"io/ioutil" //nolint:staticcheck
 	"os"
+	"path/filepath"
 	"testing"
 	"text/template"
 )
@@ -363,5 +364,95 @@ func TestFileMatches(t *testing.T) {
 		if got := fileMatches(tt.path, patterns); got != tt.wantMatch {
 			t.Errorf("fileMatches(%q, %q) returned %v, want %v", tt.path, patterns, got, tt.wantMatch)
 		}
+	}
+}
+
+func TestProcessFiles(t *testing.T) {
+	tmpDir, err := os.MkdirTemp("", "addlicense_test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	f1 := filepath.Join(tmpDir, "test1.go")
+	os.WriteFile(f1, []byte("package test"), 0644)
+
+	f2 := filepath.Join(tmpDir, "test2.js")
+	os.WriteFile(f2, []byte("console.log('test')"), 0644)
+
+	opts := Options{
+		License: "Apache-2.0",
+		Holder:  "Acme Corp",
+		Year:    "2026",
+	}
+
+	// Test AddLicenseToFiles
+	count, err := AddLicenseToFiles([]string{tmpDir}, opts)
+	if err != nil {
+		t.Errorf("AddLicenseToFiles failed: %v", err)
+	}
+	if count != 2 {
+		t.Errorf("Expected 2 files changed, got %d", count)
+	}
+
+	// Test CheckLicenseInFiles (now all files should have license)
+	count, err = CheckLicenseInFiles([]string{tmpDir}, opts)
+	if err != nil {
+		t.Errorf("CheckLicenseInFiles failed: %v", err)
+	}
+	if count != 0 {
+		t.Errorf("Expected 0 files missing license, got %d", count)
+	}
+
+	// Write a new file missing license
+	f3 := filepath.Join(tmpDir, "test3.go")
+	os.WriteFile(f3, []byte("package test3"), 0644)
+
+	count, err = CheckLicenseInFiles([]string{tmpDir}, opts)
+	if err != nil {
+		t.Errorf("Expected no fatal error from CheckLicenseInFiles, got %v", err)
+	}
+	if count != 1 {
+		t.Errorf("Expected 1 file missing license, got %d", count)
+	}
+
+	f4 := filepath.Join(tmpDir, "ignored.txt")
+	os.WriteFile(f4, []byte("ignored"), 0644)
+
+	f5 := filepath.Join(tmpDir, "skipped.json")
+	os.WriteFile(f5, []byte("{}"), 0644)
+
+	f6 := filepath.Join(tmpDir, "subdir", "sub.go")
+	os.MkdirAll(filepath.Join(tmpDir, "subdir"), 0755)
+	os.WriteFile(f6, []byte("package sub"), 0644)
+
+	opts = Options{
+		License:        "Apache-2.0",
+		Holder:         "Acme Corp",
+		Year:           "2026",
+		Verbose:        true,
+		IgnorePatterns: []string{"**/ignored.txt"},
+		SkipExtensions: []string{"json"},
+	}
+
+	count, err = CheckLicenseInFiles([]string{tmpDir}, opts)
+	if count != 2 { // test3.go and sub.go
+		t.Errorf("Expected 2 files missing license, got %d", count)
+	}
+
+	// Test nonexistent path to trigger walk error (walk actually suppresses it)
+	count, err = CheckLicenseInFiles([]string{"nonexistent_path_that_does_not_exist"}, opts)
+	if err != nil {
+		t.Errorf("Expected no error for nonexistent path since walk suppresses it, got %v", err)
+	}
+	if count != 0 {
+		t.Errorf("Expected 0 files, got %d", count)
+	}
+
+	// Test invalid ignore pattern
+	opts.IgnorePatterns = []string{"["} // invalid doublestar pattern
+	_, err = CheckLicenseInFiles([]string{tmpDir}, opts)
+	if err == nil {
+		t.Errorf("Expected error for invalid ignore pattern")
 	}
 }
