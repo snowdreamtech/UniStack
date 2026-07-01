@@ -17,11 +17,11 @@ Access via `Terminal` → `Run Task`:
 
 | Task                 | Command         |
 | -------------------- | --------------- |
-| `🔧 make: lint`      | `unirtm run lint`     |
+| `🔧 make: lint`      | `unigo run lint`     |
 | `🔧 make: format`    | `make format`   |
-| `🔧 make: test`      | `unirtm run test`     |
-| `🔧 make: build`     | `unirtm run build`    |
-| `🔧 make: setup`     | `unirtm run setup`    |
+| `🔧 make: test`      | `unigo run test`     |
+| `🔧 make: build`     | `unigo run build`    |
+| `🔧 make: setup`     | `unigo run setup`    |
 | `🌐 web: dev server` | `npm run dev`   |
 | `🏗️ web: build`      | `npm run build` |
 

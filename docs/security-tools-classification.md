@@ -29,7 +29,7 @@ These tools provide universal security coverage regardless of project language o
 
 ```bash
 # In CI workflows
-unirtm run setup security
+unigo run setup security
 ```
 
 ---
@@ -57,10 +57,10 @@ These tools are language-specific and only relevant when the corresponding langu
 
 ```bash
 # Installed automatically when language files are detected
-unirtm run setup go      # Installs govulncheck
-unirtm run setup rust    # Installs cargo-audit
-unirtm run setup node    # npm-audit is part of npm
-unirtm run setup python  # Installs pip-audit
+unigo run setup go      # Installs govulncheck
+unigo run setup rust    # Installs cargo-audit
+unigo run setup node    # npm-audit is part of npm
+unigo run setup python  # Installs pip-audit
 ```
 
 ---
@@ -143,7 +143,7 @@ Workflows that require universal security scanning must explicitly install these
 - name: "🔒 Install Security Tools"
   shell: sh
   run: |
-    unirtm run setup security
+    unigo run setup security
 ```
 
 Or include in the main setup:
@@ -152,25 +152,25 @@ Or include in the main setup:
 - name: "🚀 Initialize Development Environment"
   shell: sh
   run: |
-    unirtm run setup security  # Install universal security tools
-    unirtm run install
-    unirtm run check-env
+    unigo run setup security  # Install universal security tools
+    unigo run install
+    unigo run check-env
 ```
 
 ### For Workflows Not Using Security Scanners
 
-If a workflow doesn't need security scanning (e.g., documentation builds), it will fail at `unirtm run check-env` unless security tools are installed. Options:
+If a workflow doesn't need security scanning (e.g., documentation builds), it will fail at `unigo run check-env` unless security tools are installed. Options:
 
 1. **Install security tools** (recommended):
 
    ```yaml
-   run: unirtm run setup security && unirtm run check-env
+   run: unigo run setup security && unigo run check-env
    ```
 
 2. **Skip check-env** (not recommended):
 
    ```yaml
-   run: unirtm run setup && unirtm run install
+   run: unigo run setup && unigo run install
    # Skip check-env
    ```
 
@@ -252,7 +252,7 @@ If you have existing workflows that relied on the old Optional CI-only behavior 
 
 ```yaml
 - name: "Check Environment"
-  run: unirtm run check-env
+  run: unigo run check-env
   # Would warn but not fail if OSV-scanner missing
 ```
 
@@ -260,10 +260,10 @@ If you have existing workflows that relied on the old Optional CI-only behavior 
 
 ```yaml
 - name: "Install Security Tools"
-  run: unirtm run setup security
+  run: unigo run setup security
 
 - name: "Check Environment"
-  run: unirtm run check-env
+  run: unigo run check-env
   # Will fail if OSV-scanner missing
 ```
 
@@ -275,17 +275,17 @@ If you have existing workflows that relied on the old Optional CI-only behavior 
 
 ```bash
 # Test check-env without security tools (should skip)
-unirtm run check-env
+unigo run check-env
 
 # Force install security tools locally
-OSV_FORCE_INSTALL=1 ZIZMOR_FORCE_INSTALL=1 unirtm run check-env
+OSV_FORCE_INSTALL=1 ZIZMOR_FORCE_INSTALL=1 unigo run check-env
 ```
 
 ### CI Testing
 
 ```bash
 # Simulate CI environment
-CI=true unirtm run check-env
+CI=true unigo run check-env
 # Should fail if universal security tools are missing
 ```
 

@@ -138,7 +138,7 @@ env | grep -E '(API|TOKEN|KEY|PASSWORD|SECRET)' | \
 **策略**：仅在必要时使用 asdf，优先使用更安全的替代方案
 
 ```toml
-# .unirtm.toml - 优先级顺序
+# .unigo.toml - 优先级顺序
 # 1. 内置后端（最安全）
 node = "25.9.0"
 python = "3.14.3"
@@ -253,7 +253,7 @@ unigo (asdf 的 Rust 重写版本) 提供了一些改进：
 ### 高安全环境（生产、CI/CD）
 
 ```toml
-# .unirtm.toml
+# .unigo.toml
 [settings]
 # 完全禁用 asdf 和 aqua
 disable_backends = ["asdf", "aqua"]
@@ -268,7 +268,7 @@ python = "3.14.3"
 ### 平衡环境（开发）
 
 ```toml
-# .unirtm.toml
+# .unigo.toml
 [settings]
 # 禁用 aqua，保留 asdf 但谨慎使用
 disable_backends = ["aqua"]

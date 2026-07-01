@@ -43,7 +43,7 @@ git commit --no-verify -m "chore: emergency fix"
 
 ## UniGo Tool Manager Configuration
 
-The project uses [unigo](https://github.com/snowdreamtech/UniGo) for managing development tools. Configuration is in `.unirtm.toml`.
+The project uses [unigo](https://github.com/snowdreamtech/UniGo) for managing development tools. Configuration is in `.unigo.toml`.
 
 ### Important Security Requirements
 

@@ -120,7 +120,7 @@ fi
 
 ### `verify_binary_exists()`
 
-Checks if a binary exists in the system PATH or unirtm installation directory.
+Checks if a binary exists in the system PATH or unigo installation directory.
 
 **Signature:**
 
@@ -152,7 +152,7 @@ fi
 
 1. Check with `command -v`
 2. Check with `unigo which`
-3. Search unirtm installation directory with `find`
+3. Search unigo installation directory with `find`
 
 **Performance:**
 
@@ -311,7 +311,7 @@ run_with_timeout TIMEOUT_SECONDS COMMAND [ARGS...]
 
 ```bash
 # Run command with 30-second timeout
-if run_with_timeout 30 unirtm install shfmt; then
+if run_with_timeout 30 unigo install shfmt; then
   echo "Installation completed"
 else
   echo "Installation failed or timed out"
@@ -490,7 +490,7 @@ Use timeouts for network operations:
 
 ```bash
 # 5-minute timeout for tool installation
-if ! run_with_timeout 300 unirtm install tool; then
+if ! run_with_timeout 300 unigo install tool; then
   log_error "Installation timed out"
   exit 1
 fi

@@ -2,7 +2,7 @@
 
 ## 问题描述
 
-在运行 `make sync-lock` 或 `unirtm install` 时，可能会遇到以下错误：
+在运行 `make sync-lock` 或 `unigo install` 时，可能会遇到以下错误：
 
 ```
 unigo ERROR github:astral-sh/ruff@0.15.10 has no provenance verification on linux-x64-musl,
@@ -33,7 +33,7 @@ Verify the release is authentic before proceeding.
    - 这不是 Ruff 的问题，而是 Aqua 的设计缺陷
 
 4. **unigo 的默认行为**
-   - 当你在 `.unirtm.toml` 中写 `github:astral-sh/ruff` 时
+   - 当你在 `.unigo.toml` 中写 `github:astral-sh/ruff` 时
    - unigo 实际上使用 `aqua:astral-sh/ruff` 作为后端
    - metadata 查询来自 GitHub API
    - 但二进制下载来自 Aqua Registry（默认优先）
@@ -42,7 +42,7 @@ Verify the release is authentic before proceeding.
 ### 技术细节
 
 1. **UniGo 的后端机制**
-   - 当你在 `.unirtm.toml` 中指定 `github:astral-sh/ruff` 时
+   - 当你在 `.unigo.toml` 中指定 `github:astral-sh/ruff` 时
    - unigo 实际上使用 `aqua:astral-sh/ruff` 作为后端
    - 可以在 <https://unigo-versions.jdx.dev/tools/ruff> 查看
 
@@ -71,7 +71,7 @@ Verify the release is authentic before proceeding.
 
 #### 第一层：unigo 配置文件
 
-在 `.unirtm.toml` 的 `[settings]` 部分添加：
+在 `.unigo.toml` 的 `[settings]` 部分添加：
 
 ```toml
 [settings]
@@ -87,7 +87,7 @@ aqua.minisign = false
 
 #### 第二层：环境变量强制
 
-在 `.unirtm.toml` 的 `[env]` 部分添加：
+在 `.unigo.toml` 的 `[env]` 部分添加：
 
 ```toml
 [env]
@@ -126,7 +126,7 @@ unigo settings ls | grep aqua
 # aqua.slsa                 false
 
 # 2. 测试安装工具（使用 verbose 模式）
-UNIRTM_VERBOSE=1 unirtm install github:astral-sh/ruff@0.15.10 2>&1 | grep -i "aqua\|github"
+UNIRTM_VERBOSE=1 unigo install github:astral-sh/ruff@0.15.10 2>&1 | grep -i "aqua\|github"
 
 # 应该看到：
 # - 没有任何 "aqua" 字样
@@ -159,7 +159,7 @@ gh attestation verify ruff-x86_64-unknown-linux-gnu.tar.gz --repo astral-sh/ruff
 1. 确认验证通过后，使用 `--yes` 标志强制安装：
 
 ```bash
-unirtm install github:astral-sh/ruff@0.15.10 --yes
+unigo install github:astral-sh/ruff@0.15.10 --yes
 ```
 
 ### 方案 4: 降级到已知可用的版本
@@ -167,7 +167,7 @@ unirtm install github:astral-sh/ruff@0.15.10 --yes
 如果 attestation 验证持续失败，可以暂时使用 0.15.9：
 
 ```toml
-# .unirtm.toml
+# .unigo.toml
 [tools]
 "github:astral-sh/ruff" = "0.15.9"
 ```
@@ -177,7 +177,7 @@ unirtm install github:astral-sh/ruff@0.15.10 --yes
 使用 pipx 或 cargo 安装 ruff，而不是通过 unigo：
 
 ```toml
-# .unirtm.toml
+# .unigo.toml
 [tools]
 # 使用 pipx 安装（Python 包）
 "pipx:ruff" = "0.15.10"
@@ -219,11 +219,11 @@ gh attestation verify <downloaded-file> --repo astral-sh/ruff
 
 ### 1. 锁定版本
 
-在 `unirtm.lock` 中锁定已验证的版本：
+在 `unigo.lock` 中锁定已验证的版本：
 
 ```bash
 # 生成或更新 lockfile
-unirtm install
+unigo install
 unigo lock
 ```
 
@@ -236,7 +236,7 @@ unigo lock
 - uses: actions/cache@v4
   with:
     path: ~/.local/share/unigo
-    key: unigo-${{ runner.os }}-${{ hashFiles('unirtm.lock') }}
+    key: unigo-${{ runner.os }}-${{ hashFiles('unigo.lock') }}
 ```
 
 ### 3. 监控 unigo 更新

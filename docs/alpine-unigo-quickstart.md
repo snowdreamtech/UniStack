@@ -44,13 +44,13 @@ export PATH="$HOME/.local/bin:$PATH"
 
 ```bash
 # 安装 Node.js（会自动下载 musl 预编译包）
-unirtm install node@25.9.0
+unigo install node@25.9.0
 
 # 安装 Python
-unirtm install python@3.14.3
+unigo install python@3.14.3
 
 # 安装 Go
-unirtm install go@1.26.2
+unigo install go@1.26.2
 
 # 激活工具
 unigo use node@25.9.0 python@3.14.3 go@1.26.2
@@ -77,8 +77,8 @@ RUN curl https://unigo.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # 复制配置并安装工具
-COPY .unirtm.toml .
-RUN unirtm install
+COPY .unigo.toml .
+RUN unigo install
 
 WORKDIR /app
 COPY . .
@@ -108,8 +108,8 @@ RUN curl https://unigo.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # 复制配置并安装工具
-COPY .unirtm.toml .
-RUN unirtm install
+COPY .unigo.toml .
+RUN unigo install
 
 WORKDIR /app
 COPY . .
@@ -168,7 +168,7 @@ file $(unigo which node)
 
 ### 使用国内镜像加速
 
-在 `.unirtm.toml` 中配置：
+在 `.unigo.toml` 中配置：
 
 ```toml
 [env]
@@ -204,13 +204,13 @@ RUN curl https://unigo.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # 安装工具
-COPY .unirtm.toml .
-RUN unirtm install
+COPY .unigo.toml .
+RUN unigo install
 
 # 构建应用
 WORKDIR /app
 COPY . .
-RUN unirtm exec -- npm ci --production
+RUN unigo exec -- npm ci --production
 
 # ============================================
 # 阶段 2: 运行阶段（最小化）
@@ -249,11 +249,11 @@ curl https://unigo.run | sh
 
 ```bash
 # 启用详细日志
-UNIRTM_DEBUG=1 unirtm install node@25.9.0
+UNIRTM_DEBUG=1 unigo install node@25.9.0
 
 # 清除缓存重试
 rm -rf ~/.cache/unigo
-unirtm install node@25.9.0
+unigo install node@25.9.0
 ```
 
 ### 问题 3: 预编译包不可用
@@ -266,7 +266,7 @@ unigo ls-remote node
 apk add build-base linux-headers binutils-gold
 
 # 重新安装
-unirtm install node@25.9.0
+unigo install node@25.9.0
 ```
 
 ### 问题 4: ARM64 架构支持

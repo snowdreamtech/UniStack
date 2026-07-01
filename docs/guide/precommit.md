@@ -7,7 +7,7 @@ The template enforces code quality locally using [pre-commit](https://pre-commit
 Pre-commit is installed automatically when you run:
 
 ```bash
-unirtm run setup
+unigo run setup
 ```
 
 Or manually:

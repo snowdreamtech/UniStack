@@ -56,10 +56,10 @@ This triggers the AI agent to:
 Follow the standardized sequence for a robust environment:
 
 ```bash
-unirtm run init     # Step 1: Hydrate project from template
-unirtm run setup    # Step 2: Install system-level tools (binaries)
-unirtm run install  # Step 3: Install project dependencies & hooks
-unirtm run verify   # Step 4: Run comprehensive health check
+unigo run init     # Step 1: Hydrate project from template
+unigo run setup    # Step 2: Install system-level tools (binaries)
+unigo run install  # Step 3: Install project dependencies & hooks
+unigo run verify   # Step 4: Run comprehensive health check
 ```
 
 ## Step 4: Open in DevContainer
@@ -81,11 +81,11 @@ Your AI assistant will now follow the project rules automatically. Jump in:
 ## Verify Everything Works
 
 ```bash
-unirtm run lint    # Run all linters
-unirtm run test    # Run tests
-unirtm run build   # Build the project
+unigo run lint    # Run all linters
+unigo run test    # Run tests
+unigo run build   # Build the project
 ```
 
 ::: tip
-Run `unirtm run help` to see all available commands.
+Run `unigo run help` to see all available commands.
 :::

@@ -18,7 +18,7 @@ The `install_tool_safe()` function implements a six-step process for reliable to
 
 ### Step 1: Binary-First Detection
 
-Before attempting installation, the function checks if the tool binary already exists in the system PATH or unirtm installation directory.
+Before attempting installation, the function checks if the tool binary already exists in the system PATH or unigo installation directory.
 
 **Benefits:**
 
@@ -35,7 +35,7 @@ if command -v "$BIN_NAME" >/dev/null 2>&1; then
   return 0
 fi
 
-# Check unirtm installation directory
+# Check unigo installation directory
 if unigo which "$BIN_NAME" >/dev/null 2>&1; then
   # Binary found in unigo
   return 0
@@ -75,7 +75,7 @@ Use unigo to install the tool with the specified version.
 **Implementation:**
 
 ```bash
-unirtm install "$PROVIDER"
+unigo install "$PROVIDER"
 ```
 
 ### Step 6: Post-Install Verification
@@ -86,7 +86,7 @@ After installation, verify the binary is accessible and functional.
 
 ```bash
 # Refresh PATH to include newly installed tools
-eval "$(unirtm activate bash)"
+eval "$(unigo activate bash)"
 
 # Verify binary exists
 if ! command -v "$BIN_NAME" >/dev/null 2>&1; then
@@ -128,7 +128,7 @@ The system uses a layered resolution strategy:
 
 1. **UniGo Which** (Primary): `unigo which <tool>` - handles platform-specific binaries automatically
 2. **Command -v** (Fallback 1): `command -v <tool>` - for tools in PATH
-3. **UniGo Where + Find** (Fallback 2): Search unirtm installation directory with pattern matching
+3. **UniGo Where + Find** (Fallback 2): Search unigo installation directory with pattern matching
 
 **Example:**
 
@@ -199,9 +199,9 @@ Each verification step is atomic and reports its status:
 
 **Solution:**
 
-1. Check unirtm installation: `unigo list`
+1. Check unigo installation: `unigo list`
 2. Verify PATH includes unigo shims: `echo $PATH`
-3. Try manual installation: `unirtm install tool-name`
+3. Try manual installation: `unigo install tool-name`
 
 #### Scenario 2: Binary Not Functional
 
@@ -217,7 +217,7 @@ Each verification step is atomic and reports its status:
 
 **Solution:**
 
-1. Remove and reinstall: `unigo uninstall tool-name && unirtm install tool-name`
+1. Remove and reinstall: `unigo uninstall tool-name && unigo install tool-name`
 2. Check tool documentation for dependencies
 3. Verify platform compatibility
 

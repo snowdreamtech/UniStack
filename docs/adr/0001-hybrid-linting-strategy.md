@@ -42,7 +42,7 @@ To maintain a single source of truth for tool installation (`scripts/setup.sh`) 
 
 - **Developer Velocity:** Local commits remain lightning fast (typically sub-second) since heavy analysis is deferred.
 - **Uncomprounigod Quality:** The CI pipeline guarantees that no code is merged without passing industry-standard deep static analysis (`golangci-lint`, `hadolint`).
-- **Zero Configuration:** Developers across Windows, macOS, and Linux can simply run `unirtm run setup` or `pnpm install` and immediately receive identical local protection shields without manual intervention.
+- **Zero Configuration:** Developers across Windows, macOS, and Linux can simply run `unigo run setup` or `pnpm install` and immediately receive identical local protection shields without manual intervention.
 
 ### Negative
 
