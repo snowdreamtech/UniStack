@@ -4,13 +4,20 @@
 package logger
 
 import (
+	"io"
 	"log/slog"
 	"os"
 )
 
 // Init configures the global slog default logger based on the provided flags.
 // It uses zero external dependencies and maps neatly to CLI standard behavior.
-func Init(debug, quiet, jsonFmt bool) {
+func Init(debug, quiet, silent, jsonFmt bool) {
+	// 0. If silent, discard all output
+	if silent {
+		slog.SetDefault(slog.New(slog.NewTextHandler(io.Discard, nil)))
+		return
+	}
+
 	// 1. Determine log level
 	var level slog.Level
 	if quiet {
