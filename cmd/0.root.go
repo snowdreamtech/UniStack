@@ -13,6 +13,7 @@ import (
 	"github.com/snowdreamtech/unigo/internal/pkg/logger"
 	"github.com/snowdreamtech/unigo/internal/updater"
 	"github.com/spf13/cobra"
+	"github.com/snowdreamtech/unigo/internal/cli/output"
 )
 
 var (
@@ -22,12 +23,19 @@ var (
 	noConfig bool
 	debug    bool
 	verbose  bool
-	jsonFmt  bool
-	dryRun   bool
-	cdDir    string
-	yes      bool
-	jobs     int
+	jsonOutput bool
+	dryRun     bool
+	cdDir      string
+	yes        bool
+	jobs       int
 )
+
+func getOutputFormat() output.OutputFormat {
+	if jsonOutput {
+		return output.FormatJSON
+	}
+	return output.FormatHuman
+}
 
 var rootCmd = &cobra.Command{
 	Use:   "unigo",
@@ -43,7 +51,7 @@ var rootCmd = &cobra.Command{
 
 		// Initialize the global logger before any command runs.
 		// If --verbose is set, treat it as --debug
-		logger.Init(debug || verbose, quiet, silent, jsonFmt)
+		logger.Init(debug || verbose, quiet, silent, jsonOutput)
 
 		// Asynchronously check for a newer version (non-blocking).
 		updater.CheckUpdateAsync(env.GitTag)
@@ -67,7 +75,7 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress all task output and non-error messages")
 	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "enable verbose debug logging")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "V", false, "enable verbose output (alias for --debug)")
-	rootCmd.PersistentFlags().BoolVarP(&jsonFmt, "json", "j", false, "enable JSON output format")
+	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "enable JSON output format")
 	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "answer yes to all confirmation prompts")
 	rootCmd.PersistentFlags().BoolVar(&dryRun, "dry-run", false, "show what would happen without making changes")
 	rootCmd.PersistentFlags().IntVar(&jobs, "jobs", 8, "how many jobs to run in parallel")

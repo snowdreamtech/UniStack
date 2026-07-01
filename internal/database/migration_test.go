@@ -105,8 +105,8 @@ func TestMigrationManager_TransactionRollback(t *testing.T) {
 
 	// Insert test data
 	_, err = db.Conn().ExecContext(ctx, `
-		INSERT INTO example_items (key, value)
-		VALUES ('node', 'abc123')
+		INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+		VALUES ('node', '20.0.0', 'github', 'generic', '/path/to/node', 'abc123')
 	`)
 	require.NoError(t, err)
 
@@ -115,8 +115,8 @@ func TestMigrationManager_TransactionRollback(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = tx.ExecContext(ctx, `
-		INSERT INTO example_items (key, value)
-		VALUES ('python', 'def456')
+		INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+		VALUES ('python', '3.11.0', 'github', 'generic', '/path/to/python', 'def456')
 	`)
 	require.NoError(t, err)
 
@@ -125,12 +125,12 @@ func TestMigrationManager_TransactionRollback(t *testing.T) {
 
 	// Verify only the first record exists
 	var count int
-	err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items`).Scan(&count)
+	err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations`).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
 	// Verify the rolled back record doesn't exist
-	err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items WHERE key='python'`).Scan(&count)
+	err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations WHERE tool='python'`).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 0, count)
 }

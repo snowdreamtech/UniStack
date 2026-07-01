@@ -17,7 +17,17 @@ import (
 
 func TestMigrationManager_Rollback_EdgeCases(t *testing.T) {
 	ctx := context.Background()
+	dbPath := filepath.Join(t.TempDir(), "rollback_test.db")
 
+	db, err := Open(ctx, Config{
+		Path:    dbPath,
+		WALMode: false,
+	})
+	require.NoError(t, err)
+	defer db.Close()
+
+	conn := db.Conn()
+	mgr := NewMigrationManager(conn)
 
 	t.Run("rollback when no migrations applied returns error", func(t *testing.T) {
 		// Create a fresh DB without schema
@@ -32,7 +42,12 @@ func TestMigrationManager_Rollback_EdgeCases(t *testing.T) {
 		assert.Contains(t, err.Error(), "no migrations to rollback")
 	})
 
-
+	t.Run("rollback when migration has no down SQL returns error", func(t *testing.T) {
+		// The real migrations have no Down SQL, so Rollback should fail
+		err := mgr.Rollback(ctx)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no down migration")
+	})
 
 	t.Run("rollback works when migration has down SQL", func(t *testing.T) {
 		// Create a DB with a schema_migrations table and inject a test migration with Down SQL

@@ -51,7 +51,7 @@ func TestDatabaseIntegration(t *testing.T) {
 		assert.Equal(t, len(migrations), count)
 
 		// Verify all tables exist
-		tables := []string{"example_items"}
+		tables := []string{"installations", "cache", "audit_log", "tool_index"}
 		for _, table := range tables {
 			var tableCount int
 			query := `SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?`
@@ -62,7 +62,7 @@ func TestDatabaseIntegration(t *testing.T) {
 	})
 
 	// Test all table operations
-	t.Run("example_items table operations", func(t *testing.T) {
+	t.Run("installations table operations", func(t *testing.T) {
 		db, err := Open(ctx, Config{
 			Path:    dbPath,
 			WALMode: true,
@@ -70,21 +70,99 @@ func TestDatabaseIntegration(t *testing.T) {
 		require.NoError(t, err)
 		defer db.Close()
 
-		// Insert item
+		// Insert installation
 		_, err = db.Conn().ExecContext(ctx, `
-			INSERT INTO example_items (key, value)
-			VALUES (?, ?)
-		`, "test-key", "test-value")
+			INSERT INTO installations (tool, version, backend, provider, install_path, checksum, metadata)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
+		`, "node", "20.0.0", "github", "generic", "/path/to/node", "abc123", `{"arch":"amd64"}`)
 		require.NoError(t, err)
 
-		// Query item
-		var key, value string
+		// Query installation
+		var tool, version, backend string
 		err = db.Conn().QueryRowContext(ctx, `
-			SELECT key, value FROM example_items WHERE key = ?
-		`, "test-key").Scan(&key, &value)
+			SELECT tool, version, backend FROM installations WHERE tool = ?
+		`, "node").Scan(&tool, &version, &backend)
 		require.NoError(t, err)
-		assert.Equal(t, "test-key", key)
-		assert.Equal(t, "test-value", value)
+		assert.Equal(t, "node", tool)
+		assert.Equal(t, "20.0.0", version)
+		assert.Equal(t, "github", backend)
+	})
+
+	t.Run("cache table operations", func(t *testing.T) {
+		db, err := Open(ctx, Config{
+			Path:    dbPath,
+			WALMode: true,
+		})
+		require.NoError(t, err)
+		defer db.Close()
+
+		// Insert cache entry
+		_, err = db.Conn().ExecContext(ctx, `
+			INSERT INTO cache (key, value, expires_at)
+			VALUES (?, ?, datetime('now', '+1 day'))
+		`, "test-key", []byte("test-value"))
+		require.NoError(t, err)
+
+		// Query cache entry
+		var value []byte
+		err = db.Conn().QueryRowContext(ctx, `
+			SELECT value FROM cache WHERE key = ?
+		`, "test-key").Scan(&value)
+		require.NoError(t, err)
+		assert.Equal(t, []byte("test-value"), value)
+	})
+
+	t.Run("audit_log table operations", func(t *testing.T) {
+		db, err := Open(ctx, Config{
+			Path:    dbPath,
+			WALMode: true,
+		})
+		require.NoError(t, err)
+		defer db.Close()
+
+		// Insert audit log entry
+		_, err = db.Conn().ExecContext(ctx, `
+			INSERT INTO audit_log (operation, tool, version, status, duration_ms)
+			VALUES (?, ?, ?, ?, ?)
+		`, "install", "python", "3.11.0", "success", 1500)
+		require.NoError(t, err)
+
+		// Query audit log
+		var operation, status string
+		var durationMs int
+		err = db.Conn().QueryRowContext(ctx, `
+			SELECT operation, status, duration_ms FROM audit_log WHERE tool = ?
+		`, "python").Scan(&operation, &status, &durationMs)
+		require.NoError(t, err)
+		assert.Equal(t, "install", operation)
+		assert.Equal(t, "success", status)
+		assert.Equal(t, 1500, durationMs)
+	})
+
+	t.Run("tool_index table operations", func(t *testing.T) {
+		db, err := Open(ctx, Config{
+			Path:    dbPath,
+			WALMode: true,
+		})
+		require.NoError(t, err)
+		defer db.Close()
+
+		// Insert tool index entry
+		_, err = db.Conn().ExecContext(ctx, `
+			INSERT INTO tool_index (tool, description, homepage, license, backend)
+			VALUES (?, ?, ?, ?, ?)
+		`, "go", "The Go programming language", "https://go.dev", "BSD-3-Clause", "github")
+		require.NoError(t, err)
+
+		// Query tool index
+		var tool, description, license string
+		err = db.Conn().QueryRowContext(ctx, `
+			SELECT tool, description, license FROM tool_index WHERE tool = ?
+		`, "go").Scan(&tool, &description, &license)
+		require.NoError(t, err)
+		assert.Equal(t, "go", tool)
+		assert.Equal(t, "The Go programming language", description)
+		assert.Equal(t, "BSD-3-Clause", license)
 	})
 
 	// Test indexes are working
@@ -99,7 +177,7 @@ func TestDatabaseIntegration(t *testing.T) {
 		// Query using indexed column should use the index
 		rows, err := db.Conn().QueryContext(ctx, `
 			EXPLAIN QUERY PLAN
-			SELECT * FROM example_items WHERE key = 'test-key'
+			SELECT * FROM installations WHERE tool = 'node'
 		`)
 		require.NoError(t, err)
 		defer rows.Close()
@@ -111,12 +189,12 @@ func TestDatabaseIntegration(t *testing.T) {
 			var detail string
 			err := rows.Scan(&id, &parent, &notused, &detail)
 			require.NoError(t, err)
-			if contains(detail, "sqlite_autoindex") {
+			if contains(detail, "idx_installations_tool") {
 				foundIndex = true
 				break
 			}
 		}
-		assert.True(t, foundIndex, "query should use sqlite_autoindex index")
+		assert.True(t, foundIndex, "query should use idx_installations_tool index")
 	})
 }
 

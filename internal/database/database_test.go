@@ -87,7 +87,7 @@ func TestDatabaseInitialization(t *testing.T) {
 	defer db.Close()
 
 	// Verify all tables exist
-	tables := []string{"example_items", "schema_migrations"}
+	tables := []string{"installations", "cache", "audit_log", "tool_index", "schema_migrations"}
 	for _, table := range tables {
 		var count int
 		query := `SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?`
@@ -98,14 +98,14 @@ func TestDatabaseInitialization(t *testing.T) {
 
 	// Verify indexes exist
 	indexes := []string{
-		"idx_example_items_key",
-		
-		
-		
-		
-		
-		
-		
+		"idx_installations_tool",
+		"idx_installations_installed_at",
+		"idx_cache_expires_at",
+		"idx_audit_log_timestamp",
+		"idx_audit_log_operation",
+		"idx_audit_log_tool",
+		"idx_tool_index_backend",
+		"idx_tool_index_updated_at",
 	}
 	for _, index := range indexes {
 		var count int
@@ -129,8 +129,8 @@ func TestDatabaseReopen(t *testing.T) {
 
 	// Insert test data
 	_, err = db1.Conn().ExecContext(ctx, `
-		INSERT INTO example_items (key, value)
-		VALUES ('node', 'abc123')
+		INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+		VALUES ('node', '20.0.0', 'github', 'generic', '/path/to/node', 'abc123')
 	`)
 	require.NoError(t, err)
 	db1.Close()
@@ -145,7 +145,7 @@ func TestDatabaseReopen(t *testing.T) {
 
 	// Verify data persisted
 	var count int
-	err = db2.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items`).Scan(&count)
+	err = db2.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations`).Scan(&count)
 	require.NoError(t, err)
 	assert.Equal(t, 1, count)
 
@@ -171,8 +171,8 @@ func TestDatabaseTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = tx.ExecContext(ctx, `
-			INSERT INTO example_items (key, value)
-			VALUES ('python', 'def456')
+			INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+			VALUES ('python', '3.11.0', 'github', 'generic', '/path/to/python', 'def456')
 		`)
 		require.NoError(t, err)
 
@@ -181,7 +181,7 @@ func TestDatabaseTransaction(t *testing.T) {
 
 		// Verify data was committed
 		var count int
-		err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items WHERE key='python'`).Scan(&count)
+		err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations WHERE tool='python'`).Scan(&count)
 		require.NoError(t, err)
 		assert.Equal(t, 1, count)
 	})
@@ -191,8 +191,8 @@ func TestDatabaseTransaction(t *testing.T) {
 		require.NoError(t, err)
 
 		_, err = tx.ExecContext(ctx, `
-			INSERT INTO example_items (key, value)
-			VALUES ('go', 'ghi789')
+			INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+			VALUES ('go', '1.21.0', 'github', 'generic', '/path/to/go', 'ghi789')
 		`)
 		require.NoError(t, err)
 
@@ -201,7 +201,7 @@ func TestDatabaseTransaction(t *testing.T) {
 
 		// Verify data was not committed
 		var count int
-		err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items WHERE key='go'`).Scan(&count)
+		err = db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations WHERE tool='go'`).Scan(&count)
 		require.NoError(t, err)
 		assert.Equal(t, 0, count)
 	})
@@ -238,8 +238,8 @@ func TestDatabaseConcurrentReads(t *testing.T) {
 
 	// Insert test data
 	_, err = db.Conn().ExecContext(ctx, `
-		INSERT INTO example_items (key, value)
-		VALUES ('node', 'abc123')
+		INSERT INTO installations (tool, version, backend, provider, install_path, checksum)
+		VALUES ('node', '20.0.0', 'github', 'generic', '/path/to/node', 'abc123')
 	`)
 	require.NoError(t, err)
 
@@ -248,7 +248,7 @@ func TestDatabaseConcurrentReads(t *testing.T) {
 	for i := 0; i < 10; i++ {
 		go func() {
 			var count int
-			err := db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM example_items`).Scan(&count)
+			err := db.Conn().QueryRowContext(ctx, `SELECT COUNT(*) FROM installations`).Scan(&count)
 			require.NoError(t, err)
 			assert.Equal(t, 1, count)
 			done <- true
