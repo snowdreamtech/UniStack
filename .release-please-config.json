@@ -4,9 +4,13 @@
   "changelog-path": "CHANGELOG.md",
   "comment--manifest-mode": "To enable Manifest (Monorepo/Flavor) mode: 1. Rename 'x-packages' to 'packages'. 2. Create '.release-please-manifest.json'. 3. Remove top-level 'initial-version'.",
   "packages": {
-    ".": {}
-  },
-  "x-packages": {
+    ".": {
+      "release-type": "go",
+      "component": "native",
+      "include-component-in-tag": true,
+      "release-as": "0.0.1",
+      "changelog-path": "CHANGELOG.md"
+    },
     "docker/alpine": {
       "release-type": "simple",
       "component": "alpine",
@@ -50,7 +54,6 @@
       ]
     }
   },
-  "initial-version": "0.1.0",
   "include-v-in-tag": true,
   "extra-files": [
     "*.csproj",

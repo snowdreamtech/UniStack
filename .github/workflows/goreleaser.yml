@@ -24,6 +24,7 @@ name: "📦 GoReleaser"
       - "v*" # v1.2.3
       - "V*" # V1.2.3
       - "[0-9]*" # 1.2.3
+      - "native-v*" # native component tag
       - "**/v*" # module/v1.2 (Monorepo)
       - "**/V*" # module/V1.2
       - "**/[0-9]*" # module/1.2
