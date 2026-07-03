@@ -114,7 +114,7 @@ func (m *ShellConfigManager) Inject(shell ShellType, marker string, content stri
 		// Fallback if the replacement logic above didn't perfectly match (e.g., end of file).
 		// In a real robust implementation we'd use begin/end markers, but let's stick to simple replacement
 		// by just rebuilding the file if we correctly replaced it.
-		
+
 		// For simplicity, let's just append if we couldn't cleanly replace.
 		if !replaced {
 			return m.appendBlock(configFile, fullBlock)
