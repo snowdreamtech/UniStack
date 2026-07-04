@@ -297,7 +297,7 @@ homebrew_casks:
       name: homebrew-tap
     homepage: "https://github.com/snowdreamtech/unigo"
     url:
-      unigo: "https://github.com/snowdreamtech/unigo/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      template: "https://github.com/snowdreamtech/unigo/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
       verified: "github.com/snowdreamtech/"
     description: "Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration."
     license: "MIT"
