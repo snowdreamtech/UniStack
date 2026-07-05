@@ -3,6 +3,13 @@
 ## [0.0.2](https://github.com/snowdreamtech/UniGo/compare/v0.0.2...v0.0.2) (2026-07-05)
 
 
+### ♻️ Miscellaneous Chores
+
+* merge upstream template updates ([e52934d](https://github.com/snowdreamtech/UniGo/commit/e52934d8c84610862f4cb188f30b3b32b1e2b11f))
+
+## [0.0.2](https://github.com/snowdreamtech/UniGo/compare/v0.0.2...v0.0.2) (2026-07-05)
+
+
 ### ⚠ BREAKING CHANGES
 
 * **security:** mise now downloads binaries ONLY from GitHub Releases
