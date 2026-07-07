@@ -46,68 +46,31 @@ repos:
       # -- Git Hygiene (Incremental) ------------------------------------------
       - id: trailing-whitespace
         name: trim trailing whitespace
-        entry: |
-          python3 -c "
-          import sys, re, os
-          modified = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  with open(f, 'rb') as fh: content = fh.read()
-                  new_content = re.sub(b'[ \t]+(?=\r?\n|$)', b'', content)
-                  if content != new_content:
-                      with open(f, 'wb') as fh: fh.write(new_content)
-                      modified.append(f)
-          for f in modified: print(f'Fixing trailing whitespace in: {f}')
-          sys.exit(1 if modified else 0)
-          "
+        entry: scripts/pre-commit/trailing-whitespace.py
         language: system
         types: [text]
         exclude: |
           (?x)^(
-            \.md$|.*\.lock$|go\.sum$|
-            (\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
+            \.md$|.*\.lock$|go\.sum$
           )
         stages: [pre-commit, pre-merge-commit]
         description: "Standardize text hygiene by removing trailing whitespace."
 
       - id: end-of-file-fixer
         name: fix end of files
-        entry: |
-          python3 -c "
-          import sys, os
-          modified = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  with open(f, 'rb') as fh: content = fh.read()
-                  if not content: continue
-                  stripped = content.rstrip(b'\r\n')
-                  newline = b'\r\n' if b'\r\n' in content else b'\n'
-                  new_content = stripped + newline
-                  if content != new_content:
-                      with open(f, 'wb') as fh: fh.write(new_content)
-                      modified.append(f)
-          for f in modified: print(f'Fixing end of file in: {f}')
-          sys.exit(1 if modified else 0)
-          "
+        entry: scripts/pre-commit/end-of-file-fixer.py
         language: system
         types: [text]
         exclude: |
           (?x)^(
-            .*\.lock$|go\.sum$|
-            (\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
+            .*\.lock$|go\.sum$
           )
         stages: [pre-commit, pre-merge-commit]
         description: "Ensure that files end with a single newline character."
 
       - id: check-added-large-files
         name: check for added large files
-        entry: |
-          python3 -c "
-          import sys, os
-          large_files = [f for f in sys.argv[1:] if os.path.isfile(f) and os.path.getsize(f) > 1024*1024]
-          for f in large_files: print(f'File too large (>1MB): {f}')
-          sys.exit(1 if large_files else 0)
-          "
+        entry: scripts/pre-commit/check-added-large-files.py
         language: system
         exclude: |
           (?x)^(
@@ -119,20 +82,7 @@ repos:
 
       - id: check-merge-conflict
         name: check for merge conflicts
-        entry: |
-          python3 -c "
-          import sys, os, re
-          conflicts = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  with open(f, 'r', errors='ignore') as fh:
-                      for line in fh:
-                          if re.match(r'^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)', line):
-                              conflicts.append(f)
-                              break
-          for f in conflicts: print(f'Merge conflict markers found in: {f}')
-          sys.exit(1 if conflicts else 0)
-          "
+        entry: scripts/pre-commit/check-merge-conflict.py
         language: system
         types: [text]
         stages: [pre-commit, pre-merge-commit]
@@ -140,52 +90,21 @@ repos:
 
       - id: check-case-conflict
         name: check for case conflicts
-        entry: |
-          python3 -c "
-          import sys, os
-          dirs = set(os.path.dirname(f) or '.' for f in sys.argv[1:])
-          clashing = []
-          for d in dirs:
-              files = os.listdir(d)
-              freq = {}
-              for f in files:
-                  low = f.lower()
-                  freq[low] = freq.get(low, 0) + 1
-              for f in files:
-                  if freq[f.lower()] > 1: clashing.append(os.path.join(d, f))
-          for f in sorted(set(clashing)): print(f'Case collision: {f}')
-          sys.exit(1 if clashing else 0)
-          "
+        entry: scripts/pre-commit/check-case-conflict.py
         language: system
         stages: [pre-commit, pre-merge-commit]
         description: "Verify that filenames are unique across case-insensitive filesystems."
 
       - id: check-symlinks
         name: check for broken symlinks
-        entry: |
-          python3 -c "
-          import sys, os
-          broken = [f for f in sys.argv[1:] if os.path.islink(f) and not os.path.exists(f)]
-          for f in broken: print(f'Broken symlink: {f}')
-          sys.exit(1 if broken else 0)
-          "
+        entry: scripts/pre-commit/check-symlinks.py
         language: system
         stages: [pre-commit, pre-merge-commit]
         description: "Ensure symlinks point to existing locations."
 
       - id: check-utf8-bom
         name: check for utf8 bom
-        entry: |
-          python3 -c "
-          import sys, os
-          found = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) > 3:
-                  with open(f, 'rb') as fh:
-                      if fh.read(3) == b'\xef\xbb\xbf': found.append(f)
-          for f in found: print(f'Illegal UTF-8 BOM detected: {f}')
-          sys.exit(1 if found else 0)
-          "
+        entry: scripts/pre-commit/check-utf8-bom.py
         language: system
         types: [text]
         exclude: scripts/sync-labels\.ps1$
@@ -194,18 +113,7 @@ repos:
       # -- Data & Configuration Hygiene ---------------------------------------
       - id: check-json
         name: check json well-formedness
-        entry: |
-          python3 -c "
-          import sys, os, json
-          errors = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  try:
-                      with open(f, 'r', encoding='utf-8') as fh: json.load(fh)
-                  except Exception as e: errors.append(f'{f} ({e})')
-          for e in errors: print(f'Malformed JSON: {e}')
-          sys.exit(1 if errors else 0)
-          "
+        entry: scripts/pre-commit/check-json.py
         language: system
         types: [json]
         exclude: '\.vscode/.*\.json$'
@@ -213,42 +121,14 @@ repos:
 
       - id: check-toml
         name: check toml well-formedness
-        entry: |
-          python3 -c "
-          import sys, os
-          try:
-              import tomllib as toml
-          except ImportError:
-              try: import tomli as toml
-              except ImportError: sys.exit(0)
-          errors = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  try:
-                      with open(f, 'rb') as fh: toml.load(fh)
-                  except Exception as e: errors.append(f'{f} ({e})')
-          for e in errors: print(f'Malformed TOML: {e}')
-          sys.exit(1 if errors else 0)
-          "
+        entry: scripts/pre-commit/check-toml.py
         language: system
-        files: '\.toml$'
+        types: [toml]
         description: "Verify that TOML files are well-formed (requires Python 3.11+ or tomllib)."
 
       - id: check-ini
         name: check ini well-formedness
-        entry: |
-          python3 -c "
-          import sys, os, configparser
-          errors = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 1024*1024:
-                  try:
-                      cp = configparser.ConfigParser()
-                      cp.read(f, encoding='utf-8')
-                  except Exception as e: errors.append(f'{f} ({e})')
-          for e in errors: print(f'Malformed INI: {e}')
-          sys.exit(1 if errors else 0)
-          "
+        entry: scripts/pre-commit/check-ini.py
         language: system
         files: '\.(ini|editorconfig|properties)$'
         exclude: '\.(editorconfig|\.vscode/.*\.json)$'
@@ -256,47 +136,14 @@ repos:
 
       - id: check-jsonc
         name: check jsonc well-formedness
-        entry: |
-          python3 -c "
-          import sys, os, json, re
-          errors = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 2*1024*1024:
-                  try:
-                      with open(f, 'r', encoding='utf-8') as fh:
-                          content = fh.read()
-                          content = re.sub(r'(?<![:])//.*', '', content)
-                          content = re.sub(r'/\*.*?\*/', '', content, flags=re.S)
-                          content = re.sub(r',([ \t\r\n]*[}\]])', r'\1', content)
-                          json.loads(content)
-                  except Exception as e: errors.append(f'{f} ({e})')
-          for e in errors: print(f'Malformed JSONC: {e}')
-          sys.exit(1 if errors else 0)
-          "
+        entry: scripts/pre-commit/check-jsonc.py
         language: system
         files: '\.(jsonc|json5)$|tsconfig.*\.json$|devcontainer\.json$|\.vscode/.*\.json$'
         description: "Verify that JSON with Comments (JSONC/JSON5) files are well-formed."
 
       - id: check-env-safety
         name: check environment safety
-        entry: |
-          python3 -c "
-          import sys, os, re
-          errors = []
-          # Simple regex for high-entropy strings or common secret patterns
-          SECRET_REGEX = re.compile(r'=[a-zA-Z0-9/\+]{20,}')
-          for f in sys.argv[1:]:
-              if os.path.isfile(f):
-                  with open(f, 'r', encoding='utf-8', errors='ignore') as fh:
-                      for i, line in enumerate(fh, 1):
-                          if '=' in line and not line.strip().startswith('#'):
-                              val = line.split('=', 1)[1].strip()
-                              if val and (SECRET_REGEX.search(line) or any(k in val.lower() for k in ['pk_', 'sk_', 'key_', 'token_', 'secret_', 'passwd_', 'api_key', 'access_token', 'refresh_token'])):
-                                  if 'your_' not in val.lower() and '<' not in val:
-                                      errors.append(f'{f}:{i} (potential real secret detected)')
-          for e in errors: print(f'Unsafe Env File: {e}')
-          sys.exit(1 if errors else 0)
-          "
+        entry: scripts/pre-commit/check-env-safety.py
         language: system
         files: '\.env(\..+)?$'
         description: "Verify that .env files and templates do not contain real secrets or high-entropy values."
@@ -321,8 +168,6 @@ repos:
           - markdown
           - astro
           - svelte
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Format web-standard file types using Prettier (including Astro/Svelte)."
 
       - id: zizmor
@@ -337,8 +182,6 @@ repos:
         language: system
         entry: unirtm hook-exec shfmt -w -s -i 2
         types: [shell]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Format shell scripts according to POSIX standards."
 
       - id: taplo
@@ -346,8 +189,6 @@ repos:
         language: system
         entry: unirtm hook-exec taplo format
         types: [toml]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Format TOML files using Taplo."
 
       - id: gofmt
@@ -355,8 +196,6 @@ repos:
         language: system
         entry: unirtm hook-exec gofmt -w
         types: [go]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Canonical Go code formatting."
 
       - id: goimports
@@ -364,10 +203,9 @@ repos:
         language: system
         entry: unirtm hook-exec goimports -w
         types: [go]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Manage Go imports and formatting."
 
+      # Temporarily disabled (consider using unirtm hook-exec if needed or removed if govulncheck replaces it)
       #      - id: golangci-lint
       #        name: golangci-lint
       #        language: system
@@ -389,18 +227,7 @@ repos:
 
       - id: detect-private-key
         name: detect private keys
-        entry: |
-          python3 -c "
-          import sys, os, re
-          pattern = re.compile(b'-----BEGIN ' + b'.*PRIVATE KEY-----')
-          found = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f) and os.path.getsize(f) < 1024*1024:
-                  with open(f, 'rb') as fh:
-                      if pattern.search(fh.read()): found.append(f)
-          for f in found: print(f'Private key detected: {f}')
-          sys.exit(1 if found else 0)
-          "
+        entry: scripts/pre-commit/detect-private-key.py
         language: system
         types: [text]
         exclude: '\.pre-commit-config\.yaml$'
@@ -468,62 +295,31 @@ repos:
       # -- Hardening & Security ----------------------------------------------
       - id: check-executables-have-shebangs
         name: check shell scripts for shebangs
-        entry: |
-          python3 -c "
-          import sys, os, stat
-          if os.name == 'nt': sys.exit(0)
-          missing = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f):
-                  mode = os.stat(f).st_mode
-                  # Check if any execution bit is set (Owner, Group, or Others)
-                  if (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)):
-                      with open(f, 'rb') as fh:
-                          head = fh.read(2)
-                          if head != b'#!': missing.append(f)
-          for f in missing: print(f'Executable lacks shebang: {f}')
-          sys.exit(1 if missing else 0)
-          "
+        entry: scripts/pre-commit/check-executables-have-shebangs.py
         language: system
         types: [text]
+        exclude_types: [json, yaml, toml, markdown, html, css, javascript, ts, tsx, vue, astro, svelte, image]
         exclude: |
           (?x)^(
-            .*\.bat|.*\.ps1|.*\.batch|.*\.cmd|.*\.exe|
-            .*\.md|.*\.markdown|.*\.txt|.*\.pdf|.*\.docx?|
-            .*\.css|.*\.scss|.*\.less|.*\.html|.*\.jsx?|.*\.tsx?|.*\.vue|.*\.astro|.*\.svelte|.*\.mjs|
-            .*\.json[c5]?|.*\.ya?ml|.*\.toml|.*\.xml|.*\.ini|.*\.editorconfig|.*\.properties|.*\.env.*|
-            .*\.png|.*\.jpg|.*\.jpeg|.*\.gif|.*\.ico|.*\.svg|.*\.lock|.*\.lockb|.*\.sum|.*\.resolved|
-            \.gitignore|\.gitattributes|Makefile|ruff\.toml|eslint\.config\.mjs|commitlint\.config\.js|LICENSE
+            .*\.bat|.*\.ps1|.*\.cmd|.*\.exe|
+            .*\.txt|.*\.pdf|.*\.docx?|.*\.ini|.*\.editorconfig|.*\.properties|.*\.env.*|
+            .*\.lock|.*\.lockb|.*\.sum|.*\.resolved|
+            \.gitignore|\.gitattributes|Makefile|LICENSE
           )$
         description: "Executable scripts MUST start with a shebang (!#)."
 
       - id: check-shebang-scripts-are-executable
         name: check shebang scripts are executable
-        entry: |
-          python3 -c "
-          import sys, os, stat
-          if os.name == 'nt': sys.exit(0)
-          not_exec = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f):
-                  mode = os.stat(f).st_mode
-                  # Check if any execution bit is set (Owner, Group, or Others)
-                  if not (mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)):
-                      with open(f, 'rb') as fh:
-                          if fh.read(2) == b'#!': not_exec.append(f)
-          for f in not_exec: print(f'Shebang script not executable: {f}')
-          sys.exit(1 if not_exec else 0)
-          "
+        entry: scripts/pre-commit/check-shebang-scripts-are-executable.py
         language: system
         types: [text]
+        exclude_types: [json, yaml, toml, markdown, html, css, javascript, ts, tsx, vue, astro, svelte, image]
         exclude: |
           (?x)^(
-            .*\.bat|.*\.ps1|.*\.batch|.*\.cmd|.*\.exe|
-            .*\.md|.*\.markdown|.*\.txt|.*\.pdf|.*\.docx?|
-            .*\.css|.*\.scss|.*\.less|.*\.html|.*\.jsx?|.*\.tsx?|.*\.vue|.*\.astro|.*\.svelte|.*\.mjs|
-            .*\.json[c5]?|.*\.ya?ml|.*\.toml|.*\.xml|.*\.ini|.*\.editorconfig|.*\.properties|.*\.env.*|
-            .*\.png|.*\.jpg|.*\.jpeg|.*\.gif|.*\.ico|.*\.svg|.*\.lock|.*\.lockb|.*\.sum|.*\.resolved|
-            \.gitignore|\.gitattributes|Makefile|ruff\.toml|eslint\.config\.mjs|commitlint\.config\.js|LICENSE
+            .*\.bat|.*\.ps1|.*\.cmd|.*\.exe|
+            .*\.txt|.*\.pdf|.*\.docx?|.*\.ini|.*\.editorconfig|.*\.properties|.*\.env.*|
+            .*\.lock|.*\.lockb|.*\.sum|.*\.resolved|
+            \.gitignore|\.gitattributes|Makefile|LICENSE
           )$
         description: "Scripts with shebangs MUST have the executable bit set."
 
@@ -560,69 +356,27 @@ repos:
           ]
         exclude: |
           (?x)^(
-            scripts/.*\.(sh|ps1|bat)$|
-            \.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml
+            scripts/.*\.(sh|ps1|bat)$
           )/.*
         description: "High-performance incremental compliance: Verify staged files for a SnowdreamTech license header."
 
       - id: forbidden-files
         name: check forbidden files
-        entry: |
-          python3 -c "
-          import sys, os, re
-          pattern = re.compile(r'(test\.txt|tmp\.json|debug\.log|\.DS_Store|Thumbs\.db|\.swp|\.bak|\\.orig|\\.rej|\\.coverage|\\.map|npm-debug\.log|\\.env)$')
-          forbidden = [f for f in sys.argv[1:] if os.path.isfile(f) and pattern.search(f)]
-          for f in forbidden: print(f'Forbidden file detected: {f}')
-          sys.exit(1 if forbidden else 0)
-          "
+        entry: scripts/pre-commit/forbidden-files.py
         language: system
         stages: [pre-commit, pre-merge-commit]
         description: "Prevent accidental commit of temporary or merge-remnant files."
 
       - id: check-lockfile-conflicts
         name: check lockfile conflicts
-        entry: |
-          python3 -c "
-          import sys, os, re
-          conflicts = []
-          for f in sys.argv[1:]:
-              if os.path.isfile(f):
-                  with open(f, 'r', errors='ignore') as fh:
-                      for line in fh:
-                          if re.match(r'^(<<<<<<<|=======|>>>>>>>|\|\|\|\|\|\|\|)', line):
-                              conflicts.append(f)
-                              break
-          for f in conflicts: print(f'Unresolved merge conflict in lockfile: {f}')
-          sys.exit(1 if conflicts else 0)
-          "
+        entry: scripts/pre-commit/check-lockfile-conflicts.py
         language: system
         files: '(\-lock\.json|lock\.yaml|Cargo\.lock|go\.sum|composer\.lock|package-lock\.json|bun\.lockb|pubspec\.lock|Package\.resolved|flake\.lock|dvc\.lock)$'
         description: "Mandatory check for merge conflict markers in large lockfiles (no size limit)."
 
       - id: check-lockfile-coexistence
         name: check lockfile coexistence
-        entry: |
-          python3 -c "
-          import sys, os
-          dirs = set(os.path.dirname(f) or '.' for f in sys.argv[1:])
-          conflicts = []
-          for d in dirs:
-              files = os.listdir(d)
-              if 'package-lock.json' in files and 'pnpm-lock.yaml' in files:
-                  conflicts.append(f'{d} (both package-lock.json and pnpm-lock.yaml found)')
-              if 'package-lock.json' in files and 'yarn.lock' in files:
-                  conflicts.append(f'{d} (both package-lock.json and yarn.lock found)')
-              if 'package-lock.json' in files and 'bun.lockb' in files:
-                  conflicts.append(f'{d} (both package-lock.json and bun.lockb found)')
-              if 'pnpm-lock.yaml' in files and 'yarn.lock' in files:
-                  conflicts.append(f'{d} (both pnpm-lock.yaml and yarn.lock found)')
-              if 'pnpm-lock.yaml' in files and 'bun.lockb' in files:
-                  conflicts.append(f'{d} (both pnpm-lock.yaml and bun.lockb found)')
-              if 'yarn.lock' in files and 'bun.lockb' in files:
-                  conflicts.append(f'{d} (both yarn.lock and bun.lockb found)')
-          for c in conflicts: print(f'Conflicting lockfiles detected: {c}')
-          sys.exit(1 if conflicts else 0)
-          "
+        entry: scripts/pre-commit/check-lockfile-coexistence.py
         language: system
         files: '(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb)$'
         description: "Prevent accidental coexistence of multiple Node.js package manager lockfiles."
@@ -638,8 +392,6 @@ repos:
           - tsx
           - jsx
           - vue
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Find and fix problems in JavaScript/TypeScript/Vue code."
 
       - id: yamllint
@@ -647,8 +399,6 @@ repos:
         language: system
         entry: unirtm hook-exec yamllint --config-file .yamllint.yml
         types: [yaml]
-        exclude: |
-          (?x)^(\.github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml)/.*
         description: "Lint YAML files based on strict project rules."
 
       - id: markdownlint-cli2
@@ -699,13 +449,6 @@ repos:
         files: ^\.github/workflows/.*\.yml$
         description: "Validate GitHub Actions workflow syntax."
 
-      - id: zizmor
-        name: zizmor security check
-        language: system
-        entry: unirtm hook-exec zizmor --config .zizmor.yml
-        files: ^\.github/workflows/.*\.yml$
-        description: "Audit GitHub Actions workflows for security best practices."
-
       # -- Infrastructure & Config -------------------------------------------
       - id: dockerfile-utils
         name: dockerfile quality check
@@ -718,12 +461,6 @@ repos:
         name: editorconfig quality check
         language: system
         entry: unirtm hook-exec editorconfig-checker
-        exclude: |
-          (?x)^(
-            \.(venv|git|github/agents|agent|agents|roo|claude|qwen|amazonq|augment|bob|codebuddy|codex|kilocode|opencode|qoder|shai|cursor|windsurf|pearai|pi|pochi|specify|supermaven|tabnine|trae|vibe|void|zed|zencoder|openhands|cody|coderabbit|aide|cline|clinerules|cursorrules|pr_agent.toml|idx|continue|history|vscode-test)/.*|
-            node_modules/|venv/|env/|dist/|build/|out/|target/|vendor/|__pycache__/|\.specify/|
-            \.aider\.conf\.yml
-          )
         description: "Ensure compliance with .editorconfig rules across the project."
 
       - id: goreleaser-check
