@@ -2,9 +2,9 @@
 
 ## 核心发现
 
-**重要更正**: 经过实际测试验证，unigo 的 Node.js core backend **不会**自动检测 musl 并下载预编译包。
+**重要更正**: 经过实际测试验证，unistack 的 Node.js core backend **不会**自动检测 musl 并下载预编译包。
 
-### unigo 在不同平台的实际行为
+### unistack 在不同平台的实际行为
 
 | 平台 | 默认行为 | 是否需要配置 |
 |------|---------|-------------|
@@ -16,7 +16,7 @@
 ### Alpine 上的默认行为（未配置）
 
 ```bash
-$ unigo install node@25.9.0
+$ unistack install node@25.9.0
 # 1. 下载源码包: node-v25.9.0.tar.gz
 # 2. 解压: extract node-v25.9.0.tar.gz
 # 3. 运行 ./configure
@@ -28,10 +28,10 @@ $ unigo install node@25.9.0
 
 ### 方案 A: 条件环境变量（推荐）
 
-在 `.unigo.toml` 中使用条件配置，根据系统自动选择：
+在 `.unistack.toml` 中使用条件配置，根据系统自动选择：
 
 ```toml
-# .unigo.toml
+# .unistack.toml
 [tools]
 node = "25.9.0"
 python = "3.14.3"
@@ -60,17 +60,17 @@ FROM alpine:3.22
 # 安装基础依赖
 RUN apk add --no-cache bash curl git ca-certificates gpg
 
-# 安装 unigo
-RUN curl https://unigo.run | sh
+# 安装 unistack
+RUN curl https://unistack.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# ⭐ 关键：配置 unigo 使用 musl 预编译包
+# ⭐ 关键：配置 unistack 使用 musl 预编译包
 ENV UNIRTM_NODE_MIRROR_URL="https://unofficial-builds.nodejs.org/download/release/"
 ENV UNIRTM_NODE_FLAVOR="musl"
 
 # 复制配置并安装
-COPY .unigo.toml .
-RUN unigo install
+COPY .unistack.toml .
+RUN unistack install
 
 WORKDIR /app
 COPY . .
@@ -80,7 +80,7 @@ CMD ["node", "index.js"]
 **优势**:
 
 - ✅ 配置清晰明确
-- ✅ 不影响 .unigo.toml
+- ✅ 不影响 .unistack.toml
 - ✅ 适合单一平台部署
 
 ### 方案 C: 使用官方 Node.js Alpine 镜像（最简单）
@@ -88,14 +88,14 @@ CMD ["node", "index.js"]
 ```dockerfile
 FROM node:25.9.0-alpine3.22
 
-# 安装 unigo 用于其他工具
+# 安装 unistack 用于其他工具
 RUN apk add --no-cache bash curl git
-RUN curl https://unigo.run | sh
+RUN curl https://unistack.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# 复制配置（node 已预装，unigo 跳过）
-COPY .unigo.toml .
-RUN unigo install python go
+# 复制配置（node 已预装，unistack 跳过）
+COPY .unistack.toml .
+RUN unistack install python go
 
 WORKDIR /app
 COPY . .
@@ -115,7 +115,7 @@ CMD ["node", "index.js"]
 ```dockerfile
 # 最小依赖 - 足以使用预编译包
 RUN apk add --no-cache \
-    bash \           # unigo 需要
+    bash \           # unistack 需要
     curl \           # 下载工具
     git \            # 版本控制
     ca-certificates \# HTTPS
@@ -139,7 +139,7 @@ RUN apk add --no-cache \
 
 ```bash
 # 启用调试日志
-UNIRTM_DEBUG=1 unigo install node@25.9.0
+UNIRTM_DEBUG=1 unistack install node@25.9.0
 
 # 查找关键信息：
 # ✅ 预编译包: "Downloading https://unofficial-builds.nodejs.org/..."
@@ -149,7 +149,7 @@ UNIRTM_DEBUG=1 unigo install node@25.9.0
 ### 验证二进制文件类型
 
 ```bash
-file $(unigo which node)
+file $(unistack which node)
 
 # Alpine (musl): dynamically linked, interpreter /lib/ld-musl-x86_64.so.1
 # Ubuntu (glibc): dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2
@@ -162,13 +162,13 @@ file $(unigo which node)
 
 ```
 .
-├── .unigo.toml              # 跨平台配置
+├── .unistack.toml              # 跨平台配置
 ├── Dockerfile.alpine       # Alpine 专用
 ├── Dockerfile.ubuntu       # Ubuntu 专用
 └── docker-compose.yml
 ```
 
-### .unigo.toml（方案 A）
+### .unistack.toml（方案 A）
 
 ```toml
 [tools]
@@ -193,8 +193,8 @@ FROM alpine:3.22
 # 安装基础依赖
 RUN apk add --no-cache bash curl git ca-certificates gpg
 
-# 安装 unigo
-RUN curl https://unigo.run | sh
+# 安装 unistack
+RUN curl https://unistack.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # 配置 musl 预编译包
@@ -202,8 +202,8 @@ ENV UNIRTM_NODE_MIRROR_URL="https://unofficial-builds.nodejs.org/download/releas
 ENV UNIRTM_NODE_FLAVOR="musl"
 
 # 安装工具
-COPY .unigo.toml .
-RUN unigo install
+COPY .unistack.toml .
+RUN unistack install
 
 WORKDIR /app
 COPY . .
@@ -220,13 +220,13 @@ RUN apt-get update && apt-get install -y \
     bash curl git ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 安装 unigo
-RUN curl https://unigo.run | sh
+# 安装 unistack
+RUN curl https://unistack.run | sh
 ENV PATH="/root/.local/bin:$PATH"
 
 # 安装工具（自动使用 glibc 预编译包）
-COPY .unigo.toml .
-RUN unigo install
+COPY .unistack.toml .
+RUN unistack install
 
 WORKDIR /app
 COPY . .
@@ -265,18 +265,18 @@ services:
 
 ## 常见问题
 
-### Q1: 为什么 unigo 不自动检测 musl？
+### Q1: 为什么 unistack 不自动检测 musl？
 
-unigo 的 Node.js core backend 默认使用 nodejs.org 官方源，而官方源只提供 glibc 预编译包。musl 预编译包来自社区维护的 unofficial-builds，需要手动配置。
+unistack 的 Node.js core backend 默认使用 nodejs.org 官方源，而官方源只提供 glibc 预编译包。musl 预编译包来自社区维护的 unofficial-builds，需要手动配置。
 
 ### Q2: 如何确认使用的是预编译包？
 
 ```bash
 # 方法 1: 查看调试日志
-UNIRTM_DEBUG=1 unigo install node@25.9.0 2>&1 | grep -i download
+UNIRTM_DEBUG=1 unistack install node@25.9.0 2>&1 | grep -i download
 
 # 方法 2: 检查安装时间
-time unigo install node@25.9.0
+time unistack install node@25.9.0
 # 预编译包: ~30秒
 # 源码编译: ~10分钟
 ```
@@ -291,9 +291,9 @@ time unigo install node@25.9.0
 # 安装编译依赖
 apk add python3 build-base linux-headers
 
-# 不设置 UNIRTM_NODE_FLAVOR，让 unigo 从源码编译
+# 不设置 UNIRTM_NODE_FLAVOR，让 unistack 从源码编译
 unset UNIRTM_NODE_FLAVOR
-unigo install node@25.9.0
+unistack install node@25.9.0
 ```
 
 ## 最佳实践总结
@@ -306,7 +306,7 @@ unigo install node@25.9.0
 
 ## 参考资源
 
-- [unigo 官方文档](https://github.com/snowdreamtech/UniGo)
+- [unistack 官方文档](https://github.com/snowdreamtech/UniStack)
 - [Node.js 官方下载](https://nodejs.org/dist/)
 - [Node.js Unofficial Builds](https://unofficial-builds.nodejs.org/)
 - [Alpine Linux 包搜索](https://pkgs.alpinelinux.org/)

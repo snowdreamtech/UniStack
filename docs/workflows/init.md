@@ -35,10 +35,10 @@ Invoke with `/snowdreamtech.init` in any AI IDE.
 - Checks all required tools are available on `PATH`
 - Reports any missing or misconfigured tools
 
-## Equivalent .unigo.toml Command
+## Equivalent .unistack.toml Command
 
 ```bash
-unigo run setup
+unistack run setup
 ```
 
 ## Manual Steps (if needed)

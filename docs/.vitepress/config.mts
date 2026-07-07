@@ -31,7 +31,7 @@ export default defineConfig({
         ],
       },
       { text: "Workflows", link: "/workflows/speckit" },
-      { text: "Reference", link: "/reference/unigo-tasks" },
+      { text: "Reference", link: "/reference/unistack-tasks" },
       {
         text: "Changelog",
         link: "https://github.com/snowdreamtech/template/blob/main/CHANGELOG.md",
@@ -104,17 +104,17 @@ export default defineConfig({
         {
           text: "Reference",
           items: [
-            { text: ".unigo.toml Commands", link: "/reference/unigo-tasks" },
+            { text: ".unistack.toml Commands", link: "/reference/unistack-tasks" },
             { text: "Supported AI IDEs", link: "/reference/ai-ides" },
             { text: "Linting Tools", link: "/reference/linters" },
             { text: "Tool Installation", link: "/reference/tool-installation" },
-            { text: "UniGo Configuration", link: "/reference/unigo-configuration" },
+            { text: "UniStack Configuration", link: "/reference/unistack-configuration" },
             { text: "API Reference", link: "/reference/api-common" },
           ],
         },
         {
           text: "Troubleshooting",
-          items: [{ text: "UniGo Attestation Error", link: "/troubleshooting/unigo-attestation-error" }],
+          items: [{ text: "UniStack Attestation Error", link: "/troubleshooting/unistack-attestation-error" }],
         },
       ],
       "/rules/languages/": [

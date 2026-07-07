@@ -45,7 +45,7 @@ Git Bash is included with [Git for Windows](https://git-scm.com/download/win) an
 # All scripts work directly
 ./scripts/setup.sh
 ./scripts/test.sh
-unigo run lint
+unistack run lint
 ```
 
 #### Option 2: WSL (Windows Subsystem for Linux)

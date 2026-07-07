@@ -10,7 +10,7 @@ The project uses a unified tool installation pattern that:
 - Handles platform-specific binary names (e.g., `ec-linux-amd64`, `ec-darwin-arm64`, `hadolint.exe`)
 - Provides atomic verification steps for debugging
 - Supports both CI and local development environments
-- Integrates with unigo for version management
+- Integrates with unistack for version management
 
 ## The Six-Step Installation Process
 
@@ -18,7 +18,7 @@ The `install_tool_safe()` function implements a six-step process for reliable to
 
 ### Step 1: Binary-First Detection
 
-Before attempting installation, the function checks if the tool binary already exists in the system PATH or unigo installation directory.
+Before attempting installation, the function checks if the tool binary already exists in the system PATH or unistack installation directory.
 
 **Benefits:**
 
@@ -35,9 +35,9 @@ if command -v "$BIN_NAME" >/dev/null 2>&1; then
   return 0
 fi
 
-# Check unigo installation directory
-if unigo which "$BIN_NAME" >/dev/null 2>&1; then
-  # Binary found in unigo
+# Check unistack installation directory
+if unistack which "$BIN_NAME" >/dev/null 2>&1; then
+  # Binary found in unistack
   return 0
 fi
 ```
@@ -68,14 +68,14 @@ Based on the environment (CI vs local development), decide whether to proceed wi
 
 If a non-functional binary is found, remove it before reinstalling.
 
-### Step 5: UniGo Installation
+### Step 5: UniStack Installation
 
-Use unigo to install the tool with the specified version.
+Use unistack to install the tool with the specified version.
 
 **Implementation:**
 
 ```bash
-unigo install "$PROVIDER"
+unistack install "$PROVIDER"
 ```
 
 ### Step 6: Post-Install Verification
@@ -86,7 +86,7 @@ After installation, verify the binary is accessible and functional.
 
 ```bash
 # Refresh PATH to include newly installed tools
-eval "$(unigo activate bash)"
+eval "$(unistack activate bash)"
 
 # Verify binary exists
 if ! command -v "$BIN_NAME" >/dev/null 2>&1; then
@@ -126,18 +126,18 @@ Many tools provide platform-specific binaries with different names. The installa
 
 The system uses a layered resolution strategy:
 
-1. **UniGo Which** (Primary): `unigo which <tool>` - handles platform-specific binaries automatically
+1. **UniStack Which** (Primary): `unistack which <tool>` - handles platform-specific binaries automatically
 2. **Command -v** (Fallback 1): `command -v <tool>` - for tools in PATH
-3. **UniGo Where + Find** (Fallback 2): Search unigo installation directory with pattern matching
+3. **UniStack Where + Find** (Fallback 2): Search unistack installation directory with pattern matching
 
 **Example:**
 
 ```bash
 # For editorconfig-checker on Linux x86_64
-# UniGo automatically resolves to: ec-linux-amd64
+# UniStack automatically resolves to: ec-linux-amd64
 
 # For hadolint on Windows
-# UniGo automatically resolves to: hadolint.exe
+# UniStack automatically resolves to: hadolint.exe
 ```
 
 ### Performance Considerations
@@ -193,15 +193,15 @@ Each verification step is atomic and reports its status:
 
 **Possible causes:**
 
-- UniGo installation directory not in PATH
+- UniStack installation directory not in PATH
 - Platform-specific binary name not recognized
 - Installation failed silently
 
 **Solution:**
 
-1. Check unigo installation: `unigo list`
-2. Verify PATH includes unigo shims: `echo $PATH`
-3. Try manual installation: `unigo install tool-name`
+1. Check unistack installation: `unistack list`
+2. Verify PATH includes unistack shims: `echo $PATH`
+3. Try manual installation: `unistack install tool-name`
 
 #### Scenario 2: Binary Not Functional
 
@@ -217,7 +217,7 @@ Each verification step is atomic and reports its status:
 
 **Solution:**
 
-1. Remove and reinstall: `unigo uninstall tool-name && unigo install tool-name`
+1. Remove and reinstall: `unistack uninstall tool-name && unistack install tool-name`
 2. Check tool documentation for dependencies
 3. Verify platform compatibility
 
@@ -230,12 +230,12 @@ Each verification step is atomic and reports its status:
 **Possible causes:**
 
 - Tool doesn't provide binaries for your platform
-- UniGo provider doesn't support platform-specific names
+- UniStack provider doesn't support platform-specific names
 
 **Solution:**
 
 1. Check tool's GitHub releases for your platform
-2. Update unigo provider configuration
+2. Update unistack provider configuration
 3. Use alternative installation method
 
 ## Code Examples
@@ -250,7 +250,7 @@ install_tool_safe "shfmt" "${VER_SHFMT_PROVIDER:-}" "Shfmt" "--version" 0 "*.sh 
 **Parameters:**
 
 - `BIN_NAME`: "shfmt" - binary name to verify
-- `PROVIDER`: unigo provider string (e.g., "github:mvdan/sh")
+- `PROVIDER`: unistack provider string (e.g., "github:mvdan/sh")
 - `DISPLAY_NAME`: "Shfmt" - human-readable name for logging
 - `VERSION_FLAG`: "--version" - flag to check version
 - `SKIP_FILE_CHECK`: 0 - check for relevant files before installing
@@ -329,7 +329,7 @@ CI=true ./scripts/setup.sh
 
 ### UNIRTM_OFFLINE
 
-Use unigo in offline mode (no network access).
+Use unistack in offline mode (no network access).
 
 **Values:**
 
@@ -395,9 +395,9 @@ For a complete list, see the implementation in `scripts/lib/langs/*.sh`.
 
 - [Alpine Linux Compatibility](../alpine-compatibility.md)
 - [API Documentation](./api-common.md)
-- [Troubleshooting](../troubleshooting-unigo-provenance.md)
+- [Troubleshooting](../troubleshooting-unistack-provenance.md)
 
 ## References
 
-- [UniGo Documentation](https://github.com/snowdreamtech/UniGo)
+- [UniStack Documentation](https://github.com/snowdreamtech/UniStack)
 - [Performance Testing Spec](../../.kiro/specs/performance-testing-and-docs/design.md)

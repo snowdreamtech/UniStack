@@ -46,7 +46,7 @@ Beyond just rules, the template includes the **SpecKit** workflow suite — a se
 Quality is enforced at every stage:
 
 - **Pre-commit hooks**: 40+ standardized checks run locally to catch issues early.
-- **Unified CI Pipeline**: Modernized GitHub Actions (`unigo run lint`, `unigo run audit`, `unigo run test`) ensure 100% environment parity.
+- **Unified CI Pipeline**: Modernized GitHub Actions (`unistack run lint`, `unistack run audit`, `unistack run test`) ensure 100% environment parity.
 - **Standardized Runtimes**: Consistent use of Node.js 22 and Python 3.12 across all stages.
 - **DevContainer**: Reproducible environment ensures 100% setup reliability.
 

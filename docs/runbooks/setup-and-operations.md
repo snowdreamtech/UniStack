@@ -18,7 +18,7 @@ behavioral rules distributed to 50+ IDEs via a symlink/redirect pattern.
 
 | Dependency | Version  | Purpose                      |
 | ---------- | -------- | ---------------------------- |
-| `unigo`     | ≥ 2024.x | Toolchain version management |
+| `unistack`     | ≥ 2024.x | Toolchain version management |
 | `make`     | System   | Task orchestration           |
 | `git`      | ≥ 2.x    | Version control and hooks    |
 | `node`     | ≥ 20.x   | Documentation (VitePress)    |
@@ -43,17 +43,17 @@ behavioral rules distributed to 50+ IDEs via a symlink/redirect pattern.
 git clone <repo-url>
 cd <repo>
 git config core.ignorecase false   # MANDATORY on macOS/Windows
-unigo run setup                          # installs unigo + core tools
-unigo run install                        # installs project dependencies (Node, Python venv)
-unigo run verify                         # validates everything is green
+unistack run setup                          # installs unistack + core tools
+unistack run install                        # installs project dependencies (Node, Python venv)
+unistack run verify                         # validates everything is green
 ```
 
 ### Run Quality Checks
 
 ```bash
-unigo run lint          # run all local linters
-unigo run audit         # run security audit (Gitleaks + dependency scan)
-unigo run verify        # run all checks in sequence
+unistack run lint          # run all local linters
+unistack run audit         # run security audit (Gitleaks + dependency scan)
+unistack run verify        # run all checks in sequence
 ```
 
 ### Update Dependencies
@@ -66,7 +66,7 @@ cd docs && pnpm update
 pre-commit autoupdate
 
 # Tool versions
-unigo upgrade
+unistack upgrade
 ```
 
 ### Build Documentation
@@ -95,10 +95,10 @@ cd docs && pnpm run dev         # development server (hot-reload)
 
 ```bash
 # Reproduce locally
-unigo run lint
+unistack run lint
 
 # Check specific linter output
-unigo run lint 2>&1 | grep -A5 "error\|failed"
+unistack run lint 2>&1 | grep -A5 "error\|failed"
 ```
 
 **Likely causes**:
@@ -113,7 +113,7 @@ unigo run lint 2>&1 | grep -A5 "error\|failed"
 
 ### Pre-commit Hook Fails on macOS
 
-**Symptom**: `unigo run install` completes but hooks fail with Python/binary not found errors.
+**Symptom**: `unistack run install` completes but hooks fail with Python/binary not found errors.
 
 **Diagnosis**:
 
@@ -128,7 +128,7 @@ pre-commit --version
 ```bash
 # Rebuild the venv
 rm -rf .venv
-unigo run install
+unistack run install
 ```
 
 ---
@@ -166,7 +166,7 @@ find . -xtype l   # list broken symlinks
 
 ```bash
 # Re-initialize symlinks
-unigo run setup
+unistack run setup
 ```
 
 ---
@@ -189,9 +189,9 @@ unigo run setup
 git stash                    # save local changes
 git checkout main            # switch to main
 git pull origin main         # fetch latest
-unigo run setup                   # re-initialize toolchain
-unigo run install                 # re-install dependencies
-unigo run verify                  # confirm clean state
+unistack run setup                   # re-initialize toolchain
+unistack run install                 # re-install dependencies
+unistack run verify                  # confirm clean state
 ```
 
 ### Rollback a Bad Commit

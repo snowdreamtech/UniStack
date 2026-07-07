@@ -1,23 +1,23 @@
-# UniGo
+# UniStack
 
-[![CI Pipeline](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniGo/ci.yml?branch=main&label=CI%20Pipeline)](https://github.com/snowdreamtech/UniGo/actions/workflows/ci.yml)
-[![CD Pipeline](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniGo/cd.yml?branch=main&label=CD%20Pipeline)](https://github.com/snowdreamtech/UniGo/actions/workflows/cd.yml)
-[![GitHub Pages](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniGo/pages.yml?branch=main&label=Docs&logo=github)](https://github.com/snowdreamtech/UniGo/actions/workflows/pages.yml)
-[![CodeQL](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniGo/codeql.yml?branch=main&label=CodeQL&logo=github)](https://github.com/snowdreamtech/UniGo/actions/workflows/codeql.yml)
-[![Multi-OS Verified](https://img.shields.io/badge/Verified-Linux%20%7C%20macOS%20%7C%20Windows-blue)](https://github.com/snowdreamtech/UniGo/actions/workflows/ci.yml)
-[![Security Audit](https://img.shields.io/badge/Security-Zizmor%20%7C%20Trivy%20%7C%20Gitleaks-brightgreen)](https://github.com/snowdreamtech/UniGo/actions/workflows/ci.yml)
-[![SBOM Available](https://img.shields.io/badge/SBOM-Available-success)](https://github.com/snowdreamtech/UniGo/releases/latest)
+[![CI Pipeline](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniStack/ci.yml?branch=main&label=CI%20Pipeline)](https://github.com/snowdreamtech/UniStack/actions/workflows/ci.yml)
+[![CD Pipeline](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniStack/cd.yml?branch=main&label=CD%20Pipeline)](https://github.com/snowdreamtech/UniStack/actions/workflows/cd.yml)
+[![GitHub Pages](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniStack/pages.yml?branch=main&label=Docs&logo=github)](https://github.com/snowdreamtech/UniStack/actions/workflows/pages.yml)
+[![CodeQL](https://img.shields.io/github/actions/workflow/status/snowdreamtech/UniStack/codeql.yml?branch=main&label=CodeQL&logo=github)](https://github.com/snowdreamtech/UniStack/actions/workflows/codeql.yml)
+[![Multi-OS Verified](https://img.shields.io/badge/Verified-Linux%20%7C%20macOS%20%7C%20Windows-blue)](https://github.com/snowdreamtech/UniStack/actions/workflows/ci.yml)
+[![Security Audit](https://img.shields.io/badge/Security-Zizmor%20%7C%20Trivy%20%7C%20Gitleaks-brightgreen)](https://github.com/snowdreamtech/UniStack/actions/workflows/ci.yml)
+[![SBOM Available](https://img.shields.io/badge/SBOM-Available-success)](https://github.com/snowdreamtech/UniStack/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/license/MIT)
-[![Release](https://img.shields.io/github/v/release/snowdreamtech/UniGo?logo=github&sort=semver)](https://github.com/snowdreamtech/UniGo/releases/latest)
-[![Dependabot Enabled](https://img.shields.io/badge/Dependabot-Enabled-brightgreen?logo=dependabot)](https://github.com/snowdreamtech/UniGo/blob/main/.github/dependabot.yml)
+[![Release](https://img.shields.io/github/v/release/snowdreamtech/UniStack?logo=github&sort=semver)](https://github.com/snowdreamtech/UniStack/releases/latest)
+[![Dependabot Enabled](https://img.shields.io/badge/Dependabot-Enabled-brightgreen?logo=dependabot)](https://github.com/snowdreamtech/UniStack/blob/main/.github/dependabot.yml)
 [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
-[![GitHub Stars](https://img.shields.io/github/stars/snowdreamtech/UniGo?style=social)](https://github.com/snowdreamtech/UniGo)
-[![GitHub Issues](https://img.shields.io/github/issues/snowdreamtech/UniGo)](https://github.com/snowdreamtech/UniGo/issues)
-[![Code Size](https://img.shields.io/github/languages/code-size/snowdreamtech/UniGo)](https://github.com/snowdreamtech/UniGo)
+[![GitHub Stars](https://img.shields.io/github/stars/snowdreamtech/UniStack?style=social)](https://github.com/snowdreamtech/UniStack)
+[![GitHub Issues](https://img.shields.io/github/issues/snowdreamtech/UniStack)](https://github.com/snowdreamtech/UniStack/issues)
+[![Code Size](https://img.shields.io/github/languages/code-size/snowdreamtech/UniStack)](https://github.com/snowdreamtech/UniStack)
 
 [English](README.md) | [简体中文](README_zh-CN.md)
 
-UniGo is a fast, flexible, and enterprise-grade Golang CLI template inspired by UniRTM and helloworld. It provides a robust foundation for building modern command-line applications in Go, featuring beautiful terminal output, structured logging, built-in caching, and a comprehensive CI/CD pipeline.
+UniStack is a fast, flexible, and enterprise-grade Golang CLI template inspired by UniRTM and helloworld. It provides a robust foundation for building modern command-line applications in Go, featuring beautiful terminal output, structured logging, built-in caching, and a comprehensive CI/CD pipeline.
 
 ## 🌟 Features
 
@@ -32,7 +32,7 @@ UniGo is a fast, flexible, and enterprise-grade Golang CLI template inspired by 
 
 ### Overview
 
-UniGo is engineered to solve the boilerplate problem when starting new Go CLI projects. It standardizes the development environment, architectural patterns, and automation pipelines out of the box.
+UniStack is engineered to solve the boilerplate problem when starting new Go CLI projects. It standardizes the development environment, architectural patterns, and automation pipelines out of the box.
 
 ### Core Components
 
@@ -55,16 +55,16 @@ UniGo is engineered to solve the boilerplate problem when starting new Go CLI pr
 2. **Initialize**: `unirtm run setup` (bootstraps core dependencies and hooks).
 3. **Install**: `unirtm run install` (installs project dependencies).
 4. **Verify**: `unirtm run verify` (ensures everything is green).
-5. **Build**: `go build -o unigo main.go`
+5. **Build**: `go build -o unistack main.go`
 
 ### Available Commands
 
-- `unigo version`: Print the version number
-- `unigo doctor`: Check system health and diagnose issues
-- `unigo self-update`: Update to the latest version
-- `unigo cache`: Manage local cache
-- `unigo config`: Manage configuration
-- `unigo license`: Manage copyright license headers
+- `unistack version`: Print the version number
+- `unistack doctor`: Check system health and diagnose issues
+- `unistack self-update`: Update to the latest version
+- `unistack cache`: Manage local cache
+- `unistack config`: Manage configuration
+- `unistack license`: Manage copyright license headers
 
 ## 🛠️ Operations Guide
 
@@ -76,7 +76,7 @@ UniGo is engineered to solve the boilerplate problem when starting new Go CLI pr
 ### Troubleshooting
 
 - **Problem**: `unirtm run verify` fails with test errors.
-  - **Solution**: Ensure your code passes all Go unit tests. UniGo enforces strict coverage and race condition checks.
+  - **Solution**: Ensure your code passes all Go unit tests. UniStack enforces strict coverage and race condition checks.
 - **Problem**: Pre-commit hooks fail.
   - **Solution**: The hooks often auto-fix issues (like formatting). Stage the modified files and commit again.
 
@@ -92,8 +92,8 @@ UniGo is engineered to solve the boilerplate problem when starting new Go CLI pr
 ### Local Development Setup
 
 ```bash
-git clone https://github.com/snowdreamtech/UniGo.git
-cd UniGo
+git clone https://github.com/snowdreamtech/UniStack.git
+cd UniStack
 unirtm run setup
 unirtm run install
 ```
@@ -121,4 +121,4 @@ See the [LICENSE](./LICENSE) file for the full license text.
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/image?repos=snowdreamtech/UniGo&type=date&legend=top-left)](https://www.star-history.com/?repos=snowdreamtech%2FUniGo&type=date&legend=top-left)
+[![Star History Chart](https://api.star-history.com/image?repos=snowdreamtech/UniStack&type=date&legend=top-left)](https://www.star-history.com/?repos=snowdreamtech%2FUniStack&type=date&legend=top-left)

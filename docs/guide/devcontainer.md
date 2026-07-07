@@ -100,4 +100,4 @@ Add extensions to `devcontainer.json`:
 
 ### Post-Create Commands
 
-The DevContainer runs `unigo run install` after creation to install project dependencies automatically.
+The DevContainer runs `unistack run install` after creation to install project dependencies automatically.

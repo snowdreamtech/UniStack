@@ -41,9 +41,9 @@ To skip hooks for a single commit (emergency use only):
 git commit --no-verify -m "chore: emergency fix"
 ```
 
-## UniGo Tool Manager Configuration
+## UniStack Tool Manager Configuration
 
-The project uses [unigo](https://github.com/snowdreamtech/UniGo) for managing development tools. Configuration is in `.unigo.toml`.
+The project uses [unistack](https://github.com/snowdreamtech/UniStack) for managing development tools. Configuration is in `.unistack.toml`.
 
 ### Important Security Requirements
 
@@ -67,7 +67,7 @@ aqua.minisign = false
 asdf_compat = true
 ```
 
-For detailed unigo configuration guidelines, see:
+For detailed unistack configuration guidelines, see:
 
-- [UniGo Configuration Best Practices](../reference/unigo-configuration.md)
-- [UniGo Attestation Error Troubleshooting](../troubleshooting/unigo-attestation-error.md)
+- [UniStack Configuration Best Practices](../reference/unistack-configuration.md)
+- [UniStack Attestation Error Troubleshooting](../troubleshooting/unistack-attestation-error.md)
