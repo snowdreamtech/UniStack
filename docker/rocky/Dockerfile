@@ -4,13 +4,13 @@ ARG TARGETOS
 ARG TARGETARCH
 
 # Set the workdir
-WORKDIR /root/go/src/github.com/snowdreamtech/unigo
+WORKDIR /root/go/src/github.com/snowdreamtech/unistack
 
 ENV GO111MODULE=auto
 
 COPY . ./
 
-RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -v -o /root/go/bin/unigo
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldflags "-s -w" -v -o /root/go/bin/unistack
 
 # Base Image (Rocky Variant)
 # Extends snowdreamtech/rocky with additional tooling and configuration.
@@ -34,16 +34,16 @@ ARG BUILDTIME \
 
 # Standard OCI Metadata (https://github.com/opencontainers/image-spec)
 LABEL org.opencontainers.image.authors="Snowdream Tech" \
-    org.opencontainers.image.title="UniGo Image Based On Rocky" \
-    org.opencontainers.image.description="Docker Images for UniGo on Rocky. (i386, amd64, arm32v5, arm32v7, arm64, mips64le, ppc64le, s390x)" \
-    org.opencontainers.image.documentation="https://hub.docker.com/r/snowdreamtech/unigo" \
-    org.opencontainers.image.base.name="snowdreamtech/unigo:rocky" \
+    org.opencontainers.image.title="UniStack Image Based On Rocky" \
+    org.opencontainers.image.description="Docker Images for UniStack on Rocky. (i386, amd64, arm32v5, arm32v7, arm64, mips64le, ppc64le, s390x)" \
+    org.opencontainers.image.documentation="https://hub.docker.com/r/snowdreamtech/unistack" \
+    org.opencontainers.image.base.name="snowdreamtech/unistack:rocky" \
     org.opencontainers.image.licenses="MIT" \
-    org.opencontainers.image.source="https://github.com/snowdreamtech/unigo" \
+    org.opencontainers.image.source="https://github.com/snowdreamtech/unistack" \
     org.opencontainers.image.vendor="Snowdream Tech" \
     org.opencontainers.image.created="${BUILDTIME}" \
     org.opencontainers.image.revision="${REVISION}" \
-    org.opencontainers.image.url="https://github.com/snowdreamtech/unigo"
+    org.opencontainers.image.url="https://github.com/snowdreamtech/unistack"
 
 # x-release-please-start-version
 LABEL org.opencontainers.image.version="${VERSION:-0.0.4}"
@@ -61,9 +61,9 @@ ENV KEEPALIVE=${KEEPALIVE} \
     USER=${USER} \
     WORKDIR=${WORKDIR}
 
-COPY --from=builder /root/go/bin/unigo /usr/local/bin/
+COPY --from=builder /root/go/bin/unistack /usr/local/bin/
 
-RUN chmod +x /usr/local/bin/unigo
+RUN chmod +x /usr/local/bin/unistack
 
 # Container Orchestration Files
 COPY docker/rocky/entrypoint.d /usr/local/bin/entrypoint.d
