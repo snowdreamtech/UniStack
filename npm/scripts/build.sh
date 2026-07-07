@@ -68,19 +68,19 @@ printf '   npm:  %s\n' "${NPM_DIR}"
 # Format: "npm_dir|dist_dir|binary"
 # ---------------------------------------------------------------------------
 PLATFORMS="
-unigo-darwin-arm64|unigo_darwin_arm64_v8.0|unigo
-unigo-darwin-x64|unigo_darwin_amd64_v1|unigo
-unigo-linux-x64|unigo_linux_amd64_v1|unigo
-unigo-linux-arm64|unigo_linux_arm64_v8.0|unigo
-unigo-linux-ia32|unigo_linux_386_sse2|unigo
-unigo-linux-arm|unigo_linux_arm_7|unigo
-unigo-linux-loong64|unigo_linux_loong64|unigo
-unigo-linux-ppc64le|unigo_linux_ppc64le_power8|unigo
-unigo-linux-riscv64|unigo_linux_riscv64_rva20u64|unigo
-unigo-linux-s390x|unigo_linux_s390x|unigo
-unigo-windows-x64|unigo_windows_amd64_v1|unigo.exe
-unigo-windows-arm64|unigo_windows_arm64_v8.0|unigo.exe
-unigo-windows-ia32|unigo_windows_386_sse2|unigo.exe
+unistack-darwin-arm64|unistack_darwin_arm64_v8.0|unistack
+unistack-darwin-x64|unistack_darwin_amd64_v1|unistack
+unistack-linux-x64|unistack_linux_amd64_v1|unistack
+unistack-linux-arm64|unistack_linux_arm64_v8.0|unistack
+unistack-linux-ia32|unistack_linux_386_sse2|unistack
+unistack-linux-arm|unistack_linux_arm_7|unistack
+unistack-linux-loong64|unistack_linux_loong64|unistack
+unistack-linux-ppc64le|unistack_linux_ppc64le_power8|unistack
+unistack-linux-riscv64|unistack_linux_riscv64_rva20u64|unistack
+unistack-linux-s390x|unistack_linux_s390x|unistack
+unistack-windows-x64|unistack_windows_amd64_v1|unistack.exe
+unistack-windows-arm64|unistack_windows_arm64_v8.0|unistack.exe
+unistack-windows-ia32|unistack_windows_386_sse2|unistack.exe
 "
 
 # ---------------------------------------------------------------------------
@@ -158,8 +158,8 @@ done
 # ---------------------------------------------------------------------------
 # Process root package
 # ---------------------------------------------------------------------------
-printf '\n🔧 unigo (root package)\n'
-_root_pkg_dir="${NPM_DIR}/unigo"
+printf '\n🔧 unistack (root package)\n'
+_root_pkg_dir="${NPM_DIR}/unistack"
 generate_package_json "${_root_pkg_dir}" "${VERSION_NPM}"
 copy_docs "${_root_pkg_dir}"
 
@@ -171,6 +171,6 @@ printf '   Version: %s\n' "${VERSION_NPM}"
 printf '\nNext steps:\n'
 printf '  1. Publish platform packages first:\n'
 # shellcheck disable=SC2016
-printf '%s\n' '       for pkg in npm/unigo-*/; do npm publish "$pkg" --access public --registry=https://registry.npmjs.org; done'
+printf '%s\n' '       for pkg in npm/unistack-*/; do npm publish "$pkg" --access public --registry=https://registry.npmjs.org; done'
 printf '  2. Then publish root package:\n'
-printf '       npm publish npm/unigo/ --access public --registry=https://registry.npmjs.org\n'
+printf '       npm publish npm/unistack/ --access public --registry=https://registry.npmjs.org\n'
