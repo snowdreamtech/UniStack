@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
 
 var isWindowsMode = runtime.GOOS == "windows"
@@ -35,7 +35,7 @@ func JoinForPosix(paths []string) string {
 
 // FormatDirForPosix ensures that a single directory path is safe for injection into
 // POSIX shell scripts (Bash, Zsh). On Windows, it converts backslashes to forward slashes,
-// and supports UNIGO_CYGDRIVE_PREFIX for Git Bash/MSYS2 path conversions.
+// and supports UNISTACK_CYGDRIVE_PREFIX for Git Bash/MSYS2 path conversions.
 func FormatDirForPosix(dir string) string {
 	if isWindowsMode {
 		dir = strings.ReplaceAll(dir, "\\", "/")

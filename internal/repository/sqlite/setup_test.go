@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/snowdreamtech/unigo/internal/database"
+	"github.com/snowdreamtech/unistack/internal/database"
 	"github.com/stretchr/testify/require"
 )
 
@@ -17,7 +17,7 @@ import (
 func setupTestDB(t *testing.T) (*database.DB, func()) {
 	t.Helper()
 
-	tempDir, err := os.MkdirTemp("", "unigo_test_*")
+	tempDir, err := os.MkdirTemp("", "unistack_test_*")
 	require.NoError(t, err)
 
 	dbPath := filepath.Join(tempDir, "test.db")

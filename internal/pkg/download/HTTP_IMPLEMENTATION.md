@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document summarizes the implementation of Task 6.2 from the UniGo spec, which implements a concrete HTTP downloader with retry logic, timeout configuration, proxy support, and progress reporting.
+This document summarizes the implementation of Task 6.2 from the UniStack spec, which implements a concrete HTTP downloader with retry logic, timeout configuration, proxy support, and progress reporting.
 
 ## What Was Implemented
 
@@ -507,4 +507,4 @@ Task 6.2 has been successfully completed. The `HTTPDownloader` implementation pr
 
 All tests pass (43/43), code quality checks pass, and the implementation is ready for integration with the backend system and cache manager.
 
-The implementation follows all project standards, Go best practices, and design principles, providing a robust and maintainable solution for HTTP downloads in the UniGo system.
+The implementation follows all project standards, Go best practices, and design principles, providing a robust and maintainable solution for HTTP downloads in the UniStack system.

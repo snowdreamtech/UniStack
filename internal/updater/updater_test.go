@@ -17,7 +17,7 @@ import (
 func TestUpdateCache_ReadWrite(t *testing.T) {
 	// Setup temporary data directory
 	tempDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tempDir)
+	t.Setenv("UNISTACK_DATA_DIR", tempDir)
 
 	// Initially cache should be empty
 	cache, err := readCache()
@@ -49,7 +49,7 @@ func TestUpdateCache_ReadWrite(t *testing.T) {
 func TestUpdateCache_Corrupt(t *testing.T) {
 	// Setup temporary data directory
 	tempDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tempDir)
+	t.Setenv("UNISTACK_DATA_DIR", tempDir)
 
 	// Write corrupt JSON
 	cachePath := getCachePath()
@@ -100,7 +100,7 @@ func TestCheckUpdateAsync_SkipDevVersions(t *testing.T) {
 func TestCheckUpdateAsync_RecentCheck(t *testing.T) {
 	// If last checked < 24h ago, should not re-fetch
 	tempDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tempDir)
+	t.Setenv("UNISTACK_DATA_DIR", tempDir)
 
 	recent := &UpdateCache{
 		LatestVersion: "1.0.0",
@@ -122,7 +122,7 @@ func TestPromptIfAvailable_DevVersion(t *testing.T) {
 
 func TestGetCachePath(t *testing.T) {
 	tempDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tempDir)
+	t.Setenv("UNISTACK_DATA_DIR", tempDir)
 
 	path := getCachePath()
 	assert.Contains(t, path, "update-cache.json")
@@ -132,7 +132,7 @@ func TestGetCachePath(t *testing.T) {
 func TestWriteCache_CreatesDir(t *testing.T) {
 	// Write to a nested path that doesn't exist yet
 	tempDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", filepath.Join(tempDir, "nested", "path"))
+	t.Setenv("UNISTACK_DATA_DIR", filepath.Join(tempDir, "nested", "path"))
 
 	cache := &UpdateCache{LatestVersion: "2.0.0", LastChecked: time.Now()}
 	err := writeCache(cache)

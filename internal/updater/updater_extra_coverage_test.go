@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +30,7 @@ func (t *customTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 
 func TestFetchLatestReleaseInfo_Success(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, "/repos/snowdreamtech/UniGo/releases/latest", r.URL.Path)
+		assert.Equal(t, "/repos/snowdreamtech/UniStack/releases/latest", r.URL.Path)
 		assert.Equal(t, "application/vnd.github.v3+json", r.Header.Get("Accept"))
 
 		info := ReleaseInfo{

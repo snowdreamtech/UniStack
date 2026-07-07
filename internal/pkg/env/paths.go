@@ -37,35 +37,35 @@ func GetFSToolName(tool, backend string) string {
 	return name
 }
 
-// GetConfigDir returns the root configuration directory for UniGo.
-// It uses UNIGO_CONFIG_DIR if set, otherwise falls back to XDG config directory.
+// GetConfigDir returns the root configuration directory for UniStack.
+// It uses UNISTACK_CONFIG_DIR if set, otherwise falls back to XDG config directory.
 func GetConfigDir() string {
 	if configDir := Get("CONFIG_DIR"); configDir != "" {
 		return configDir
 	}
 
 	if configHome := Get("XDG_CONFIG_HOME"); configHome != "" {
-		return filepath.Join(configHome, "unigo")
+		return filepath.Join(configHome, "unistack")
 	}
 
 	homeDir, err := OsUserHomeDir()
 	if err != nil {
-		return "./unigo_config"
+		return "./unistack_config"
 	}
 
 	if RuntimeGOOS == "windows" {
 		if appData, err := OsUserConfigDir(); err == nil {
-			return filepath.Join(appData, "unigo")
+			return filepath.Join(appData, "unistack")
 		}
 	}
 
 	// For macOS and Linux, we unify on the standard XDG ~/.config
 	// This provides a consistent experience for developers across Unix-like systems.
-	return filepath.Join(homeDir, ".config", "unigo")
+	return filepath.Join(homeDir, ".config", "unistack")
 }
 
-// GetDataDir returns the root data directory for UniGo.
-// It uses UNIGO_DATA_DIR if set, otherwise falls back to appropriate OS directories.
+// GetDataDir returns the root data directory for UniStack.
+// It uses UNISTACK_DATA_DIR if set, otherwise falls back to appropriate OS directories.
 func GetDataDir() string {
 	if dataDir := Get("DATA_DIR"); dataDir != "" {
 		return dataDir
@@ -73,33 +73,33 @@ func GetDataDir() string {
 
 	// Follow XDG Base Directory Specification for data home if XDG_DATA_HOME is set
 	if dataHome := Get("XDG_DATA_HOME"); dataHome != "" {
-		return filepath.Join(dataHome, "unigo")
+		return filepath.Join(dataHome, "unistack")
 	}
 
 	homeDir, err := OsUserHomeDir()
 	if err != nil {
-		return "./unigo_data" // Fallback if home directory cannot be determined
+		return "./unistack_data" // Fallback if home directory cannot be determined
 	}
 
 	if RuntimeGOOS == "windows" {
 		// Windows stores data in Local AppData
 		if localAppData := Get("LOCALAPPDATA"); localAppData != "" {
-			return filepath.Join(localAppData, "unigo")
+			return filepath.Join(localAppData, "unistack")
 		}
-		return filepath.Join(homeDir, "AppData", "Local", "unigo")
+		return filepath.Join(homeDir, "AppData", "Local", "unistack")
 	}
 
 	// For macOS and Linux, we unify on the standard XDG ~/.local/share
 	// This ensures dotfiles and scripts work consistently across both platforms.
-	return filepath.Join(homeDir, ".local", "share", "unigo")
+	return filepath.Join(homeDir, ".local", "share", "unistack")
 }
 
-// GetDatabasePath returns the path to the UniGo SQLite database.
+// GetDatabasePath returns the path to the UniStack SQLite database.
 func GetDatabasePath() string {
-	return filepath.Join(GetDataDir(), "unigo.db")
+	return filepath.Join(GetDataDir(), "unistack.db")
 }
 
-// GetShimsDir returns the directory where UniGo shims are stored.
+// GetShimsDir returns the directory where UniStack shims are stored.
 func GetShimsDir() string {
 	return filepath.Join(GetDataDir(), "shims")
 }
@@ -127,17 +127,17 @@ func GetCacheDir() string {
 	}
 
 	if cacheHome := Get("XDG_CACHE_HOME"); cacheHome != "" {
-		return filepath.Join(cacheHome, "unigo")
+		return filepath.Join(cacheHome, "unistack")
 	}
 
 	homeDir, err := OsUserHomeDir()
 	if err != nil {
-		return "./unigo_cache"
+		return "./unistack_cache"
 	}
 
 	if RuntimeGOOS == "darwin" {
 		// macOS standard cache directory
-		return filepath.Join(homeDir, "Library", "Caches", "unigo")
+		return filepath.Join(homeDir, "Library", "Caches", "unistack")
 	}
 
 	if RuntimeGOOS == "windows" {
@@ -146,12 +146,12 @@ func GetCacheDir() string {
 	}
 
 	// Default for Linux and others (XDG standard)
-	return filepath.Join(homeDir, ".cache", "unigo")
+	return filepath.Join(homeDir, ".cache", "unistack")
 }
 
-// GetLockFilePath returns the path of the unigo.lock file.
-// It respects the UNIGO_LOCK_FILE environment variable for custom locations
-// (useful in CI or monorepo setups), falling back to "unigo.lock" in the
+// GetLockFilePath returns the path of the unistack.lock file.
+// It respects the UNISTACK_LOCK_FILE environment variable for custom locations
+// (useful in CI or monorepo setups), falling back to "unistack.lock" in the
 // current working directory — mirroring how mise.lock sits next to mise.toml.
 func GetLockFilePath() string {
 	if custom := Get("LOCK_FILE"); custom != "" {
@@ -159,13 +159,13 @@ func GetLockFilePath() string {
 	}
 	wd, err := OsGetwd()
 	if err != nil {
-		return "unigo.lock"
+		return "unistack.lock"
 	}
-	return filepath.Join(wd, "unigo.lock")
+	return filepath.Join(wd, "unistack.lock")
 }
 
-// GetGlobalConfigPath returns the path to the global unigo.toml configuration file.
-// This is the file edited by `unigo set --global` / `unigo unset --global`.
+// GetGlobalConfigPath returns the path to the global unistack.toml configuration file.
+// This is the file edited by `unistack set --global` / `unistack unset --global`.
 func GetGlobalConfigPath() string {
-	return filepath.Join(GetConfigDir(), "unigo.toml")
+	return filepath.Join(GetConfigDir(), "unistack.toml")
 }

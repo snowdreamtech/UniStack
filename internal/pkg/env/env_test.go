@@ -11,13 +11,13 @@ import (
 
 func TestGet(t *testing.T) {
 	// Setup
-	t.Setenv("UNIGO_TEST_KEY_1", "val1")
+	t.Setenv("UNISTACK_TEST_KEY_1", "val1")
 
 	t.Setenv("MISE_TEST_KEY_2", "val2")
 
 	t.Setenv("TEST_KEY_3", "val3")
 
-	t.Setenv("UNIGO_TEST_KEY_4", "val4_unigo")
+	t.Setenv("UNISTACK_TEST_KEY_4", "val4_unistack")
 	t.Setenv("MISE_TEST_KEY_4", "val4_mise")
 	t.Setenv("TEST_KEY_4", "val4_raw")
 
@@ -28,7 +28,7 @@ func TestGet(t *testing.T) {
 		{"TEST_KEY_1", "val1"},
 		{"TEST_KEY_2", "val2"},
 		{"TEST_KEY_3", "val3"},
-		{"TEST_KEY_4", "val4_unigo"},
+		{"TEST_KEY_4", "val4_unistack"},
 		{"TEST_KEY_NONEXISTENT", ""},
 		{"PATH", os.Getenv("PATH")},
 	}

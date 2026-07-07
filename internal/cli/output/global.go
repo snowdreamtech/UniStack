@@ -7,7 +7,7 @@ import (
 	"os"
 	"sync"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
 
 var (

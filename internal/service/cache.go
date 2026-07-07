@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/repository"
+	"github.com/snowdreamtech/unistack/internal/repository"
 )
 
 // CacheManager manages cache storage with TTL, checksum verification, and automatic cleanup

@@ -8,7 +8,7 @@
 
 ## Overview
 
-This document summarizes the implementation of Task 6.1 from the UniGo spec, which defines the core interface for the download module.
+This document summarizes the implementation of Task 6.1 from the UniStack spec, which defines the core interface for the download module.
 
 ## What Was Implemented
 

@@ -17,12 +17,12 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/pkg/version"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/pkg/version"
 )
 
 const (
-	githubAPIURL = "https://api.github.com/repos/snowdreamtech/UniGo/releases/latest"
+	githubAPIURL = "https://api.github.com/repos/snowdreamtech/UniStack/releases/latest"
 	cacheFile    = "update-cache.json"
 	checkPeriod  = 24 * time.Hour
 	promptPeriod = 24 * time.Hour
@@ -240,8 +240,8 @@ func PromptIfAvailable(currentVersion string, cmdName string) {
 	}
 
 	// Print prompt to Stderr
-	pterm.Warning.Printf("unigo version %s available\n", cache.LatestVersion)
-	pterm.Warning.Printf("To update, run `unigo self-update`\n")
+	pterm.Warning.Printf("unistack version %s available\n", cache.LatestVersion)
+	pterm.Warning.Printf("To update, run `unistack self-update`\n")
 
 	// Update prompt time
 	cache.LastPrompted = time.Now()

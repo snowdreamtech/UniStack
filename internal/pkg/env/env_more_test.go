@@ -17,11 +17,11 @@ func TestEnv_WindowsAppDataFallback(t *testing.T) {
 	defer func() { RuntimeGOOS = origGOOS }()
 	RuntimeGOOS = "windows"
 
-	t.Setenv("UNIGO_CONFIG_DIR", "")
+	t.Setenv("UNISTACK_CONFIG_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
-	t.Setenv("UNIGO_DATA_DIR", "")
+	t.Setenv("UNISTACK_DATA_DIR", "")
 	t.Setenv("XDG_DATA_HOME", "")
-	t.Setenv("UNIGO_CACHE_DIR", "")
+	t.Setenv("UNISTACK_CACHE_DIR", "")
 	t.Setenv("XDG_CACHE_HOME", "")
 	t.Setenv("LOCALAPPDATA", "")
 
@@ -35,15 +35,15 @@ func TestEnv_WindowsAppDataFallback(t *testing.T) {
 	OsUserHomeDir = func() (string, error) { return "C:\\Users\\test", nil }
 
 	cfg := GetConfigDir()
-	assert.Equal(t, filepath.Join("C:\\Users\\test\\AppData\\Roaming", "unigo"), cfg)
+	assert.Equal(t, filepath.Join("C:\\Users\\test\\AppData\\Roaming", "unistack"), cfg)
 
 	data := GetDataDir()
-	assert.Equal(t, filepath.Join("C:\\Users\\test", "AppData", "Local", "unigo"), data)
+	assert.Equal(t, filepath.Join("C:\\Users\\test", "AppData", "Local", "unistack"), data)
 
 	// mock localappdata
 	t.Setenv("LOCALAPPDATA", "C:\\Users\\test\\AppData\\Local")
 	data2 := GetDataDir()
-	assert.Equal(t, filepath.Join("C:\\Users\\test\\AppData\\Local", "unigo"), data2)
+	assert.Equal(t, filepath.Join("C:\\Users\\test\\AppData\\Local", "unistack"), data2)
 
 	cache := GetCacheDir()
 	// GetCacheDir on Windows uses GetDataDir() + "cache"
@@ -55,7 +55,7 @@ func TestEnv_DarwinCacheFallback(t *testing.T) {
 	defer func() { RuntimeGOOS = origGOOS }()
 	RuntimeGOOS = "darwin"
 
-	t.Setenv("UNIGO_CACHE_DIR", "")
+	t.Setenv("UNISTACK_CACHE_DIR", "")
 	t.Setenv("XDG_CACHE_HOME", "")
 
 	origHomeDir := OsUserHomeDir
@@ -63,14 +63,14 @@ func TestEnv_DarwinCacheFallback(t *testing.T) {
 	OsUserHomeDir = func() (string, error) { return "/Users/test", nil }
 
 	cache := GetCacheDir()
-	assert.Equal(t, filepath.Join("/Users/test", "Library", "Caches", "unigo"), cache)
+	assert.Equal(t, filepath.Join("/Users/test", "Library", "Caches", "unistack"), cache)
 }
 
 func TestEnv_PathsFallback(t *testing.T) {
 	// safely set environment variables to empty string
-	t.Setenv("UNIGO_CONFIG_DIR", "")
-	t.Setenv("UNIGO_DATA_DIR", "")
-	t.Setenv("UNIGO_CACHE_DIR", "")
+	t.Setenv("UNISTACK_CONFIG_DIR", "")
+	t.Setenv("UNISTACK_DATA_DIR", "")
+	t.Setenv("UNISTACK_CACHE_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("XDG_DATA_HOME", "")
 	t.Setenv("XDG_CACHE_HOME", "")
@@ -93,17 +93,17 @@ func TestEnv_PathsFallback(t *testing.T) {
 	t.Setenv("XDG_CONFIG_HOME", "/xdg_config")
 	t.Setenv("XDG_DATA_HOME", "/xdg_data")
 	t.Setenv("XDG_CACHE_HOME", "/xdg_cache")
-	assert.Equal(t, filepath.Join("/xdg_config", "unigo"), GetConfigDir())
-	assert.Equal(t, filepath.Join("/xdg_data", "unigo"), GetDataDir())
-	assert.Equal(t, filepath.Join("/xdg_cache", "unigo"), GetCacheDir())
+	assert.Equal(t, filepath.Join("/xdg_config", "unistack"), GetConfigDir())
+	assert.Equal(t, filepath.Join("/xdg_data", "unistack"), GetDataDir())
+	assert.Equal(t, filepath.Join("/xdg_cache", "unistack"), GetCacheDir())
 }
 
 func TestEnv_GetLockFilePath(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("UNIGO_CONFIG_DIR", tmpDir)
+	t.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
 
 	// Create a dummy lockfile in tmpDir so it finds it, instead of searching up to repo root
-	dummyLock := filepath.Join(tmpDir, ".unigo.lock")
+	dummyLock := filepath.Join(tmpDir, ".unistack.lock")
 	os.WriteFile(dummyLock, []byte(""), 0644)
 
 	lock := GetLockFilePath()
@@ -127,9 +127,9 @@ func TestEnv_RandomString(t *testing.T) {
 }
 
 func TestEnv_OsErrorFallbacks(t *testing.T) {
-	t.Setenv("UNIGO_CONFIG_DIR", "")
-	t.Setenv("UNIGO_DATA_DIR", "")
-	t.Setenv("UNIGO_CACHE_DIR", "")
+	t.Setenv("UNISTACK_CONFIG_DIR", "")
+	t.Setenv("UNISTACK_DATA_DIR", "")
+	t.Setenv("UNISTACK_CACHE_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "")
 	t.Setenv("XDG_DATA_HOME", "")
 	t.Setenv("XDG_CACHE_HOME", "")
@@ -150,10 +150,10 @@ func TestEnv_OsErrorFallbacks(t *testing.T) {
 	OsUserConfigDir = func() (string, error) { return "", errMock }
 	OsGetwd = func() (string, error) { return "", errMock }
 
-	assert.Equal(t, "./unigo_config", GetConfigDir())
-	assert.Equal(t, "./unigo_data", GetDataDir())
-	assert.Equal(t, "./unigo_cache", GetCacheDir())
-	assert.Equal(t, "unigo.lock", GetLockFilePath())
+	assert.Equal(t, "./unistack_config", GetConfigDir())
+	assert.Equal(t, "./unistack_data", GetDataDir())
+	assert.Equal(t, "./unistack_cache", GetCacheDir())
+	assert.Equal(t, "unistack.lock", GetLockFilePath())
 
 	// mock crypto rand
 	origRand := CryptoRandRead

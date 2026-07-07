@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/download"
-	"github.com/snowdreamtech/unigo/internal/pkg/errors"
+	"github.com/snowdreamtech/unistack/internal/pkg/download"
+	"github.com/snowdreamtech/unistack/internal/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -593,7 +593,7 @@ func TestHTTPDownloader_VerifyGPGSignature_Skipped(t *testing.T) {
 	defer server.Close()
 
 	tmpDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tmpDir)
+	t.Setenv("UNISTACK_DATA_DIR", tmpDir)
 	// Create a dummy keyring file so it passes the open check, but it might fail to parse keyring.
 	keyringPath := filepath.Join(tmpDir, "keyring.gpg")
 	os.WriteFile(keyringPath, []byte{}, 0644)

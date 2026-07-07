@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/download"
+	"github.com/snowdreamtech/unistack/internal/pkg/download"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -54,7 +54,7 @@ func TestHTTPDownloader_Download_ContextCancelled(t *testing.T) {
 // TestHTTPDownloader_VerifyGPGSignature_FullFailure verifies the end-to-end execution of signature check which fails at CheckDetachedSignature.
 func TestHTTPDownloader_VerifyGPGSignature_FullFailure(t *testing.T) {
 	tmpDir := t.TempDir()
-	t.Setenv("UNIGO_DATA_DIR", tmpDir)
+	t.Setenv("UNISTACK_DATA_DIR", tmpDir)
 
 	keyringPath := filepath.Join(tmpDir, "keyring.gpg")
 	// Must be a valid empty keyring to pass openpgp.ReadKeyRing.

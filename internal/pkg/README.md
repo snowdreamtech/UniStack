@@ -1,6 +1,6 @@
 # Internal Packages
 
-This directory contains shared internal infrastructure packages used across the UniGo project template. These modules are strictly decoupled from business logic, making them universally applicable to any CLI tool.
+This directory contains shared internal infrastructure packages used across the UniStack project template. These modules are strictly decoupled from business logic, making them universally applicable to any CLI tool.
 
 ## Packages
 

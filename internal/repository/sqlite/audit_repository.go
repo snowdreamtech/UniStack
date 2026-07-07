@@ -8,7 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/snowdreamtech/unigo/internal/repository"
+	"github.com/snowdreamtech/unistack/internal/repository"
 )
 
 // AuditRepository implements repository.AuditRepository for SQLite

@@ -9,7 +9,7 @@ import (
 )
 
 // CompareVersions robustly compares two version strings.
-// It leverages UniGo's comprehensive internal Version parser to handle semver, date-versions,
+// It leverages UniStack's comprehensive internal Version parser to handle semver, date-versions,
 // and aliases (like "latest" vs "lts").
 // If one or both versions fail to parse (e.g. non-standard alphanumeric directories like "tip"),
 // it falls back to a segment-based numerical splitting algorithm to gracefully handle any string format.

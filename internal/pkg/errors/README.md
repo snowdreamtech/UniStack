@@ -1,6 +1,6 @@
 # Error Handling Package
 
-This package provides a comprehensive error handling system for UniGo, implementing custom error types, error classification, and error wrapping patterns as specified in Requirements 12.1 and 12.2.
+This package provides a comprehensive error handling system for UniStack, implementing custom error types, error classification, and error wrapping patterns as specified in Requirements 12.1 and 12.2.
 
 ## Features
 

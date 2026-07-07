@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/repository"
+	"github.com/snowdreamtech/unistack/internal/repository"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

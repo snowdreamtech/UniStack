@@ -11,17 +11,17 @@ import (
 )
 
 func TestLoadTOML(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, err := os.MkdirTemp("", "unistack_config_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	tomlContent := []byte(`debug = true`)
-	err = os.WriteFile(filepath.Join(tmpDir, "unigo.toml"), tomlContent, 0644)
+	err = os.WriteFile(filepath.Join(tmpDir, "unistack.toml"), tomlContent, 0644)
 	if err != nil {
 		t.Fatalf("Failed to write toml: %v", err)
 	}
@@ -36,17 +36,17 @@ func TestLoadTOML(t *testing.T) {
 }
 
 func TestLoadYAML(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, err := os.MkdirTemp("", "unistack_config_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	yamlContent := []byte(`debug: true`)
-	err = os.WriteFile(filepath.Join(tmpDir, "unigo.yaml"), yamlContent, 0644)
+	err = os.WriteFile(filepath.Join(tmpDir, "unistack.yaml"), yamlContent, 0644)
 	if err != nil {
 		t.Fatalf("Failed to write yaml: %v", err)
 	}
@@ -61,14 +61,14 @@ func TestLoadYAML(t *testing.T) {
 }
 
 func TestSave(t *testing.T) {
-	tmpDir, err := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, err := os.MkdirTemp("", "unistack_config_test")
 	if err != nil {
 		t.Fatalf("Failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	cfg := &Config{Debug: true}
 	err = cfg.Save()
@@ -77,7 +77,7 @@ func TestSave(t *testing.T) {
 	}
 
 	// Verify it wrote TOML
-	content, err := os.ReadFile(filepath.Join(tmpDir, "unigo.toml"))
+	content, err := os.ReadFile(filepath.Join(tmpDir, "unistack.toml"))
 	if err != nil {
 		t.Fatalf("Failed to read saved file: %v", err)
 	}
@@ -88,12 +88,12 @@ func TestSave(t *testing.T) {
 }
 
 func TestLoadInvalidTOML(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
-	os.WriteFile(filepath.Join(tmpDir, "unigo.toml"), []byte(`[invalid`), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "unistack.toml"), []byte(`[invalid`), 0644)
 
 	_, err := Load()
 	if err == nil {
@@ -102,12 +102,12 @@ func TestLoadInvalidTOML(t *testing.T) {
 }
 
 func TestLoadInvalidYAML(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
-	os.WriteFile(filepath.Join(tmpDir, "unigo.yaml"), []byte(`invalid: yaml: :`), 0644)
+	os.WriteFile(filepath.Join(tmpDir, "unistack.yaml"), []byte(`invalid: yaml: :`), 0644)
 
 	_, err := Load()
 	if err == nil {
@@ -120,12 +120,12 @@ func TestLoadUnreadableConfig(t *testing.T) {
 		t.Skip("Windows does not support Unix-style file permissions for testing unreadable files")
 	}
 
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
-	file := filepath.Join(tmpDir, "unigo.toml")
+	file := filepath.Join(tmpDir, "unistack.toml")
 	os.WriteFile(file, []byte(`debug = true`), 0200) // write-only
 
 	_, err := Load()
@@ -135,15 +135,15 @@ func TestLoadUnreadableConfig(t *testing.T) {
 }
 
 func TestSaveMkdirError(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
 
 	// Create a file where the config dir should be
 	badDir := filepath.Join(tmpDir, "bad_dir")
 	os.WriteFile(badDir, []byte("file"), 0644)
 
-	os.Setenv("UNIGO_CONFIG_DIR", badDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", badDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	cfg := &Config{Debug: true}
 	err := cfg.Save()
@@ -153,13 +153,13 @@ func TestSaveMkdirError(t *testing.T) {
 }
 
 func TestSaveWriteError(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	// Pre-create the config file as read-only
-	configPath := filepath.Join(tmpDir, "unigo.toml")
+	configPath := filepath.Join(tmpDir, "unistack.toml")
 	os.WriteFile(configPath, []byte(""), 0400)
 
 	cfg := &Config{Debug: true}
@@ -170,10 +170,10 @@ func TestSaveWriteError(t *testing.T) {
 }
 
 func TestLoadDefault(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "unigo_config_test")
+	tmpDir, _ := os.MkdirTemp("", "unistack_config_test")
 	defer os.RemoveAll(tmpDir)
-	os.Setenv("UNIGO_CONFIG_DIR", tmpDir)
-	defer os.Unsetenv("UNIGO_CONFIG_DIR")
+	os.Setenv("UNISTACK_CONFIG_DIR", tmpDir)
+	defer os.Unsetenv("UNISTACK_CONFIG_DIR")
 
 	cfg, err := Load()
 	if err != nil {

@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/cli/output"
+	"github.com/snowdreamtech/unistack/internal/cli/output"
 )
 
 // ExampleNewFormatter demonstrates creating different formatter types
