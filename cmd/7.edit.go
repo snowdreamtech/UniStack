@@ -8,18 +8,18 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/snowdreamtech/unigo/internal/config"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/config"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 	"github.com/spf13/cobra"
 )
 
 var editCmd = &cobra.Command{
 	Use:   "edit",
 	Short: "Open the config file in $EDITOR",
-	Long: `Open the UniGo config file in your preferred editor.
+	Long: `Open the UniStack config file in your preferred editor.
 
 Priority for finding an editor:
-1.  UNIGO_EDITOR environment variable
+1.  UNISTACK_EDITOR environment variable
 2.  VISUAL environment variable
 3.  EDITOR environment variable
 4.  Standard system defaults (vim, nano, notepad)`,
@@ -63,8 +63,8 @@ func runEdit(cmd *cobra.Command, args []string) error {
 }
 
 func getBestEditorWithSource() (string, string) {
-	if e := os.Getenv("UNIGO_EDITOR"); e != "" {
-		return e, "UNIGO_EDITOR"
+	if e := os.Getenv("UNISTACK_EDITOR"); e != "" {
+		return e, "UNISTACK_EDITOR"
 	}
 	if e := os.Getenv("VISUAL"); e != "" {
 		return e, "VISUAL"

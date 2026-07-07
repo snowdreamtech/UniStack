@@ -2,7 +2,7 @@
 // Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 // Package cmd contains all the command-line interface definitions and implementations
-// for the unigo application. This file implements shell completion generation commands.
+// for the unistack application. This file implements shell completion generation commands.
 package cmd
 
 import (
@@ -11,9 +11,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/snowdreamtech/unigo/internal/cli/output"
-	"github.com/snowdreamtech/unigo/internal/cli/shell"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/cli/output"
+	"github.com/snowdreamtech/unistack/internal/cli/shell"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 	"github.com/spf13/cobra"
 )
 
@@ -35,10 +35,10 @@ var allShells = []shell.ShellType{
 
 // completionFileNames maps each ShellType to its output filename.
 var completionFileNames = map[shell.ShellType]string{
-	shell.ShellZsh:        "unigo.zsh",
-	shell.ShellBash:       "unigo.bash",
-	shell.ShellFish:       "unigo.fish",
-	shell.ShellPowerShell: "unigo.ps1",
+	shell.ShellZsh:        "unistack.zsh",
+	shell.ShellBash:       "unistack.bash",
+	shell.ShellFish:       "unistack.fish",
+	shell.ShellPowerShell: "unistack.ps1",
 }
 
 // init registers the completion command and its subcommands to the root command.
@@ -54,7 +54,7 @@ func init() {
 var completionCmd = &cobra.Command{
 	Use:   "completion [bash|zsh|fish|powershell]",
 	Short: "Generate or install shell completion script",
-	Long: `Generate or install shell completion script for UniGo.
+	Long: `Generate or install shell completion script for UniStack.
 
 By default, it auto-detects your current shell and prints the completion script.
 Use the --install (-i) flag to automatically save the script and enable it in your shell configuration.
@@ -64,19 +64,19 @@ Use the --dir (-d) flag to export all four completion scripts to a specified dir
 
 Examples:
   # Auto-detect and print to stdout
-  unigo completion
+  unistack completion
 
   # Auto-detect and install persistently
-  unigo completion -i
+  unistack completion -i
 
   # Generate for a specific shell and print
-  unigo completion zsh
+  unistack completion zsh
 
   # Generate all scripts, install only for shells present on the system
-  unigo completion -i --all
+  unistack completion -i --all
 
   # Export all four completion scripts to a directory (no shell config changes)
-  unigo completion -d ./completions`,
+  unistack completion -d ./completions`,
 
 	DisableFlagsInUseLine: true,
 	ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
@@ -163,7 +163,7 @@ func runCompletion(cmd *cobra.Command, args []string) error {
 // exportCompletionsToDir generates all four completion scripts and writes them to destDir.
 // The directory is created if it does not exist. This is idempotent.
 func exportCompletionsToDir(formatter output.Formatter, cmd *cobra.Command, destDir string) error {
-	// dryRun isn't explicitly defined in unigo root cmd in this example, so assuming false
+	// dryRun isn't explicitly defined in unistack root cmd in this example, so assuming false
 	dryRun := false
 
 	if dryRun {
@@ -341,16 +341,16 @@ func installCompletion(formatter output.Formatter, cmd *cobra.Command, shellType
 
 	switch shellType {
 	case shell.ShellZsh:
-		compFile = filepath.Join(compDir, "unigo.zsh")
+		compFile = filepath.Join(compDir, "unistack.zsh")
 		configFile = filepath.Join(home, ".zshrc")
 	case shell.ShellBash:
-		compFile = filepath.Join(compDir, "unigo.bash")
+		compFile = filepath.Join(compDir, "unistack.bash")
 		configFile = filepath.Join(home, ".bashrc")
 	case shell.ShellFish:
 		// Fish uses a standard completion path; place the file there directly.
-		compFile = filepath.Join(home, ".config/fish/completions/unigo.fish")
+		compFile = filepath.Join(home, ".config/fish/completions/unistack.fish")
 	case shell.ShellPowerShell:
-		compFile = filepath.Join(compDir, "unigo.ps1")
+		compFile = filepath.Join(compDir, "unistack.ps1")
 		configFile = env.Get("PROFILE")
 		if configFile == "" {
 			configFile = filepath.Join(home, "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1")
@@ -383,9 +383,9 @@ func installCompletion(formatter output.Formatter, cmd *cobra.Command, shellType
 	}
 
 	if dryRun {
-		formatter.Success(fmt.Sprintf("[dry-run] UniGo completion for %s is ready to be enabled.", shellType))
+		formatter.Success(fmt.Sprintf("[dry-run] UniStack completion for %s is ready to be enabled.", shellType))
 	} else {
-		formatter.Success(fmt.Sprintf("UniGo completion for %s is now enabled.", shellType))
+		formatter.Success(fmt.Sprintf("UniStack completion for %s is now enabled.", shellType))
 		if configFile != "" {
 			fmt.Printf("\nPlease restart your shell or run: source %s\n", configFile)
 		}
@@ -405,15 +405,15 @@ func uninstallCompletion(formatter output.Formatter, shellType shell.ShellType) 
 
 	switch shellType {
 	case shell.ShellZsh:
-		compFile = filepath.Join(compDir, "unigo.zsh")
+		compFile = filepath.Join(compDir, "unistack.zsh")
 		configFile = filepath.Join(home, ".zshrc")
 	case shell.ShellBash:
-		compFile = filepath.Join(compDir, "unigo.bash")
+		compFile = filepath.Join(compDir, "unistack.bash")
 		configFile = filepath.Join(home, ".bashrc")
 	case shell.ShellFish:
-		compFile = filepath.Join(home, ".config/fish/completions/unigo.fish")
+		compFile = filepath.Join(home, ".config/fish/completions/unistack.fish")
 	case shell.ShellPowerShell:
-		compFile = filepath.Join(compDir, "unigo.ps1")
+		compFile = filepath.Join(compDir, "unistack.ps1")
 		configFile = env.Get("PROFILE")
 		if configFile == "" {
 			configFile = filepath.Join(home, "Documents", "PowerShell", "Microsoft.PowerShell_profile.ps1")
@@ -443,6 +443,6 @@ func uninstallCompletion(formatter output.Formatter, shellType shell.ShellType) 
 		}
 	}
 
-	formatter.Success(fmt.Sprintf("UniGo completion for %s has been disabled.", shellType))
+	formatter.Success(fmt.Sprintf("UniStack completion for %s has been disabled.", shellType))
 	return nil
 }

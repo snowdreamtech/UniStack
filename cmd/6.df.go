@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/utils"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/utils"
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +18,8 @@ var dfHumanReadable bool
 
 var dfCmd = &cobra.Command{
 	Use:   "df",
-	Short: "Display the disk usage of unigo data directories",
-	Long:  `Display the disk usage of various folders within the unigo data directory.`,
+	Short: "Display the disk usage of unistack data directories",
+	Long:  `Display the disk usage of various folders within the unistack data directory.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dataDir := env.GetDataDir()
 

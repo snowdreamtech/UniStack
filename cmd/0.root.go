@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/snowdreamtech/unigo/internal/cli/output"
-	"github.com/snowdreamtech/unigo/internal/hello"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/pkg/errors"
-	"github.com/snowdreamtech/unigo/internal/pkg/logger"
-	"github.com/snowdreamtech/unigo/internal/updater"
+	"github.com/snowdreamtech/unistack/internal/cli/output"
+	"github.com/snowdreamtech/unistack/internal/hello"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/pkg/errors"
+	"github.com/snowdreamtech/unistack/internal/pkg/logger"
+	"github.com/snowdreamtech/unistack/internal/updater"
 	"github.com/spf13/cobra"
 )
 
@@ -34,8 +34,8 @@ func getOutputFormat() output.OutputFormat {
 }
 
 var rootCmd = &cobra.Command{
-	Use:   "unigo",
-	Short: "UniGo is a Golang template hello world application",
+	Use:   "unistack",
+	Short: "UniStack is a Golang template hello world application",
 	Long:  `A fast and flexible Golang template referencing UniRTM and helloworld.`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		// Change directory if --cd is provided

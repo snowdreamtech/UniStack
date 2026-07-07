@@ -16,9 +16,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/archive"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/updater"
+	"github.com/snowdreamtech/unistack/internal/pkg/archive"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/updater"
 	"github.com/spf13/cobra"
 )
 
@@ -140,9 +140,9 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	}
 
 	fmt.Printf("Extracting binary...\n")
-	binaryName := "unigo"
+	binaryName := "unistack"
 	if goos == "windows" {
-		binaryName = "unigo.exe"
+		binaryName = "unistack.exe"
 	}
 
 	binaryData, err := archive.ExtractBinary(archiveData, binaryName)

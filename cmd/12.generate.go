@@ -30,7 +30,7 @@ var manpageCmd = &cobra.Command{
 		}
 
 		header := &doc.GenManHeader{
-			Title:   "UNIGO",
+			Title:   "UNISTACK",
 			Section: "1",
 		}
 

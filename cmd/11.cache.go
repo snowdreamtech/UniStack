@@ -11,11 +11,11 @@ import (
 	"time"
 
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unigo/internal/cli/output"
-	"github.com/snowdreamtech/unigo/internal/database"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/repository/sqlite"
-	"github.com/snowdreamtech/unigo/internal/service"
+	"github.com/snowdreamtech/unistack/internal/cli/output"
+	"github.com/snowdreamtech/unistack/internal/database"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/repository/sqlite"
+	"github.com/snowdreamtech/unistack/internal/service"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
