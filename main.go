@@ -4,7 +4,7 @@
 package main
 
 import (
-	"github.com/snowdreamtech/unigo/cmd"
+	"github.com/snowdreamtech/unistack/cmd"
 )
 
 func main() {

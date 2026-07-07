@@ -3,10 +3,10 @@
   Licensed under the MIT License. See LICENSE file in the project root for full license information.
 #>
 
-# PowerShell installer script for UniGo (install.ps1)
+# PowerShell installer script for UniStack (install.ps1)
 # Compatible with Windows PowerShell and PowerShell Core
 # Usage:
-#   Invoke-WebRequest -Uri https://raw.githubusercontent.com/snowdreamtech/UniGo/main/install.ps1 -OutFile install.ps1; .\install.ps1 --version v0.7.0
+#   Invoke-WebRequest -Uri https://raw.githubusercontent.com/snowdreamtech/UniStack/main/install.ps1 -OutFile install.ps1; .\install.ps1 --version v0.7.0
 #   .\install.ps1 --install-dir $HOME\bin --no-proxy
 
 param(
@@ -45,7 +45,7 @@ function Write-Error  { param([string]$msg) Write-Log -Level 'ERROR' -Message $m
 function Show-Help {
     Write-Info "Usage: install.ps1 [--version <tag>] [--install-dir <dir>] [--no-proxy] [--quiet] [--skip-checksum] [--log-file <path>] [--help]"
     Write-Info "  --version, -v   Target version (default: latest release)"
-    Write-Info "  --install-dir   Directory to place the binary (default: `$HOME\bin for normal user, C:\Program Files\UniGo for admin)"
+    Write-Info "  --install-dir   Directory to place the binary (default: `$HOME\bin for normal user, C:\Program Files\UniStack for admin)"
     Write-Info "  --no-proxy      Disable GitHub proxy"
     Write-Info "  --quiet, -q     Suppress INFO and WARN output"
     Write-Info "  --skip-checksum Skip SHA256 checksum verification"
@@ -57,8 +57,8 @@ function Show-Help {
 if ($Help) { Show-Help }
 
 # Configuration
-$Repo = "snowdreamtech/UniGo"
-$Binary = "unigo"
+$Repo = "snowdreamtech/UniStack"
+$Binary = "unistack"
 $GitHubProxy = $env:GITHUB_PROXY
 if (-not $GitHubProxy) { $GitHubProxy = "https://gh-proxy.sn0wdr1am.com/" }
 if ($NoProxy) { $GitHubProxy = "" }
@@ -178,7 +178,7 @@ if ($SkipChecksum) {
 if (-not $InstallDir) {
     $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
     if ($isAdmin) {
-        $InstallDir = "C:\Program Files\UniGo"
+        $InstallDir = "C:\Program Files\UniStack"
     } else {
         $InstallDir = "$HOME\bin"
     }
@@ -214,7 +214,7 @@ if (-not ($env:Path -split ";" | Where-Object { $_ -eq $InstallDir })) {
 if (Test-Path $targetPath) {
     try {
         $verOutput = & $targetPath version 2>$null | Out-String
-        $installedVer = $verOutput -split "`n" | Where-Object { $_ -match "^unigo version" } | Select-Object -First 1
+        $installedVer = $verOutput -split "`n" | Where-Object { $_ -match "^unistack version" } | Select-Object -First 1
         if ([string]::IsNullOrWhiteSpace($installedVer)) { $installedVer = "unknown" }
         Write-Info "Installed version: $installedVer"
         Write-Info "Installation complete!"

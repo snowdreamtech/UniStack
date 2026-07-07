@@ -4,5 +4,5 @@
 ---
 scan:
   skip-dirs:
-    - "unigo_data"
-    - "cmd/unigo_data"
+    - "unistack_data"
+    - "cmd/unistack_data"

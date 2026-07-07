@@ -2,26 +2,26 @@
 # Copyright (c) 2026 SnowdreamTech. All rights reserved.
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
-# install.sh — UniGo installer for Linux and macOS
+# install.sh — UniStack installer for Linux and macOS
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/snowdreamtech/UniGo/main/install.sh | sh
+#   curl -fsSL https://raw.githubusercontent.com/snowdreamtech/UniStack/main/install.sh | sh
 #   sh install.sh --version v0.7.0
 #
 # Environment variables:
 #   GITHUB_PROXY  — Optional proxy prefix for GitHub downloads
 #                   Default: https://gh-proxy.sn0wdr1am.com/
-#   INSTALL_DIR   — Directory to install the binary (default: ~/.unigo/bin, or /usr/local/bin if root)
-#   UNIGO_VERSION — Target version (overridden by --version flag)
+#   INSTALL_DIR   — Directory to install the binary (default: ~/.unistack/bin, or /usr/local/bin if root)
+#   UNISTACK_VERSION — Target version (overridden by --version flag)
 
 set -eu
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-REPO="snowdreamtech/UniGo"
-BINARY="unigo"
+REPO="snowdreamtech/UniStack"
+BINARY="unistack"
 GITHUB_PROXY="${GITHUB_PROXY:-https://gh-proxy.sn0wdr1am.com/}"
-UNIGO_VERSION="${UNIGO_VERSION:-}"
+UNISTACK_VERSION="${UNISTACK_VERSION:-}"
 
 # Retry config
 CURL_RETRY_COUNT=5
@@ -78,7 +78,7 @@ parse_args() {
     case "$1" in
     --version | -v)
       shift
-      UNIGO_VERSION="$1"
+      UNISTACK_VERSION="$1"
       ;;
     --install-dir)
       shift
@@ -143,9 +143,9 @@ detect_platform() {
 # Resolve target version
 # ---------------------------------------------------------------------------
 resolve_version() {
-  if [ -n "$UNIGO_VERSION" ]; then
+  if [ -n "$UNISTACK_VERSION" ]; then
     # Normalize: strip leading 'v' for comparison but keep tag form for URL
-    VERSION="$UNIGO_VERSION"
+    VERSION="$UNISTACK_VERSION"
     # Ensure v-prefix for tag
     case "$VERSION" in
     v*) ;;
@@ -417,10 +417,10 @@ verify_install() {
     die "Verification failed: binary not found at ${INSTALLED}"
   fi
 
-  INSTALLED_VER="$("$INSTALLED" version 2>/dev/null | grep '^unigo version' || echo 'unknown')"
+  INSTALLED_VER="$("$INSTALLED" version 2>/dev/null | grep '^unistack version' || echo 'unknown')"
   printf '\033[0;32m\n'
   printf '  ==============================\n'
-  printf '  UniGo %s installed!\n' "${VERSION}"
+  printf '  UniStack %s installed!\n' "${VERSION}"
   printf '  Binary : %s/%s\n' "${INSTALL_DIR}" "${BINARY}"
   printf '  Version: %s\n' "${INSTALLED_VER}"
   printf '  ==============================\n'

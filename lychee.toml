@@ -8,7 +8,7 @@
 exclude_path = [
   ".git",
   "node_modules",
-  "cmd/unigo_data",
+  "cmd/unistack_data",
   ".venv",
   "venv",
   "env",
@@ -27,8 +27,8 @@ exclude_path = [
 # Exclude URL patterns
 # Ignore unreleased version compare links in CHANGELOG
 exclude = [
-  "https://unigo.snowdream.tech.*",
-  "https://github.com/snowdreamtech/UniGo/discussions",
+  "https://unistack.snowdream.tech.*",
+  "https://github.com/snowdreamtech/UniStack/discussions",
   ".*docs/glossary.md",
   ".*docs/index.md",                                        # Unreleased version compare links (tags don't exist yet)
   'https://github\.com/.*/compare/.*\.\.\.v\d+\.\d+\.\d+$',

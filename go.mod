@@ -1,4 +1,4 @@
-module github.com/snowdreamtech/unigo
+module github.com/snowdreamtech/unistack
 
 go 1.26.4
 

@@ -2,7 +2,7 @@
 # Licensed under the MIT License. See LICENSE file in the project root for full license information.
 
 ---
-# golangci-lint configuration for UniGo
+# golangci-lint configuration for UniStack
 # Reference: https://golangci-lint.run/usage/configuration/
 
 run:
@@ -92,7 +92,7 @@ linters-settings:
     sections:
       - standard # standard library
       - default # everything else
-      - prefix(github.com/snowdreamtech/unigo) # project imports
+      - prefix(github.com/snowdreamtech/unistack) # project imports
 
   gofumpt:
     extra-rules: true

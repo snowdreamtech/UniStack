@@ -1,46 +1,46 @@
-# Mise vs UniGo Configuration Comparison
+# Mise vs UniStack Configuration Comparison
 
-This report provides a granular comparison of configuration capabilities between `mise` and `UniGo`. Based on the latest source code analysis from both repositories, here is the current parity status.
+This report provides a granular comparison of configuration capabilities between `mise` and `UniStack`. Based on the latest source code analysis from both repositories, here is the current parity status.
 
 ## 1. Environment Directives (`[env]`)
 
-Mise uses a sophisticated directive system for environment manipulation. UniGo has recently been upgraded to support the most critical of these.
+Mise uses a sophisticated directive system for environment manipulation. UniStack has recently been upgraded to support the most critical of these.
 
-| Feature | Mise Syntax | UniGo Support | Status | Notes |
+| Feature | Mise Syntax | UniStack Support | Status | Notes |
 | :--- | :--- | :---: | :---: | :--- |
 | **Simple KV** | `KEY = "VAL"` | **Yes** | ✅ | Standard key-value injection. |
 | **Shell Expansion** | `KEY = "$HOME"` | **Yes** | ✅ | Supports `$VAR` and `${VAR}` in all env values. |
 | **Task Timeout** | `timeout = 30` | **Yes** | ✅ | Supports global `task_timeout` and per-task `timeout`. |
 | **Task Output** | `output = "prefix"` | **Yes** | ✅ | Supports `plain` and `prefix` output styles. |
-| **Tera Templates** | `KEY = "{{ env.HOME }}"` | **Yes** | ✅ | UniGo uses `pongo2` (Jinja2-like), highly compatible with Tera. |
+| **Tera Templates** | `KEY = "{{ env.HOME }}"` | **Yes** | ✅ | UniStack uses `pongo2` (Jinja2-like), highly compatible with Tera. |
 | **Dotenv Files** | `_.file = ".env"` | **Yes** | ✅ | Implemented in `internal/config/loader.go`. |
-| **Path Prepending** | `_.path = "bin"` | **Yes** | ✅ | Supports both string and list formats in UniGo; supports `$VAR`. |
+| **Path Prepending** | `_.path = "bin"` | **Yes** | ✅ | Supports both string and list formats in UniStack; supports `$VAR`. |
 | **Script Sourcing** | `_.source = "src.sh"` | **Yes** | ✅ | Implemented for POSIX, Fish, and PowerShell; supports `$VAR`. |
 | **Required Vars** | `required = true` | **Yes** | ✅ | Fails if var is missing; supports custom help text. |
 | **Secret Redacting** | `redact = true` | **Yes** | ✅ | Values are replaced with `[REDACTED]` in shell output. |
 | **Unset Variable** | `KEY = { rm = true }` | **Yes** | ✅ | Removes the variable from the resolved environment. |
 | **Python Venv** | `_.python_venv = ".venv"` | **Yes** | ✅ | Automatically activates venv and sets `VIRTUAL_ENV`. |
-| **Modules/Vfox** | `_.module = "..."` | No | ❌ | UniGo has its own provider system instead of vfox modules. |
-| **Age Encryption** | `_.age = "..."` | No | ❌ | Experimental in Mise; not planned for UniGo. |
+| **Modules/Vfox** | `_.module = "..."` | No | ❌ | UniStack has its own provider system instead of vfox modules. |
+| **Age Encryption** | `_.age = "..."` | No | ❌ | Experimental in Mise; not planned for UniStack. |
 
 ## 2. Global Settings (`[settings]`)
 
-Settings control the behavior of the tool itself. UniGo targets the most frequently used settings for developer experience.
+Settings control the behavior of the tool itself. UniStack targets the most frequently used settings for developer experience.
 
-| Feature | Mise Key | UniGo Support | Status | Notes |
+| Feature | Mise Key | UniStack Support | Status | Notes |
 | :--- | :--- | :---: | :---: | :--- |
 | **GitHub Proxy** | `github_proxy` | **Yes** | ✅ | Fully aligned. |
 | **GitHub Token** | `github_token` | **Yes** | ✅ | Fully aligned. |
-| **Concurrency** | `jobs` | **Yes** | ✅ | UniGo uses `concurrency` (mapped from `jobs` during migration). |
-| **HTTP Timeout** | `http_timeout` | **Yes** | ✅ | Recently added to UniGo. |
-| **Experimental** | `experimental` | **Yes** | ✅ | Recently added to UniGo. |
+| **Concurrency** | `jobs` | **Yes** | ✅ | UniStack uses `concurrency` (mapped from `jobs` during migration). |
+| **HTTP Timeout** | `http_timeout` | **Yes** | ✅ | Recently added to UniStack. |
+| **Experimental** | `experimental` | **Yes** | ✅ | Recently added to UniStack. |
 | **Lockfile** | `lockfile` | **Yes** | ✅ | Both support opt-in tool version locking. |
 | **Strict Lock** | `locked` | **Yes** | ✅ | Useful for CI environments. |
 | **Cache Dir** | `cache_dir` | **Yes** | ✅ | Supported via `settings.cache_dir`. |
 | **Data Dir** | `data_dir` | **Yes** | ✅ | Supported via `settings.data_dir`. |
 | **Always Keep DL** | `always_keep_download` | **Yes** | ✅ | Now supported; preserves artifacts in downloads directory. |
 | **Auto Install** | `auto_install` | **Yes** | ✅ | Fully aligned; triggers on `run` and `exec`. |
-| **Asdf Compat** | `asdf_compat` | No | ❌ | UniGo uses its own modern logic exclusively. |
+| **Asdf Compat** | `asdf_compat` | No | ❌ | UniStack uses its own modern logic exclusively. |
 | **Color Control** | `color` | **Yes** | ✅ | Fully aligned; supports auto, always, and never. |
 | **Ceiling Paths** | `ceiling_paths` | **Yes** | ✅ | Stops config discovery at specified directories. |
 | **Trusted Paths** | `trusted_config_paths` | **Yes** | ✅ | Automatically trusts configurations in whitelist paths. |
@@ -52,9 +52,9 @@ Settings control the behavior of the tool itself. UniGo targets the most frequen
 
 - **Environment Caching**: [Experimental] Caches computed environments to disk for ultra-fast nested calls.
 
-### UniGo Alignment Level
+### UniStack Alignment Level
 
-UniGo has achieved **~95% functional parity** for the average developer's daily workflow. The missing features are primarily edge cases (Age encryption) or legacy compatibility (asdf_compat). With the addition of **Recursive Config Discovery**, **Ceiling Paths**, and **Version Aliases**, UniGo now offers a nearly identical configuration experience to Mise.
+UniStack has achieved **~95% functional parity** for the average developer's daily workflow. The missing features are primarily edge cases (Age encryption) or legacy compatibility (asdf_compat). With the addition of **Recursive Config Discovery**, **Ceiling Paths**, and **Version Aliases**, UniStack now offers a nearly identical configuration experience to Mise.
 
 ---
-*Report generated based on Mise source analysis (`settings.toml` & `src/config/env_directive/mod.rs`) and UniGo current state.*
+*Report generated based on Mise source analysis (`settings.toml` & `src/config/env_directive/mod.rs`) and UniStack current state.*
