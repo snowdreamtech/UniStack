@@ -6,7 +6,7 @@
 # vim: set ts=2 sw=2 tw=0 fo=cnqoj
 
 version: 2
-project_name: unigo
+project_name: unistack
 
 report_sizes: true
 
@@ -31,22 +31,22 @@ before:
     - go run ./main.go generate manpage -d ./manpages
 
 builds:
-  - id: unigo
-    binary: unigo
+  - id: unistack
+    binary: unistack
     env:
       - CGO_ENABLED=0
     flags:
       - -trimpath
     ldflags:
       - -s -w
-      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.ProjectName=unigo'
-      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.Author=Snowdream Tech <snowdreamtech@qq.com>'
-      - -X github.com/snowdreamtech/unigo/internal/pkg/env.BuildTime={{.Date}}
-      - -X github.com/snowdreamtech/unigo/internal/pkg/env.CommitHash={{.ShortCommit}}
-      - -X github.com/snowdreamtech/unigo/internal/pkg/env.CommitHashFull={{.FullCommit}}
-      - -X github.com/snowdreamtech/unigo/internal/pkg/env.GitTag={{.Tag}}
-      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.COPYRIGHT=Copyright (c) 2026-present SnowdreamTech Inc.'
-      - -X 'github.com/snowdreamtech/unigo/internal/pkg/env.LICENSE=MIT <https://github.com/snowdreamtech/unigo/blob/main/LICENSE>'
+      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.ProjectName=unistack'
+      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.Author=Snowdream Tech <snowdreamtech@qq.com>'
+      - -X github.com/snowdreamtech/unistack/internal/pkg/env.BuildTime={{.Date}}
+      - -X github.com/snowdreamtech/unistack/internal/pkg/env.CommitHash={{.ShortCommit}}
+      - -X github.com/snowdreamtech/unistack/internal/pkg/env.CommitHashFull={{.FullCommit}}
+      - -X github.com/snowdreamtech/unistack/internal/pkg/env.GitTag={{.Tag}}
+      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.COPYRIGHT=Copyright (c) 2026-present SnowdreamTech Inc.'
+      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.LICENSE=MIT <https://github.com/snowdreamtech/unistack/blob/main/LICENSE>'
     goos:
       - linux
       - darwin
@@ -68,7 +68,7 @@ builds:
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
-  - id: unigo
+  - id: unistack
     formats: [tar.gz]
     # This name template makes the OS and Arch compatible with uname and includes the version.
     name_template: >-
@@ -129,17 +129,17 @@ release:
   prerelease: auto
   github:
     owner: snowdreamtech
-    name: unigo
+    name: unistack
   header: |
     **Snowdream Tech AI IDE Template** is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
 
     This repository serves as a **Single Source of Truth** for AI agent rules, workflows, and project configurations, supporting over 50 different AI-assisted IDEs with massive multi-language support.
   footer: |
-    **Full Changelog**: https://github.com/snowdreamtech/unigo/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/snowdreamtech/unistack/compare/{{ .PreviousTag }}...{{ .Tag }}
 
     ## 🤝 Contributing
 
-    Contributions are welcome! Please read our [Contributing Guide](https://github.com/snowdreamtech/unigo/blob/main/CONTRIBUTING.md) first.
+    Contributions are welcome! Please read our [Contributing Guide](https://github.com/snowdreamtech/unistack/blob/main/CONTRIBUTING.md) first.
 
 source:
   enabled: true
@@ -189,7 +189,7 @@ changelog:
 nfpms:
   - id: default
     file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
-    homepage: https://github.com/snowdreamtech/unigo
+    homepage: https://github.com/snowdreamtech/unistack
     maintainer: "Snowdream Tech <snowdreamtech@qq.com>"
     description: |-
       Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
@@ -206,18 +206,18 @@ nfpms:
     dependencies:
       - git
     contents:
-      - src: ./completions/unigo.bash
-        dst: /usr/share/bash-completion/completions/unigo
+      - src: ./completions/unistack.bash
+        dst: /usr/share/bash-completion/completions/unistack
         file_info:
           mode: 0644
           mtime: "{{ .CommitDate }}"
-      - src: ./completions/unigo.zsh
-        dst: /usr/share/zsh/vendor-completions/_unigo
+      - src: ./completions/unistack.zsh
+        dst: /usr/share/zsh/vendor-completions/_unistack
         file_info:
           mode: 0644
           mtime: "{{ .CommitDate }}"
-      - src: ./completions/unigo.fish
-        dst: /usr/share/fish/vendor_completions.d/unigo.fish
+      - src: ./completions/unistack.fish
+        dst: /usr/share/fish/vendor_completions.d/unistack.fish
         file_info:
           mode: 0644
           mtime: "{{ .CommitDate }}"
@@ -227,7 +227,7 @@ nfpms:
           mode: 0644
           mtime: "{{ .CommitDate }}"
       - src: LICENSE
-        dst: /usr/share/doc/unigo/copyright
+        dst: /usr/share/doc/unistack/copyright
         file_info:
           mode: 0644
           mtime: "{{ .CommitDate }}"
@@ -253,7 +253,7 @@ snapcrafts:
     disable: "{{ if .IsNightly }}true{{ end }}"
 
 flatpak:
-  - app_id: io.github.snowdreamtech.unigo
+  - app_id: io.github.snowdreamtech.unistack
     runtime: org.freedesktop.Platform
     runtime_version: "24.08"
     sdk: org.freedesktop.Sdk
@@ -283,21 +283,21 @@ signs:
       - --yes # Enables keyless signing via OIDC token
 
 homebrew_casks:
-  - name: unigo
+  - name: unistack
     binaries:
-      - unigo
+      - unistack
     manpages:
-      - manpages/unigo.1
+      - manpages/unistack.1
     completions:
-      bash: completions/unigo.bash
-      zsh: completions/unigo.zsh
-      fish: completions/unigo.fish
+      bash: completions/unistack.bash
+      zsh: completions/unistack.zsh
+      fish: completions/unistack.fish
     repository:
       owner: snowdreamtech
       name: homebrew-tap
-    homepage: "https://github.com/snowdreamtech/unigo"
+    homepage: "https://github.com/snowdreamtech/unistack"
     url:
-      template: "https://github.com/snowdreamtech/unigo/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+      template: "https://github.com/snowdreamtech/unistack/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
       verified: "github.com/snowdreamtech/"
     description: "Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration."
     license: "MIT"
@@ -305,20 +305,20 @@ homebrew_casks:
       post:
         install: |
           if OS.mac?
-            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/unigo"]
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/unistack"]
           end
 
 winget:
-  - name: unigo
+  - name: unistack
     publisher: SnowdreamTech
     license: MIT
-    homepage: https://github.com/snowdreamtech/unigo
+    homepage: https://github.com/snowdreamtech/unistack
     short_description: Snowdream Tech AI IDE Template
     repository:
       owner: snowdreamtech
       name: winget-pkgs
       token: "{{ .Env.WORKFLOW_SECRET }}"
-      branch: "unigo-{{.Version}}"
+      branch: "unistack-{{.Version}}"
       pull_request:
         enabled: true
         base:
@@ -331,7 +331,7 @@ scoops:
       owner: snowdreamtech
       name: scoop-bucket
       token: "{{ .Env.WORKFLOW_SECRET }}"
-    homepage: https://github.com/snowdreamtech/unigo
+    homepage: https://github.com/snowdreamtech/unistack
     description: Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
     license: MIT
 
@@ -340,33 +340,33 @@ nix:
       owner: snowdreamtech
       name: nur
       token: "{{ .Env.WORKFLOW_SECRET }}"
-    homepage: https://github.com/snowdreamtech/unigo
+    homepage: https://github.com/snowdreamtech/unistack
     description: Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
     license: mit
     skip_upload: auto
 
 aurs:
-  - homepage: https://github.com/snowdreamtech/unigo
+  - homepage: https://github.com/snowdreamtech/unistack
     description: Snowdream Tech AI IDE Template is an enterprise-grade, foundational template designed for multi-AI IDE collaboration.
     maintainers:
       - "Snowdream Tech <snowdreamtech@qq.com>"
     license: MIT
     private_key: "{{ .Env.AUR_KEY }}"
-    git_url: "ssh://aur@aur.archlinux.org/unigo-bin.git"
+    git_url: "ssh://aur@aur.archlinux.org/unistack-bin.git"
     package: |-
       # bin
-      install -Dm755 "./unigo" "${pkgdir}/usr/bin/unigo"
+      install -Dm755 "./unistack" "${pkgdir}/usr/bin/unistack"
 
       # license
-      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/unigo/LICENSE"
+      install -Dm644 "./LICENSE" "${pkgdir}/usr/share/licenses/unistack/LICENSE"
 
       # completions
       mkdir -p "${pkgdir}/usr/share/bash-completion/completions/"
       mkdir -p "${pkgdir}/usr/share/zsh/site-functions/"
       mkdir -p "${pkgdir}/usr/share/fish/vendor_completions.d/"
-      install -Dm644 "./completions/unigo.bash" "${pkgdir}/usr/share/bash-completion/completions/unigo"
-      install -Dm644 "./completions/unigo.zsh" "${pkgdir}/usr/share/zsh/site-functions/_unigo"
-      install -Dm644 "./completions/unigo.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/unigo.fish"
+      install -Dm644 "./completions/unistack.bash" "${pkgdir}/usr/share/bash-completion/completions/unistack"
+      install -Dm644 "./completions/unistack.zsh" "${pkgdir}/usr/share/zsh/site-functions/_unistack"
+      install -Dm644 "./completions/unistack.fish" "${pkgdir}/usr/share/fish/vendor_completions.d/unistack.fish"
 
       # man pages
-      install -Dm644 "./manpages/unigo.1.gz" "${pkgdir}/usr/share/man/man1/unigo.1.gz"
+      install -Dm644 "./manpages/unistack.1.gz" "${pkgdir}/usr/share/man/man1/unistack.1.gz"

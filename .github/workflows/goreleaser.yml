@@ -348,9 +348,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           # npm/scripts/build.sh was already executed by GoReleaser after_hooks.
-          # Platform packages (npm/unigo-*/bin/) and package.json files are ready.
+          # Platform packages (npm/unistack-*/bin/) and package.json files are ready.
           echo '=== Publishing platform sub-packages ==='
-          for pkg in npm/unigo-*/; do
+          for pkg in npm/unistack-*/; do
             pkg_name=$(node -p "require('./${pkg}package.json').name" 2>/dev/null || echo "${pkg}")
             echo "[publish] ${pkg_name} ..."
             npm publish "${pkg}" --access public --registry=https://registry.npmjs.org
@@ -358,8 +358,8 @@ jobs:
 
           echo ""
           echo '=== Publishing root package ==='
-          echo '[publish] @snowdreamtech/unigo ...'
-          npm publish npm/unigo/ --access public --registry=https://registry.npmjs.org
+          echo '[publish] @snowdreamtech/unistack ...'
+          npm publish npm/unistack/ --access public --registry=https://registry.npmjs.org
 
           echo ""
           echo '[done] All npm packages published successfully!'
@@ -400,8 +400,8 @@ jobs:
           GH_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
         run: |
           gh release download "$TAG" \
-            --repo snowdreamtech/UniGo \
-            --pattern 'unigo_Linux_x86_64.tar.gz' \
+            --repo snowdreamtech/UniStack \
+            --pattern 'unistack_Linux_x86_64.tar.gz' \
             --pattern 'checksums.txt' \
             --pattern 'checksums.txt.sigstore.json'
 
@@ -411,7 +411,7 @@ jobs:
       - name: "🔒 Verify cosign signature"
         run: |
           cosign verify-blob \
-            --certificate-identity "https://github.com/snowdreamtech/UniGo/.github/workflows/goreleaser.yml@refs/tags/$TAG" \
+            --certificate-identity "https://github.com/snowdreamtech/UniStack/.github/workflows/goreleaser.yml@refs/tags/$TAG" \
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
             --bundle checksums.txt.sigstore.json \
             checksums.txt
@@ -420,6 +420,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
         run: |
-          gh attestation verify unigo_Linux_x86_64.tar.gz \
-            --repo snowdreamtech/UniGo \
-            --signer-repo snowdreamtech/UniGo
+          gh attestation verify unistack_Linux_x86_64.tar.gz \
+            --repo snowdreamtech/UniStack \
+            --signer-repo snowdreamtech/UniStack
