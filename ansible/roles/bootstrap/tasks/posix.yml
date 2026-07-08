@@ -12,6 +12,7 @@
   ansible.builtin.raw: "echo $HOME"
   register: raw_home_probe
   changed_when: false
+  become: false
   tags: ["always"]
 
 - name: "Set UniStack cache paths"
@@ -25,20 +26,21 @@
     bootstrap_flag_path: "{{ resolved_home }}/.local/share/unistack/.ansible/venv/.bootstrap_complete"
   tags: ["always"]
 
-- name: "Check if bootstrap flag exists"
-  ansible.builtin.stat:
-    path: "{{ bootstrap_flag_path }}"
-  register: bootstrap_flag
+- name: "Check if bootstrap flag exists (raw)"
+  ansible.builtin.raw: "[ -f \"{{ bootstrap_flag_path }}\" ] && echo exists || echo missing"
+  register: raw_bootstrap_flag
+  changed_when: false
+  become: false
   tags: ["always"]
 
 - name: "Install Python"
   ansible.builtin.include_tasks: "installer.yml"
-  when: not bootstrap_flag.stat.exists
+  when: "'missing' in raw_bootstrap_flag.stdout"
   tags: ["always"]
 
 - name: "Create Python Venv"
   ansible.builtin.include_tasks: "venv.yml"
-  when: not bootstrap_flag.stat.exists
+  when: "'missing' in raw_bootstrap_flag.stdout"
   tags: ["always"]
 
 - name: "Activate Python venv interpreter globally for this host"
