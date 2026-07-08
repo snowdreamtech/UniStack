@@ -42,7 +42,8 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	// Detect package manager
 	packageManagers := []string{
 		"apk", "apt-get", "microdnf", "dnf", "yum", "pacman", 
-		"zypper", "xbps-install", "emerge", "pkg", "brew", "port",
+		"zypper", "xbps-install", "emerge", "pkg", "pkg_add", "brew", "port",
+		"swupd", "eopkg", "nix-env",
 	}
 
 	var detectedPM string
@@ -82,10 +83,18 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 		installCmd = "emerge -q dev-lang/python dev-python/pip || emerge -q dev-lang/python"
 	case "pkg":
 		installCmd = "pkg install -y python3 py39-pip || pkg install -y python3 py38-pip"
+	case "pkg_add":
+		installCmd = "pkg_add -I python%3 || pkg_add -I python3"
 	case "brew":
 		installCmd = "brew install python3"
 	case "port":
 		installCmd = "port selfupdate || true && port install python311 || port install python310 || port install python3"
+	case "swupd":
+		installCmd = "swupd bundle-add python3-basic"
+	case "eopkg":
+		installCmd = "eopkg install -y python3"
+	case "nix-env":
+		installCmd = "nix-env -iA nixpkgs.python3"
 	}
 
 	// Sudo integration
