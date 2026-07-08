@@ -44,6 +44,8 @@ func extractAnsibleFS() (string, error) {
 	if err := os.MkdirAll(tmpDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create temporary extraction directory: %w", err)
 	}
+	// Bypass any restrictive host umask to guarantee we can write into our own temp dir
+	os.Chmod(tmpDir, 0700)
 
 	// Make sure we clean up the temporary directory if something fails during extraction
 	extractionSuccessful := false
@@ -66,7 +68,11 @@ func extractAnsibleFS() (string, error) {
 		targetPath := filepath.Join(tmpDir, path)
 
 		if d.IsDir() {
-			return os.MkdirAll(targetPath, 0700)
+			if err := os.MkdirAll(targetPath, 0700); err != nil {
+				return err
+			}
+			os.Chmod(targetPath, 0700) // Immunity against host umask
+			return nil
 		}
 
 		info, err := d.Info()
@@ -85,9 +91,18 @@ func extractAnsibleFS() (string, error) {
 			perm = 0600 // Default to readable/writable by owner if no perms
 		}
 
+		// Windows compilation destroys POSIX executable bits in embed.FS.
+		// Auto-detect shebang to retroactively repair executable permissions!
+		if len(data) >= 2 && data[0] == '#' && data[1] == '!' {
+			perm |= 0100 // Add owner execute bit (u+x)
+		}
+
 		if err := os.WriteFile(targetPath, data, perm); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", targetPath, err)
 		}
+		
+		// Force permissions strictly to bypass any overly restrictive host umask
+		os.Chmod(targetPath, perm)
 
 		return nil
 	})
