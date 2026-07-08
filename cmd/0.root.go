@@ -30,6 +30,7 @@ var (
 	showVersion bool
 	playbookFile  string
 	inventoryFile string
+	pipIndexUrl   string
 )
 
 func getOutputFormat() output.OutputFormat {
@@ -107,7 +108,7 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		err = orchestrator.ExecutePlaybook(workDir, pb, inv)
+		err = orchestrator.ExecutePlaybook(workDir, pb, inv, pipIndexUrl)
 		if err != nil {
 			slog.Error("Playbook execution failed", "error", err)
 			os.Exit(1)
@@ -119,6 +120,7 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cdDir, "cd", "C", "", "change directory before running command")
 	rootCmd.PersistentFlags().StringVarP(&inventoryFile, "inventory", "i", "", "specify inventory host path or comma separated host list")
 	rootCmd.PersistentFlags().StringVarP(&playbookFile, "playbook", "p", "", "specify playbook file path")
+	rootCmd.PersistentFlags().StringVar(&pipIndexUrl, "pip-index-url", "https://pypi.org/simple", "specify pip index URL for bootstrapping virtual environment")
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "enable JSON output format")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "enable quiet mode (minimal output)")
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress all task output and non-error messages")
