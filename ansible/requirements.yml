@@ -18,20 +18,20 @@
 
 collections:
   - name: "community.general"
-    version: "9.5.0"
+    version: "13.1.0"
 
   # POSIX utilities including SELinux management for RHEL-based systems.
   - name: "ansible.posix"
-    version: "2.1.0"
+    version: "2.2.1"
 
   # Podman management collection for enterprise-grade containers.
   - name: "containers.podman"
-    version: "1.13.0"
+    version: "1.20.2"
 
   # Docker management collection supporting Buildx, Swarm, and Compose v2.
   - name: "community.docker"
-    version: "3.10.3"
+    version: "5.2.1"
 
   # Kubernetes management collection for K8s deployments.
   - name: "kubernetes.core"
-    version: "5.0.0"
+    version: "6.4.0"
