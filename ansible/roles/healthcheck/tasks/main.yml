@@ -8,10 +8,9 @@
   changed_when: false
   when: (ansible_mounts | default([]) | selectattr('mount', 'equalto', '/') | list | length) == 0
 
-
 - name: Output System Diagnostics
   ansible.builtin.debug:
-    msg: 
+    msg:
       - "✅ Reachability Test Passed!"
       - "Hostname: {{ ansible_hostname }}"
       - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
@@ -19,11 +18,11 @@
       - "Architecture: {{ ansible_architecture }}"
       - "CPU Cores: {{ ansible_processor_vcpus | default('Unknown') }}"
       - "Total RAM: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB"
-      - "Root Disk: {{ 
-          ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_available / 1024 / 1024 / 1024) | round(2) | string + 'GB Free / ' + 
-          ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_total / 1024 / 1024 / 1024) | round(2) | string + 'GB Total'
-          if (ansible_mounts | default([]) | selectattr('mount', 'equalto', '/') | list | length) > 0 
-          else root_disk_space_fallback.stdout | default('Unknown') 
+      - "Root Disk: {{
+        ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_available / 1024 / 1024 / 1024) | round(2) | string + 'GB Free / ' +
+        ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_total / 1024 / 1024 / 1024) | round(2) | string + 'GB Total'
+        if (ansible_mounts | default([]) | selectattr('mount', 'equalto', '/') | list | length) > 0
+        else root_disk_space_fallback.stdout | default('Unknown')
         }}"
       - "Primary IP: {{ ansible_default_ipv4.address | default('N/A') }}"
       - "Python Version: {{ ansible_python_version }}"

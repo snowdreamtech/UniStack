@@ -62,7 +62,7 @@ var rootCmd = &cobra.Command{
 			runVersion(cmd, args)
 			return
 		}
-		
+
 		cmd.Help()
 	},
 }

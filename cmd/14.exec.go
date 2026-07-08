@@ -9,52 +9,53 @@ import (
 	"os"
 	"strings"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/errors"
 	"log/slog"
+
+	"github.com/snowdreamtech/unistack/internal/pkg/errors"
 	"github.com/snowdreamtech/unistack/internal/pkg/orchestrator"
 	"github.com/spf13/cobra"
 )
 
 var (
 	// Exec-specific flags
-	execModuleName string
-	execArgs       string
-	execBackground int
-	execPoll       int
-	execOneLine    bool
-	execTree       string
+	execModuleName  string
+	execArgs        string
+	execBackground  int
+	execPoll        int
+	execOneLine     bool
+	execTree        string
 	execPlaybookDir string
 	execTaskTimeout int
 
 	// Shared flags (similar to run.go)
-	execInventory             string
-	execPipIndexUrl           string
-	execBecome                bool
-	execBecomeUser            string
-	execBecomeMethod          string
-	execAskBecomePass         bool
-	execBecomePasswordFile    string
-	execUser                  string
-	execAskPass               bool
-	execPrivateKey            string
-	execConnection            string
-	execTimeout               int
+	execInventory              string
+	execPipIndexUrl            string
+	execBecome                 bool
+	execBecomeUser             string
+	execBecomeMethod           string
+	execAskBecomePass          bool
+	execBecomePasswordFile     string
+	execUser                   string
+	execAskPass                bool
+	execPrivateKey             string
+	execConnection             string
+	execTimeout                int
 	execConnectionPasswordFile string
-	execCheck                 bool
-	execDiff                  bool
-	execExtraVars             []string
-	execFlushCache            bool
-	execLimit                 string
-	execListHosts             bool
-	execForks                 int
-	execModulePath            []string
-	execVaultId               []string
-	execAskVaultPass          bool
-	execVaultPasswordFile     string
-	execSshCommonArgs         string
-	execSshExtraArgs          string
-	execScpExtraArgs          string
-	execSftpExtraArgs         string
+	execCheck                  bool
+	execDiff                   bool
+	execExtraVars              []string
+	execFlushCache             bool
+	execLimit                  string
+	execListHosts              bool
+	execForks                  int
+	execModulePath             []string
+	execVaultId                []string
+	execAskVaultPass           bool
+	execVaultPasswordFile      string
+	execSshCommonArgs          string
+	execSshExtraArgs           string
+	execScpExtraArgs           string
+	execSftpExtraArgs          string
 )
 
 var execCmd = &cobra.Command{
@@ -71,9 +72,9 @@ var execCmd = &cobra.Command{
 			slog.Error(fmt.Sprintf("Failed to initialize environment: %v", err))
 			os.Exit(errors.ExitCode(err))
 		}
-		
+
 		pattern := args[0]
-		
+
 		// The remaining args (after --) might be caught in args[1:]
 		var unmappedArgs []string
 		if len(args) > 1 {
@@ -82,7 +83,7 @@ var execCmd = &cobra.Command{
 
 		// Assemble explicitly mapped flags
 		dynamicArgs := []string{}
-		
+
 		if execInventory != "" {
 			dynamicArgs = append(dynamicArgs, "-i", execInventory)
 		}

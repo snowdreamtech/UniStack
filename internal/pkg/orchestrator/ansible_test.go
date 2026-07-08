@@ -48,19 +48,19 @@ func TestCalculateDependenciesHash(t *testing.T) {
 	if actualHash != expectedHash {
 		t.Errorf("Expected hash %s, got %s", expectedHash, actualHash)
 	}
-	
+
 	// Test missing files (should still return a valid empty hash without errors)
 	emptyDir, _ := os.MkdirTemp("", "unistack_ansible_test_empty")
 	defer os.RemoveAll(emptyDir)
-	
+
 	emptyHash, err := calculateDependenciesHash(emptyDir)
 	if err != nil {
 		t.Fatalf("calculateDependenciesHash returned error on empty dir: %v", err)
 	}
-	
+
 	hashEmpty := sha256.New()
 	expectedEmptyHash := hex.EncodeToString(hashEmpty.Sum(nil))
-	
+
 	if emptyHash != expectedEmptyHash {
 		t.Errorf("Expected empty hash %s, got %s", expectedEmptyHash, emptyHash)
 	}

@@ -12,7 +12,7 @@ import (
 
 func TestBuildVenvEnv(t *testing.T) {
 	venvDir := filepath.Join("tmp", "unistack", "venv")
-	
+
 	// Determine the expected binary path
 	expectedBinDir := filepath.Join(venvDir, "bin")
 	if runtime.GOOS == "windows" {
@@ -46,7 +46,7 @@ func TestBuildVenvEnv(t *testing.T) {
 			break
 		}
 	}
-	
+
 	if !foundPath {
 		t.Errorf("PATH was not found in the resulting env slice")
 	}

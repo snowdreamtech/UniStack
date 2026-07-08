@@ -39,7 +39,8 @@ func Init(debug, quiet, silent, jsonFmt bool) {
 	if jsonFmt {
 		handler = slog.NewJSONHandler(os.Stderr, opts)
 	} else {
-		pterm.EnableDebugMessages(); handler = NewPtermHandler(level)
+		pterm.EnableDebugMessages()
+		handler = NewPtermHandler(level)
 	}
 
 	// 3. Set global logger

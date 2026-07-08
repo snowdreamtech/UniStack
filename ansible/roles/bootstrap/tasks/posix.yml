@@ -34,7 +34,7 @@
   tags: ["always"]
 
 - name: "Check if bootstrap flag and venv exist (raw)"
-  ansible.builtin.raw: "[ -f \"{{ bootstrap_flag_path }}\" ] && [ -x \"{{ python_venv_path }}/bin/python3\" ] && echo exists || echo missing"
+  ansible.builtin.raw: '[ -f "{{ bootstrap_flag_path }}" ] && [ -x "{{ python_venv_path }}/bin/python3" ] && echo exists || echo missing'
   register: raw_bootstrap_flag
   changed_when: false
   become: false

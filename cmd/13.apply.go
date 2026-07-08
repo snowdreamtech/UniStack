@@ -17,43 +17,43 @@ import (
 )
 
 var (
-	playbookFile      string
-	inventoryFile     string
-	pipIndexUrl       string
-	limit                   string
-	tags                    []string
-	skipTags                []string
-	extraVars               []string
-	become                  bool
-	askBecomePass           bool
-	user                    string
-	askPass                 bool
-	privateKey              string
-	check                   bool
-	diff                    bool
-	syntaxCheck             bool
-	forks                   int
-	vaultPasswordFile       string
-	becomePasswordFile      string
-	connectionPasswordFile  string
-	flushCache              bool
-	forceHandlers           bool
-	listHosts               bool
-	listTags                bool
-	listTasks               bool
-	startAtTask             string
-	step                    bool
-	vaultId                 []string
-	askVaultPass            bool
-	modulePath              []string
-	connection              string
-	timeout                 int
-	sshCommonArgs           string
-	sftpExtraArgs           string
-	scpExtraArgs            string
-	sshExtraArgs            string
-	becomeMethod            string
-	becomeUser              string
+	playbookFile           string
+	inventoryFile          string
+	pipIndexUrl            string
+	limit                  string
+	tags                   []string
+	skipTags               []string
+	extraVars              []string
+	become                 bool
+	askBecomePass          bool
+	user                   string
+	askPass                bool
+	privateKey             string
+	check                  bool
+	diff                   bool
+	syntaxCheck            bool
+	forks                  int
+	vaultPasswordFile      string
+	becomePasswordFile     string
+	connectionPasswordFile string
+	flushCache             bool
+	forceHandlers          bool
+	listHosts              bool
+	listTags               bool
+	listTasks              bool
+	startAtTask            string
+	step                   bool
+	vaultId                []string
+	askVaultPass           bool
+	modulePath             []string
+	connection             string
+	timeout                int
+	sshCommonArgs          string
+	sftpExtraArgs          string
+	scpExtraArgs           string
+	sshExtraArgs           string
+	becomeMethod           string
+	becomeUser             string
 )
 
 var applyCmd = &cobra.Command{
@@ -223,7 +223,7 @@ var applyCmd = &cobra.Command{
 		if becomeUser != "" {
 			dynamicArgs = append(dynamicArgs, "--become-user", becomeUser)
 		}
-		
+
 		// Map UniStack global verbose (-v) count to Ansible verbose
 		if verbose > 0 {
 			dynamicArgs = append(dynamicArgs, "-"+strings.Repeat("v", verbose))
