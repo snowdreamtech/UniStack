@@ -243,8 +243,16 @@ env = { GOTOOLCHAIN = 'local', CGO_ENABLED = '0' }
 [tasks."test:ansible"]
 description = 'Run Ansible playbook syntax checks and linting'
 run = '''
+if ! command -v ansible-playbook >/dev/null 2>&1; then
+    echo "⚠️  ansible-playbook not found in PATH. Skipping Ansible tests."
+    exit 0
+fi
 ansible-playbook --syntax-check ansible/playbooks/bootstrap.yml ansible/playbooks/healthcheck.yml
-ansible-lint ansible/
+if command -v ansible-lint >/dev/null 2>&1; then
+    ansible-lint ansible/
+else
+    echo "⚠️  ansible-lint not found in PATH. Skipping linting."
+fi
 '''
 output = 'interleaved'
 
