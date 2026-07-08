@@ -31,6 +31,7 @@
 
     echo "[UNISTACK_BOOTSTRAP] Virtual environment created successfully"
   changed_when: true
+  tags: ["always"]
   args:
     executable: "/bin/sh"
 
@@ -38,5 +39,6 @@
   ansible.builtin.raw: |
     touch "{{ bootstrap_flag_path }}"
   changed_when: true
+  tags: ["always"]
   args:
     executable: "/bin/sh"

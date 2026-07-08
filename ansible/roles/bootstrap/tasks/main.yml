@@ -30,3 +30,4 @@
 - name: "Run POSIX bootstrap"
   ansible.builtin.include_tasks: "posix.yml"
   when: is_posix_system | bool
+  tags: ["always"]

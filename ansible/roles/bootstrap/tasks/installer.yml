@@ -156,5 +156,6 @@
     echo "[UNISTACK_BOOTSTRAP] Python bootstrap completed successfully"
   become: true
   changed_when: true
+  tags: ["always"]
   args:
     executable: "/bin/sh"

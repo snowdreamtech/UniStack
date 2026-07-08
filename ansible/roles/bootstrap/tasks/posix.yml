@@ -34,10 +34,12 @@
 - name: "Install Python"
   ansible.builtin.include_tasks: "installer.yml"
   when: not bootstrap_flag.stat.exists
+  tags: ["always"]
 
 - name: "Create Python Venv"
   ansible.builtin.include_tasks: "venv.yml"
   when: not bootstrap_flag.stat.exists
+  tags: ["always"]
 
 - name: "Activate Python venv interpreter globally for this host"
   ansible.builtin.set_fact:
