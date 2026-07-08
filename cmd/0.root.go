@@ -6,6 +6,8 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"log/slog"
 	
@@ -26,6 +28,8 @@ var (
 	cdDir       string
 	yes         bool
 	showVersion bool
+	playbookFile  string
+	inventoryFile string
 )
 
 func getOutputFormat() output.OutputFormat {
@@ -75,7 +79,35 @@ var rootCmd = &cobra.Command{
 		}
 		slog.Info("Successfully extracted embedded files", "workDir", workDir)
 
-		err = orchestrator.ExecutePlaybook(workDir, "playbooks/helloworld.yml", "inventory/default.ini")
+		// Determine Playbook path
+		pb := "playbooks/helloworld.yml"
+		if playbookFile != "" {
+			absPb, err := filepath.Abs(playbookFile)
+			if err == nil {
+				pb = absPb
+			} else {
+				pb = playbookFile
+			}
+		}
+
+		// Determine Inventory path
+		inv := "inventory"
+		if inventoryFile != "" {
+			// If it contains a comma, Ansible treats it as a host list (e.g. "localhost,")
+			// Otherwise, treat it as a file/directory and get absolute path
+			if !strings.Contains(inventoryFile, ",") {
+				absInv, err := filepath.Abs(inventoryFile)
+				if err == nil {
+					inv = absInv
+				} else {
+					inv = inventoryFile
+				}
+			} else {
+				inv = inventoryFile
+			}
+		}
+
+		err = orchestrator.ExecutePlaybook(workDir, pb, inv)
 		if err != nil {
 			slog.Error("Playbook execution failed", "error", err)
 			os.Exit(1)
@@ -85,6 +117,8 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.PersistentFlags().StringVarP(&cdDir, "cd", "C", "", "change directory before running command")
+	rootCmd.PersistentFlags().StringVarP(&inventoryFile, "inventory", "i", "", "specify inventory host path or comma separated host list")
+	rootCmd.PersistentFlags().StringVarP(&playbookFile, "playbook", "p", "", "specify playbook file path")
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "enable JSON output format")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "enable quiet mode (minimal output)")
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress all task output and non-error messages")
