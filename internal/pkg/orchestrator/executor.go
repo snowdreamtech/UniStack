@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 )
 
@@ -94,8 +96,10 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		return "", nil, fmt.Errorf("python3 not found in PATH, required for bootstrapping")
 	}
 
-	// Global context for all network operations (10 minute timeout)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	// Global context for all network operations (10 minute timeout), wrapped in a signal trap for Ctrl+C
+	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	ctx, cancel := context.WithTimeout(sigCtx, 10*time.Minute)
 	defer cancel()
 
 	// Create venv
