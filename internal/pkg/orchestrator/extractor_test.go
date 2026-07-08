@@ -65,7 +65,7 @@ func TestExtractAnsibleFS(t *testing.T) {
 		fullPath := filepath.Join(ansibleDir, fileToCorrupt)
 		// Alter content
 		os.WriteFile(fullPath, []byte("tampered content"), 0644)
-		
+
 		// Third extraction (should detect tampering and re-extract)
 		ansibleDir3, err := extractAnsibleFS()
 		if err != nil {
@@ -102,7 +102,7 @@ func TestExtractAnsibleFS(t *testing.T) {
 	os.RemoveAll(ansibleDir)
 	oldDir := filepath.Join(tempDir, "ansible.old")
 	os.MkdirAll(oldDir, 0755)
-	
+
 	// Fifth extraction (should rename oldDir to ansibleDir)
 	ansibleDir5, err := extractAnsibleFS()
 	if err != nil {

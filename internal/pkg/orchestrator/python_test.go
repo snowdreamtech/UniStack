@@ -65,13 +65,13 @@ func TestEnsurePythonInstalled(t *testing.T) {
 	} else {
 		pyName = "python3"
 	}
-	
+
 	fakePy3 := filepath.Join(tempDirFast, pyName)
 	createFakeExecutable(t, fakePy3, 0, "")
-	
+
 	// Create an isolated environment where ONLY our fake python3 exists in PATH
 	t.Setenv("PATH", tempDirFast)
-	
+
 	cmd, err := EnsurePythonInstalled(ctx)
 	if err != nil {
 		t.Fatalf("Expected fast path to succeed, got %v", err)
@@ -81,10 +81,10 @@ func TestEnsurePythonInstalled(t *testing.T) {
 		t.Fatalf("Expected python3, got %s", cmd)
 	}
 
-		// 2. Test auto-installation path (POSIX only, Windows will fail early)
+	// 2. Test auto-installation path (POSIX only, Windows will fail early)
 	if runtime.GOOS != "windows" {
 		tempDirAuto := t.TempDir()
-		
+
 		// Setup fake apt-get
 		fakeApt := filepath.Join(tempDirAuto, "apt-get")
 		createFakeExecutable(t, fakeApt, 0, "")
@@ -102,9 +102,9 @@ echo "exit 0" >> ` + filepath.Join(tempDirAuto, "python3") + `
 exit 0
 `
 		os.WriteFile(fakeSh, []byte(shScript), 0755)
-		
+
 		t.Setenv("PATH", tempDirAuto)
-		
+
 		cmd, err = EnsurePythonInstalled(ctx)
 		if err != nil {
 			t.Fatalf("Expected auto-installation to succeed, got %v", err)
@@ -132,7 +132,7 @@ exit 0
 		os.Remove(filepath.Join(tempDirAuto, "python3"))
 		// Modify fake sh to fail
 		os.WriteFile(fakeSh, []byte("#!/bin/sh\nexit 1\n"), 0755)
-		
+
 		_, err = EnsurePythonInstalled(ctx)
 		if err == nil || !strings.Contains(err.Error(), "failed to install Python 3 automatically") {
 			t.Fatalf("Expected failure due to command failure, got %v", err)
@@ -141,7 +141,7 @@ exit 0
 		// 5. Test installation success but python still missing
 		// Modify fake sh to succeed, but NOT create python3
 		os.WriteFile(fakeSh, []byte("#!/bin/sh\nexit 0\n"), 0755)
-		
+
 		_, err = EnsurePythonInstalled(ctx)
 		if err == nil || !strings.Contains(err.Error(), "still not in PATH") {
 			t.Fatalf("Expected failure due to missing python after install, got %v", err)

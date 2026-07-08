@@ -42,13 +42,13 @@ func TestEnsureAnsibleInstalled(t *testing.T) {
 	// Scenario 2: System missing, Venv cached (marker file matches hash)
 	tempDataDir := t.TempDir()
 	t.Setenv("UNISTACK_DATA_DIR", tempDataDir)
-	
+
 	// Ensure system PATH does not have ansible-playbook anymore
 	t.Setenv("PATH", t.TempDir()) // empty PATH
 
 	workDir := t.TempDir()
 	hash, _ := calculateDependenciesHash(workDir)
-	
+
 	// Create marker file and venv binary
 	venvDir := filepath.Join(tempDataDir, ".ansible", "venv")
 	venvBinDir := filepath.Join(venvDir, "bin")
@@ -82,7 +82,7 @@ func TestEnsureAnsibleInstalled(t *testing.T) {
 
 	// Scenario 3: Missing marker file, triggers full pip installation
 	os.Remove(markerFile)
-	
+
 	// Mock python, pip, ansible-galaxy in the PATH so they succeed
 	tempDirInstall := t.TempDir()
 	var pyName, pipName, galaxyName string
