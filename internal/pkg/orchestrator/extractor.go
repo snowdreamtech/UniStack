@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gofrs/flock"
 	"github.com/snowdreamtech/unistack/ansible"
 	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
@@ -143,18 +144,19 @@ func getVersionID() (string, error) {
 // to protect both extraction and pip bootstrapping against concurrent executions.
 func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
 	rootDir := env.GetDataDir()
-	lockDir := filepath.Join(rootDir, ".init.lock")
+	lockFile := filepath.Join(rootDir, ".init.lock")
+	fileLock := flock.New(lockFile)
 
-	// 1. Acquire global lock
+	// 1. Acquire OS-level file lock
 	lockAcquired := false
 	for i := 0; i < 60; i++ {
-		err := os.Mkdir(lockDir, 0755)
-		if err == nil {
+		locked, err := fileLock.TryLock()
+		if err != nil {
+			return "", "", nil, fmt.Errorf("failed to attempt global lock: %w", err)
+		}
+		if locked {
 			lockAcquired = true
 			break
-		}
-		if !os.IsExist(err) {
-			return "", "", nil, fmt.Errorf("failed to create global lock directory: %w", err)
 		}
 		if i == 0 {
 			fmt.Println("⏳ Another UniStack process is initializing. Waiting for global lock...")
@@ -167,9 +169,9 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 		}
 	}
 	if !lockAcquired {
-		return "", "", nil, fmt.Errorf("timeout waiting for global lock at %s", lockDir)
+		return "", "", nil, fmt.Errorf("timeout waiting for global lock at %s", lockFile)
 	}
-	defer os.RemoveAll(lockDir)
+	defer fileLock.Unlock()
 
 	// 2. Safely extract files (protected by global lock)
 	workDir, err := extractAnsibleFS()
