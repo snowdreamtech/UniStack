@@ -29,3 +29,10 @@ func getFreeDiskSpace(path string) (uint64, error) {
 
 	return freeBytesAvailableToCaller, nil
 }
+
+// getTotalMemory returns the total physical memory in bytes
+func getTotalMemory() (uint64, error) {
+	// Not needed on Windows since preflight blocks Windows execution immediately.
+	// Returning 0 to satisfy the compiler.
+	return 0, nil
+}

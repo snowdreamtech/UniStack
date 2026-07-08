@@ -1,4 +1,4 @@
-//go:build !windows
+//go:build darwin
 
 package orchestrator
 
@@ -14,4 +14,9 @@ func getFreeDiskSpace(path string) (uint64, error) {
 	}
 	// Bavail is the free blocks available to unprivileged user
 	return uint64(stat.Bavail) * uint64(stat.Bsize), nil
+}
+
+// getTotalMemory returns the total physical memory in bytes
+func getTotalMemory() (uint64, error) {
+	return unix.SysctlUint64("hw.memsize")
 }

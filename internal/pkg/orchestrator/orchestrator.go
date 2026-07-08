@@ -80,12 +80,9 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 	}
 	defer fileLock.Unlock()
 
-	// Pre-flight Disk Check: Require at least 500MB (500 * 1024 * 1024 bytes) of free space
-	freeSpace, err := getFreeDiskSpace(filepath.Dir(rootDir))
-	if err == nil && freeSpace < 500*1024*1024 {
-		return "", "", nil, fmt.Errorf("🚨 FATAL: Insufficient disk space. Required: 500MB, Available: %d MB. Extraction aborted to prevent corruption", freeSpace/(1024*1024))
-	} else if err != nil {
-		fmt.Printf("⚠️ Warning: failed to check disk space: %v\n", err)
+	// Pre-flight Systems Check (OS, Disk, Memory)
+	if err := RunPreflightChecks(rootDir); err != nil {
+		return "", "", nil, err
 	}
 
 	// 2. Safely extract files (protected by global lock)
