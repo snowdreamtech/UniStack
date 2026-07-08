@@ -139,7 +139,7 @@ func runAnsibleCommand(binaryName, workDir, binary string, venvEnv []string, arg
 	}
 
 	cmd := exec.Command(cmdPath, args...)
-	cmd.Dir = workDir
+	cmd.Dir, _ = os.Getwd()
 	
 	// Stream standard output and error directly to the console
 	cmd.Stdout = os.Stdout
