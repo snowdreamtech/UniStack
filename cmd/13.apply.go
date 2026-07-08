@@ -56,10 +56,10 @@ var (
 	becomeUser              string
 )
 
-var runCmd = &cobra.Command{
-	Use:   "run",
-	Short: "Run an Ansible playbook",
-	Long:  `Run an Ansible playbook in the UniStack isolated environment.`,
+var applyCmd = &cobra.Command{
+	Use:   "apply",
+	Short: "Apply an Ansible playbook",
+	Long:  `Apply an Ansible playbook in the UniStack isolated environment.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		slog.Info("Starting UniStack Fat CLI MVP...")
 
@@ -218,44 +218,44 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
-	runCmd.Flags().StringVarP(&inventoryFile, "inventory", "i", "", "specify inventory host path or comma separated host list")
-	runCmd.Flags().StringVarP(&playbookFile, "playbook", "p", "", "specify playbook file path")
-	runCmd.Flags().StringVar(&pipIndexUrl, "pip-index-url", "https://pypi.org/simple", "specify pip index URL for bootstrapping virtual environment")
+	rootCmd.AddCommand(applyCmd)
+	applyCmd.Flags().StringVarP(&inventoryFile, "inventory", "i", "", "specify inventory host path or comma separated host list")
+	applyCmd.Flags().StringVarP(&playbookFile, "playbook", "p", "", "specify playbook file path")
+	applyCmd.Flags().StringVar(&pipIndexUrl, "pip-index-url", "https://pypi.org/simple", "specify pip index URL for bootstrapping virtual environment")
 
 	// Ansible-playbook flag mapping
-	runCmd.Flags().StringVarP(&limit, "limit", "l", "", "further limit selected hosts to an additional pattern")
-	runCmd.Flags().StringSliceVarP(&tags, "tags", "t", []string{}, "only run plays and tasks tagged with these values")
-	runCmd.Flags().StringSliceVar(&skipTags, "skip-tags", []string{}, "only run plays and tasks whose tags do not match these values")
-	runCmd.Flags().StringSliceVarP(&extraVars, "extra-vars", "e", []string{}, "set additional variables as key=value or YAML/JSON, if filename prepend with @")
-	runCmd.Flags().BoolVarP(&become, "become", "b", false, "run operations with become (does not imply password prompting)")
-	runCmd.Flags().BoolVarP(&askBecomePass, "ask-become-pass", "K", false, "ask for privilege escalation password")
-	runCmd.Flags().StringVarP(&user, "user", "u", "", "connect as this user")
-	runCmd.Flags().BoolVarP(&askPass, "ask-pass", "k", false, "ask for connection password")
-	runCmd.Flags().StringVar(&privateKey, "private-key", "", "use this file to authenticate the connection")
-	runCmd.Flags().BoolVarP(&check, "check", "C", false, "don't make any changes; instead, try to predict some of the changes that may occur")
-	runCmd.Flags().BoolVarP(&diff, "diff", "D", false, "when changing (small) files and templates, show the differences in those files")
-	runCmd.Flags().BoolVar(&syntaxCheck, "syntax-check", false, "perform a syntax check on the playbook, but do not execute it")
-	runCmd.Flags().IntVarP(&forks, "forks", "f", 5, "specify number of parallel processes to use")
-	runCmd.Flags().StringVar(&vaultPasswordFile, "vault-password-file", "", "vault password file")
-	runCmd.Flags().StringVar(&becomePasswordFile, "become-password-file", "", "become password file")
-	runCmd.Flags().StringVar(&connectionPasswordFile, "connection-password-file", "", "connection password file")
-	runCmd.Flags().BoolVar(&flushCache, "flush-cache", false, "clear the fact cache for every host in inventory")
-	runCmd.Flags().BoolVar(&forceHandlers, "force-handlers", false, "run handlers even if a task fails")
-	runCmd.Flags().BoolVar(&listHosts, "list-hosts", false, "outputs a list of matching hosts; does not execute anything else")
-	runCmd.Flags().BoolVar(&listTags, "list-tags", false, "list all available tags")
-	runCmd.Flags().BoolVar(&listTasks, "list-tasks", false, "list all tasks that would be executed")
-	runCmd.Flags().StringVar(&startAtTask, "start-at-task", "", "start the playbook at the task matching this name")
-	runCmd.Flags().BoolVar(&step, "step", false, "one-step-at-a-time: confirm each task before running")
-	runCmd.Flags().StringSliceVar(&vaultId, "vault-id", []string{}, "the vault identity to use")
-	runCmd.Flags().BoolVarP(&askVaultPass, "ask-vault-pass", "J", false, "ask for vault password")
-	runCmd.Flags().StringSliceVarP(&modulePath, "module-path", "M", []string{}, "prepend colon-separated path(s) to module library")
-	runCmd.Flags().StringVarP(&connection, "connection", "c", "", "connection type to use (default=ssh)")
-	runCmd.Flags().IntVarP(&timeout, "timeout", "T", 0, "override the connection timeout in seconds")
-	runCmd.Flags().StringVar(&sshCommonArgs, "ssh-common-args", "", "specify common arguments to pass to sftp/scp/ssh")
-	runCmd.Flags().StringVar(&sftpExtraArgs, "sftp-extra-args", "", "specify extra arguments to pass to sftp only")
-	runCmd.Flags().StringVar(&scpExtraArgs, "scp-extra-args", "", "specify extra arguments to pass to scp only")
-	runCmd.Flags().StringVar(&sshExtraArgs, "ssh-extra-args", "", "specify extra arguments to pass to ssh only")
-	runCmd.Flags().StringVar(&becomeMethod, "become-method", "", "privilege escalation method to use (default=sudo)")
-	runCmd.Flags().StringVar(&becomeUser, "become-user", "", "run operations as this user (default=root)")
+	applyCmd.Flags().StringVarP(&limit, "limit", "l", "", "further limit selected hosts to an additional pattern")
+	applyCmd.Flags().StringSliceVarP(&tags, "tags", "t", []string{}, "only run plays and tasks tagged with these values")
+	applyCmd.Flags().StringSliceVar(&skipTags, "skip-tags", []string{}, "only run plays and tasks whose tags do not match these values")
+	applyCmd.Flags().StringSliceVarP(&extraVars, "extra-vars", "e", []string{}, "set additional variables as key=value or YAML/JSON, if filename prepend with @")
+	applyCmd.Flags().BoolVarP(&become, "become", "b", false, "run operations with become (does not imply password prompting)")
+	applyCmd.Flags().BoolVarP(&askBecomePass, "ask-become-pass", "K", false, "ask for privilege escalation password")
+	applyCmd.Flags().StringVarP(&user, "user", "u", "", "connect as this user")
+	applyCmd.Flags().BoolVarP(&askPass, "ask-pass", "k", false, "ask for connection password")
+	applyCmd.Flags().StringVar(&privateKey, "private-key", "", "use this file to authenticate the connection")
+	applyCmd.Flags().BoolVarP(&check, "check", "C", false, "don't make any changes; instead, try to predict some of the changes that may occur")
+	applyCmd.Flags().BoolVarP(&diff, "diff", "D", false, "when changing (small) files and templates, show the differences in those files")
+	applyCmd.Flags().BoolVar(&syntaxCheck, "syntax-check", false, "perform a syntax check on the playbook, but do not execute it")
+	applyCmd.Flags().IntVarP(&forks, "forks", "f", 5, "specify number of parallel processes to use")
+	applyCmd.Flags().StringVar(&vaultPasswordFile, "vault-password-file", "", "vault password file")
+	applyCmd.Flags().StringVar(&becomePasswordFile, "become-password-file", "", "become password file")
+	applyCmd.Flags().StringVar(&connectionPasswordFile, "connection-password-file", "", "connection password file")
+	applyCmd.Flags().BoolVar(&flushCache, "flush-cache", false, "clear the fact cache for every host in inventory")
+	applyCmd.Flags().BoolVar(&forceHandlers, "force-handlers", false, "run handlers even if a task fails")
+	applyCmd.Flags().BoolVar(&listHosts, "list-hosts", false, "outputs a list of matching hosts; does not execute anything else")
+	applyCmd.Flags().BoolVar(&listTags, "list-tags", false, "list all available tags")
+	applyCmd.Flags().BoolVar(&listTasks, "list-tasks", false, "list all tasks that would be executed")
+	applyCmd.Flags().StringVar(&startAtTask, "start-at-task", "", "start the playbook at the task matching this name")
+	applyCmd.Flags().BoolVar(&step, "step", false, "one-step-at-a-time: confirm each task before running")
+	applyCmd.Flags().StringSliceVar(&vaultId, "vault-id", []string{}, "the vault identity to use")
+	applyCmd.Flags().BoolVarP(&askVaultPass, "ask-vault-pass", "J", false, "ask for vault password")
+	applyCmd.Flags().StringSliceVarP(&modulePath, "module-path", "M", []string{}, "prepend colon-separated path(s) to module library")
+	applyCmd.Flags().StringVarP(&connection, "connection", "c", "", "connection type to use (default=ssh)")
+	applyCmd.Flags().IntVarP(&timeout, "timeout", "T", 0, "override the connection timeout in seconds")
+	applyCmd.Flags().StringVar(&sshCommonArgs, "ssh-common-args", "", "specify common arguments to pass to sftp/scp/ssh")
+	applyCmd.Flags().StringVar(&sftpExtraArgs, "sftp-extra-args", "", "specify extra arguments to pass to sftp only")
+	applyCmd.Flags().StringVar(&scpExtraArgs, "scp-extra-args", "", "specify extra arguments to pass to scp only")
+	applyCmd.Flags().StringVar(&sshExtraArgs, "ssh-extra-args", "", "specify extra arguments to pass to ssh only")
+	applyCmd.Flags().StringVar(&becomeMethod, "become-method", "", "privilege escalation method to use (default=sudo)")
+	applyCmd.Flags().StringVar(&becomeUser, "become-user", "", "run operations as this user (default=root)")
 }
