@@ -5,6 +5,8 @@ package orchestrator
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"os/exec"
@@ -29,10 +31,17 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	markerFile := filepath.Join(workDir, ".bootstrap_complete")
 	lockDir := filepath.Join(workDir, ".bootstrap.lock")
 
-	// If atomic marker exists, check binary
-	if _, err := os.Stat(markerFile); err == nil {
-		if _, err := os.Stat(venvBin); err == nil {
-			return venvBin, buildVenvEnv(venvDir), nil
+	// Calculate dependency hash to detect version upgrades
+	currentHash, _ := calculateDependenciesHash(workDir)
+
+	// If atomic marker exists, check hash and binary
+	if markerData, err := os.ReadFile(markerFile); err == nil {
+		if string(markerData) == currentHash {
+			if _, err := os.Stat(venvBin); err == nil {
+				return venvBin, buildVenvEnv(venvDir), nil
+			}
+		} else {
+			fmt.Println("🔄 Dependencies have changed (binary upgrade detected). Rebuilding virtual environment...")
 		}
 	}
 
@@ -60,9 +69,11 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	defer os.RemoveAll(lockDir)
 
 	// Double check marker after acquiring lock
-	if _, err := os.Stat(markerFile); err == nil {
-		if _, err := os.Stat(venvBin); err == nil {
-			return venvBin, buildVenvEnv(venvDir), nil
+	if markerData, err := os.ReadFile(markerFile); err == nil {
+		if string(markerData) == currentHash {
+			if _, err := os.Stat(venvBin); err == nil {
+				return venvBin, buildVenvEnv(venvDir), nil
+			}
 		}
 	}
 
@@ -170,9 +181,9 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		}
 	}
 
-	// Successfully finished everything. Write atomic marker.
+	// Successfully finished everything. Write atomic marker with the hash.
 	if file, err := os.Create(markerFile); err == nil {
-		file.WriteString(time.Now().Format(time.RFC3339))
+		file.WriteString(currentHash)
 		file.Close()
 	}
 
@@ -235,4 +246,24 @@ func ExecutePlaybook(workDir, playbook string, inventory string, pipIndexUrl str
 	}
 
 	return nil
+}
+
+// calculateDependenciesHash computes a SHA-256 hash of the content of requirements.txt and requirements.yml.
+// This allows us to detect when the binary is upgraded and dependencies change, triggering a fresh bootstrap.
+func calculateDependenciesHash(workDir string) (string, error) {
+	hash := sha256.New()
+	
+	reqFile := filepath.Join(workDir, "requirements.txt")
+	reqData, err := os.ReadFile(reqFile)
+	if err == nil {
+		hash.Write(reqData)
+	}
+	
+	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
+	galaxyReqData, err := os.ReadFile(galaxyReqFile)
+	if err == nil {
+		hash.Write(galaxyReqData)
+	}
+	
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }
