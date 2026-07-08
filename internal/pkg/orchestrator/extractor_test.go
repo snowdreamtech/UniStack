@@ -83,6 +83,45 @@ func TestExtractAnsibleFS(t *testing.T) {
 			t.Fatalf("File was not restored correctly during tamper recovery")
 		}
 	}
+
+	// 4. Test missing file in manifest (should detect tampering and re-extract)
+	if fileToCorrupt != "" {
+		fullPath := filepath.Join(ansibleDir, fileToCorrupt)
+		os.Remove(fullPath) // Remove it entirely
+
+		ansibleDir4, err := extractAnsibleFS()
+		if err != nil {
+			t.Fatalf("extractAnsibleFS (missing file) failed: %v", err)
+		}
+		if ansibleDir4 != ansibleDir {
+			t.Fatalf("Expected same directory on fourth extraction, got %s", ansibleDir4)
+		}
+	}
+
+	// 5. Test crash recovery (ansible.old exists, ansible does not exist)
+	os.RemoveAll(ansibleDir)
+	oldDir := filepath.Join(tempDir, "ansible.old")
+	os.MkdirAll(oldDir, 0755)
+	
+	// Fifth extraction (should rename oldDir to ansibleDir)
+	ansibleDir5, err := extractAnsibleFS()
+	if err != nil {
+		t.Fatalf("extractAnsibleFS (crash recovery) failed: %v", err)
+	}
+	if ansibleDir5 != ansibleDir {
+		t.Fatalf("Expected same directory on crash recovery, got %s", ansibleDir5)
+	}
+
+	// 6. Test extraction failure (make rootDir read-only)
+	readOnlyDir := filepath.Join(tempDir, "readonly")
+	os.MkdirAll(readOnlyDir, 0755)
+	t.Setenv("UNISTACK_DATA_DIR", readOnlyDir)
+	os.Chmod(readOnlyDir, 0400) // read-only
+	_, err = extractAnsibleFS()
+	if err == nil {
+		t.Fatalf("Expected extractAnsibleFS to fail when directory creation fails")
+	}
+	os.Chmod(readOnlyDir, 0755) // revert so cleanup succeeds
 }
 
 func TestGetVersionID(t *testing.T) {
