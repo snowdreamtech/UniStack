@@ -73,7 +73,12 @@ var rootCmd = &cobra.Command{
 		
 		slog.Info("Starting UniStack Fat CLI MVP...")
 
-		workDir, binary, venvEnv, err := orchestrator.PrepareEnvironment(cmd.Context(), pipIndexUrl)
+		// Allow up to 15 minutes for the global initialization lock in case another instance
+		// is currently downloading and bootstrapping the Python/Ansible dependencies.
+		ctx, cancel := context.WithTimeout(cmd.Context(), 15*time.Minute)
+		defer cancel()
+
+		workDir, binary, venvEnv, err := orchestrator.PrepareEnvironment(ctx, pipIndexUrl)
 		if err != nil {
 			slog.Error("Failed to initialize UniStack environment", "error", err)
 			os.Exit(1)
