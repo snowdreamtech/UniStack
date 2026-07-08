@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
+	"strings"
 	"syscall"
 	"time"
 
@@ -30,7 +32,15 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	// Paths for local venv - placed OUTSIDE workDir so it survives atomic file extractions
 	// when the UniStack binary is upgraded but python dependencies remain unchanged.
 	venvDir := filepath.Join(env.GetDataDir(), ".ansible", "venv")
-	venvBin := filepath.Join(venvDir, "bin", "ansible-playbook")
+	
+	venvBinDir := filepath.Join(venvDir, "bin")
+	if runtime.GOOS == "windows" {
+		venvBinDir = filepath.Join(venvDir, "Scripts")
+	}
+	venvBin := filepath.Join(venvBinDir, "ansible-playbook.exe")
+	if runtime.GOOS != "windows" {
+		venvBin = filepath.Join(venvBinDir, "ansible-playbook")
+	}
 	markerFile := filepath.Join(venvDir, ".bootstrap_complete")
 
 	// Calculate dependency hash to detect version upgrades
@@ -82,10 +92,14 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 
 	fmt.Println("🚀 Bootstrapping Python Virtual Environment for Ansible...")
 
-	// Find python3
-	pythonCmd, err := exec.LookPath("python3")
-	if err != nil {
-		return "", nil, fmt.Errorf("python3 not found in PATH, required for bootstrapping")
+	// Find python3 (or python on Windows)
+	pythonCmd := "python3"
+	if _, err := exec.LookPath(pythonCmd); err != nil {
+		if _, err := exec.LookPath("python"); err == nil {
+			pythonCmd = "python"
+		} else {
+			return "", nil, fmt.Errorf("python3 (or python) not found in PATH, required for bootstrapping")
+		}
 	}
 
 	// Global context for all network operations (10 minute timeout), wrapped in a signal trap for Ctrl+C
@@ -100,7 +114,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		return "", nil, fmt.Errorf("failed to create venv: %w", err)
 	}
 
-	pipBin := filepath.Join(venvDir, "bin", "pip")
+	pipBin := filepath.Join(venvBinDir, "pip")
 
 	// Set pip mirror if provided
 	if pipIndexUrl != "" {
@@ -147,7 +161,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
 	if _, err := os.Stat(galaxyReqFile); err == nil {
 		fmt.Println("🌌 Installing Ansible Galaxy Dependencies (Collections & Roles)...")
-		galaxyBin := filepath.Join(venvDir, "bin", "ansible-galaxy")
+		galaxyBin := filepath.Join(venvBinDir, "ansible-galaxy")
 		
 		// Install Collections
 		err = runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
@@ -186,18 +200,22 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 // buildVenvEnv creates environment variables needed to run binaries inside a virtualenv
 func buildVenvEnv(venvDir string) []string {
 	env := os.Environ()
-	pathIdx := -1
+	
+	venvBinDir := filepath.Join(venvDir, "bin")
+	if runtime.GOOS == "windows" {
+		venvBinDir = filepath.Join(venvDir, "Scripts")
+	}
+
+	pathUpdated := false
 	for i, e := range env {
-		if len(e) > 5 && e[:5] == "PATH=" {
-			pathIdx = i
+		if strings.HasPrefix(strings.ToUpper(e), "PATH=") {
+			env[i] = fmt.Sprintf("PATH=%s%c%s", venvBinDir, os.PathListSeparator, e[5:])
+			pathUpdated = true
 			break
 		}
 	}
 
-	venvBinDir := filepath.Join(venvDir, "bin")
-	if pathIdx != -1 {
-		env[pathIdx] = fmt.Sprintf("PATH=%s:%s", venvBinDir, env[pathIdx][5:])
-	} else {
+	if !pathUpdated {
 		env = append(env, fmt.Sprintf("PATH=%s", venvBinDir))
 	}
 	env = append(env, fmt.Sprintf("VIRTUAL_ENV=%s", venvDir))
