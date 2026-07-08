@@ -114,12 +114,31 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 	return workDir, binary, venvEnv, nil
 }
 
-// ExecutePlaybook is the unified entry point to run the prepared Ansible environment.
+// ExecutePlaybook is the unified entry point to run the prepared Ansible environment (ansible-playbook).
 func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string, extraArgs ...string) error {
-	// Prepare the command
 	args := []string{"-i", inventory, playbook}
 	args = append(args, extraArgs...)
-	cmd := exec.Command(binary, args...)
+	return runAnsibleCommand("ansible-playbook", workDir, binary, venvEnv, args...)
+}
+
+// ExecuteAdHoc is the unified entry point to run the prepared Ansible environment (ansible).
+func ExecuteAdHoc(workDir, pattern string, binary string, venvEnv []string, extraArgs ...string) error {
+	args := []string{pattern}
+	args = append(args, extraArgs...)
+	return runAnsibleCommand("ansible", workDir, binary, venvEnv, args...)
+}
+
+// runAnsibleCommand handles the shared logic of invoking the Ansible environment.
+func runAnsibleCommand(binaryName, workDir, binary string, venvEnv []string, args ...string) error {
+	// Derive the target binary (ansible vs ansible-playbook) from the known binary path
+	cmdPath := filepath.Join(filepath.Dir(binary), binaryName)
+
+	// In some Edge cases on Windows, we might need .exe suffix
+	if filepath.Ext(binary) == ".exe" && filepath.Ext(cmdPath) == "" {
+		cmdPath += ".exe"
+	}
+
+	cmd := exec.Command(cmdPath, args...)
 	cmd.Dir = workDir
 	
 	// Stream standard output and error directly to the console
@@ -138,10 +157,11 @@ func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []stri
 	envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
 	cmd.Env = envVars
 
-	fmt.Printf("🚀 Executing: %s -i %s %s in %s\n", binary, inventory, playbook, workDir)
+	// Provide a masked representation of the command for logging
+	fmt.Printf("🚀 Executing: %s %v in %s\n", cmdPath, args, workDir)
 	
 	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("playbook execution failed: %w", err)
+		return fmt.Errorf("%s execution failed: %w", binaryName, err)
 	}
 
 	return nil
