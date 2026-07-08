@@ -57,7 +57,7 @@ var (
 )
 
 var applyCmd = &cobra.Command{
-	Use:   "apply",
+	Use:   "apply [playbook]",
 	Short: "Apply an Ansible playbook",
 	Long:  `Apply an Ansible playbook in the UniStack isolated environment.`,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -73,7 +73,7 @@ var applyCmd = &cobra.Command{
 		}
 		slog.Info("Successfully initialized UniStack environment", "workDir", workDir)
 
-		pb := "playbooks/helloworld.yml"
+		var pb string
 		if playbookFile != "" {
 			absPb, err := filepath.Abs(playbookFile)
 			if err == nil {
@@ -81,6 +81,29 @@ var applyCmd = &cobra.Command{
 			} else {
 				pb = playbookFile
 			}
+		} else if len(args) > 0 && !strings.HasPrefix(args[0], "-") {
+			absPb, err := filepath.Abs(args[0])
+			if err == nil {
+				pb = absPb
+			} else {
+				pb = args[0]
+			}
+			args = args[1:]
+		} else {
+			// Try to find a default playbook in current directory
+			defaults := []string{"site.yml", "main.yml", "playbook.yml"}
+			for _, def := range defaults {
+				if _, err := os.Stat(def); err == nil {
+					absPb, _ := filepath.Abs(def)
+					pb = absPb
+					break
+				}
+			}
+		}
+
+		if pb == "" {
+			slog.Error("No playbook specified. Please provide a playbook file (e.g. unistack apply site.yml) or use -p/--playbook")
+			os.Exit(1)
 		}
 
 		inv := "inventory"
