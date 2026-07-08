@@ -97,6 +97,20 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 		return "", "", nil, fmt.Errorf("failed to ensure dependencies: %w", err)
 	}
 
+	// 4. Post-flight Health Checks
+	// Extract python binary path from environment
+	pythonBin := filepath.Join(workDir, ".venv", "bin", "python") // fallback 
+	// To be perfectly precise, we should resolve pythonBin based on venvEnv or assume standard layout.
+	// Since ensureAnsibleInstalled guarantees standard layout (workDir/.ansible/venv/bin/python),
+	// we will pass the exact paths.
+	
+	// Wait, ensureAnsibleInstalled returns the ansible binary path, we can derive python from it
+	pythonBin = filepath.Join(filepath.Dir(binary), "python")
+	
+	if err := RunPostflightChecks(ctx, venvEnv, workDir, pythonBin, binary); err != nil {
+		return "", "", nil, err
+	}
+
 	return workDir, binary, venvEnv, nil
 }
 
