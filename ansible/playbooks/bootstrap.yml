@@ -1,3 +1,4 @@
+---
 - name: Bootstrap Managed Nodes
   hosts: all
   gather_facts: false
