@@ -7,11 +7,13 @@ import (
 	"fmt"
 	"os"
 
+	"log/slog"
+	
 	"github.com/snowdreamtech/unistack/internal/cli/output"
-	"github.com/snowdreamtech/unistack/internal/hello"
 	"github.com/snowdreamtech/unistack/internal/pkg/env"
 	"github.com/snowdreamtech/unistack/internal/pkg/errors"
 	"github.com/snowdreamtech/unistack/internal/pkg/logger"
+	"github.com/snowdreamtech/unistack/internal/pkg/orchestrator"
 	"github.com/snowdreamtech/unistack/internal/updater"
 	"github.com/spf13/cobra"
 )
@@ -63,7 +65,21 @@ var rootCmd = &cobra.Command{
 			runVersion(cmd, args)
 			return
 		}
-		hello.PrintHello()
+		
+		slog.Info("Starting UniStack Fat CLI MVP...")
+
+		workDir, err := orchestrator.ExtractAnsibleFS()
+		if err != nil {
+			slog.Error("Failed to extract embedded Ansible files", "error", err)
+			os.Exit(1)
+		}
+		slog.Info("Successfully extracted embedded files", "workDir", workDir)
+
+		err = orchestrator.ExecutePlaybook(workDir, "playbooks/helloworld.yml", "inventory/default.ini")
+		if err != nil {
+			slog.Error("Playbook execution failed", "error", err)
+			os.Exit(1)
+		}
 	},
 }
 

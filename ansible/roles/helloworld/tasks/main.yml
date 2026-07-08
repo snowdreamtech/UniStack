@@ -1,0 +1,4 @@
+---
+- name: Output Hello World
+  ansible.builtin.debug:
+    msg: "Hello World! UniStack Fat CLI MVP is working!"
