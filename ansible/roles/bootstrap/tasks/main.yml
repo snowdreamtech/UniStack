@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/bootstrap/tasks/main.yml
+#
+# Purpose:
+#   Bootstrap entry point for Managed Nodes (Target Machines).
+#   - Detects the OS using raw commands (no Python required).
+#   - Windows hosts: skip bootstrap entirely.
+#   - POSIX hosts (Linux/macOS): route to posix.yml.
+# =====================================================================
+
+- name: "Discovery: Detect OS type (raw probe)"
+  ansible.builtin.raw: "uname"
+  register: raw_uname_probe
+  ignore_errors: true
+  changed_when: false
+  tags: ["always"]
+
+- name: "Set discovery facts: OS families"
+  ansible.builtin.set_fact:
+    is_posix_system: "{{ (raw_uname_probe.rc | default(0)) == 0 }}"
+    is_windows_system: "{{ (raw_uname_probe.rc | default(0)) != 0 }}"
+  tags: ["always"]
+
+- name: "Skip bootstrap on Windows (no Python required)"
+  ansible.builtin.debug:
+    msg: "Windows host detected — bootstrap role skipped."
+  when: is_windows_system | bool
+  tags: ["always"]
+
+- name: "Run POSIX bootstrap"
+  ansible.builtin.include_tasks: "posix.yml"
+  when: is_posix_system | bool

@@ -1,0 +1,120 @@
+# =====================================================================
+# roles/bootstrap/tasks/installer.yml
+#
+# Purpose:
+#   Raw package manager execution to install Python 3.
+#   Uses the 'raw' module since Python is not available yet.
+# =====================================================================
+
+- name: "Install Python runtime and pip (raw, no Python required)"
+  ansible.builtin.raw: |
+    set -euo pipefail
+
+    echo "[UNISTACK_BOOTSTRAP] Detecting package manager..."
+
+    # Detect package manager
+    if command -v apk >/dev/null 2>&1; then
+      PM="apk"
+    elif command -v apt-get >/dev/null 2>&1; then
+      PM="apt"
+    elif command -v microdnf >/dev/null 2>&1; then
+      PM="microdnf"
+    elif command -v dnf >/dev/null 2>&1; then
+      PM="dnf"
+    elif command -v yum >/dev/null 2>&1; then
+      PM="yum"
+    elif command -v pacman >/dev/null 2>&1; then
+      PM="pacman"
+    elif command -v zypper >/dev/null 2>&1; then
+      PM="zypper"
+    elif command -v xbps-install >/dev/null 2>&1; then
+      PM="xbps"
+    elif command -v emerge >/dev/null 2>&1; then
+      PM="emerge"
+    elif command -v pkg >/dev/null 2>&1; then
+      PM="freebsd"
+    elif command -v brew >/dev/null 2>&1; then
+      PM="homebrew"
+    elif command -v port >/dev/null 2>&1; then
+      PM="macports"
+    else
+      echo "[UNISTACK_BOOTSTRAP] ERROR: Unsupported OS (no known package manager found)"
+      exit 1
+    fi
+
+    echo "[UNISTACK_BOOTSTRAP] Detected package manager: $PM"
+    echo "[UNISTACK_BOOTSTRAP] Installing Python..."
+
+    case "$PM" in
+      apk)
+        apk update || true
+        apk add --no-cache python3 py3-pip
+        ;;
+      apt)
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -y
+        apt-get install -y python3 python3-pip
+        apt-get install -y python3-venv || true
+        apt-get install -y python3-distutils || true
+        ;;
+      microdnf)
+        microdnf install -y python3 python3-pip || microdnf install -y python3
+        ;;
+      dnf)
+        dnf install -y python3 python3-pip \
+          || dnf install -y python3 python3-pip-wheel \
+          || dnf install -y python3 python3-wheel python3-pip
+        ;;
+      yum)
+        yum install -y python3 python3-pip \
+          || yum install -y python3 python3-pip-wheel \
+          || yum install -y python3 python3-wheel python3-pip
+        ;;
+      pacman)
+        pacman -Sy --noconfirm python python-pip
+        ;;
+      zypper)
+        zypper --non-interactive install python3 python3-pip
+        ;;
+      xbps)
+        xbps-install -Sy python3 python3-pip
+        ;;
+      emerge)
+        emerge -q dev-lang/python dev-python/pip || emerge -q dev-lang/python
+        ;;
+      freebsd)
+        pkg install -y python3 py39-pip || pkg install -y python3 py38-pip
+        ;;
+      homebrew)
+        brew install python3
+        ;;
+      macports)
+        port selfupdate || true
+        port install python311 || port install python310 || port install python3
+        ;;
+    esac
+
+    echo "[UNISTACK_BOOTSTRAP] Validating Python..."
+
+    if command -v python3 >/dev/null 2>&1; then
+      PY=python3
+    elif command -v python >/dev/null 2>&1; then
+      PY=python
+    else
+      echo "[UNISTACK_BOOTSTRAP] ERROR: Python installation failed"
+      exit 1
+    fi
+
+    $PY --version || true
+
+    # Ensure pip is present
+    if ! command -v pip3 >/dev/null 2>&1 && ! command -v pip >/dev/null 2>&1; then
+      echo "[UNISTACK_BOOTSTRAP] pip not found, attempting fallback installation..."
+      $PY -m ensurepip --default-pip || true
+    fi
+
+    echo "[UNISTACK_BOOTSTRAP] Python bootstrap completed successfully"
+  become: true
+  changed_when: true
+  args:
+    executable: "/bin/sh"

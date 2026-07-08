@@ -1,0 +1,47 @@
+# =====================================================================
+# roles/bootstrap/tasks/posix.yml
+#
+# Purpose:
+#   POSIX-only bootstrap logic (Linux + macOS).
+#   - Establishes the cache directory consistent with UniStack.
+#   - Runs installer and venv creation if needed.
+#   - Exposes `ansible_python_interpreter` for subsequent tasks.
+# =====================================================================
+
+- name: "Resolve target user HOME directory (raw)"
+  ansible.builtin.raw: "echo $HOME"
+  register: raw_home_probe
+  changed_when: false
+  tags: ["always"]
+
+- name: "Set UniStack cache paths"
+  ansible.builtin.set_fact:
+    resolved_home: "{{ raw_home_probe.stdout | trim }}"
+  tags: ["always"]
+
+- name: "Set Venv Path"
+  ansible.builtin.set_fact:
+    python_venv_path: "{{ resolved_home }}/.local/share/unistack/.ansible/venv"
+    bootstrap_flag_path: "{{ resolved_home }}/.local/share/unistack/.ansible/venv/.bootstrap_complete"
+  tags: ["always"]
+
+- name: "Check if bootstrap flag exists"
+  ansible.builtin.stat:
+    path: "{{ bootstrap_flag_path }}"
+  register: bootstrap_flag
+  tags: ["always"]
+
+- name: "Install Python"
+  ansible.builtin.include_tasks: "installer.yml"
+  when: not bootstrap_flag.stat.exists
+
+- name: "Create Python Venv"
+  ansible.builtin.include_tasks: "venv.yml"
+  when: not bootstrap_flag.stat.exists
+
+- name: "Activate Python venv interpreter globally for this host"
+  ansible.builtin.set_fact:
+    ansible_python_interpreter: "{{ python_venv_path }}/bin/python3"
+    ansible_docker_python_interpreter: "{{ python_venv_path }}/bin/python3"
+  changed_when: false
+  tags: ["always"]

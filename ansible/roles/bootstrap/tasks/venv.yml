@@ -1,0 +1,39 @@
+# =====================================================================
+# roles/bootstrap/tasks/venv.yml
+#
+# Purpose:
+#   Virtual environment creation using the 'raw' module.
+#   Ensures a clean venv exists at the target path and sets the flag.
+# =====================================================================
+
+- name: "Create Python virtual environment (raw)"
+  ansible.builtin.raw: |
+    set -euo pipefail
+
+    echo "[UNISTACK_BOOTSTRAP] Determining Python executable..."
+    if command -v python3 >/dev/null 2>&1; then
+      PY=python3
+    elif command -v python >/dev/null 2>&1; then
+      PY=python
+    else
+      echo "[UNISTACK_BOOTSTRAP] ERROR: Python executable not found"
+      exit 1
+    fi
+
+    echo "[UNISTACK_BOOTSTRAP] Creating parent directories for {{ python_venv_path }}..."
+    mkdir -p "$(dirname "{{ python_venv_path }}")"
+
+    echo "[UNISTACK_BOOTSTRAP] Creating venv at {{ python_venv_path }}..."
+    $PY -m venv "{{ python_venv_path }}"
+
+    echo "[UNISTACK_BOOTSTRAP] Virtual environment created successfully"
+  changed_when: true
+  args:
+    executable: "/bin/sh"
+
+- name: "Mark bootstrap as complete (touch flag)"
+  ansible.builtin.raw: |
+    touch "{{ bootstrap_flag_path }}"
+  changed_when: true
+  args:
+    executable: "/bin/sh"
