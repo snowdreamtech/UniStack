@@ -14,6 +14,8 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
 
 // ensureAnsibleInstalled checks for ansible and installs it in a venv if missing
@@ -25,10 +27,11 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		return sysBin, nil, nil
 	}
 
-	// Paths for local venv
-	venvDir := filepath.Join(workDir, ".venv")
+	// Paths for local venv - placed OUTSIDE workDir so it survives atomic file extractions
+	// when the UniStack binary is upgraded but python dependencies remain unchanged.
+	venvDir := filepath.Join(env.GetDataDir(), "venv")
 	venvBin := filepath.Join(venvDir, "bin", "ansible-playbook")
-	markerFile := filepath.Join(workDir, ".bootstrap_complete")
+	markerFile := filepath.Join(venvDir, ".bootstrap_complete")
 
 	// Calculate dependency hash to detect version upgrades
 	currentHash, _ := calculateDependenciesHash(workDir)
