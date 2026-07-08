@@ -33,10 +33,26 @@
       PM="emerge"
     elif command -v pkg >/dev/null 2>&1; then
       PM="freebsd"
+    elif command -v pkg_add >/dev/null 2>&1; then
+      PM="pkg_add"
     elif command -v brew >/dev/null 2>&1; then
       PM="homebrew"
     elif command -v port >/dev/null 2>&1; then
       PM="macports"
+    elif command -v swupd >/dev/null 2>&1; then
+      PM="swupd"
+    elif command -v eopkg >/dev/null 2>&1; then
+      PM="eopkg"
+    elif command -v nix-env >/dev/null 2>&1; then
+      PM="nix-env"
+    elif command -v opkg >/dev/null 2>&1; then
+      PM="opkg"
+    elif command -v tdnf >/dev/null 2>&1; then
+      PM="tdnf"
+    elif command -v urpmi >/dev/null 2>&1; then
+      PM="urpmi"
+    elif command -v slackpkg >/dev/null 2>&1; then
+      PM="slackpkg"
     else
       echo "[UNISTACK_BOOTSTRAP] ERROR: Unsupported OS (no known package manager found)"
       exit 1
@@ -85,12 +101,36 @@
       freebsd)
         pkg install -y python3 py39-pip || pkg install -y python3 py38-pip
         ;;
+      pkg_add)
+        pkg_add -I python%3 || pkg_add -I python3
+        ;;
       homebrew)
         brew install python3
         ;;
       macports)
         port selfupdate || true
         port install python311 || port install python310 || port install python3
+        ;;
+      swupd)
+        swupd bundle-add python3-basic
+        ;;
+      eopkg)
+        eopkg install -y python3
+        ;;
+      nix-env)
+        nix-env -iA nixpkgs.python3
+        ;;
+      opkg)
+        opkg update && opkg install python3
+        ;;
+      tdnf)
+        tdnf install -y python3
+        ;;
+      urpmi)
+        urpmi --auto python3
+        ;;
+      slackpkg)
+        slackpkg update && slackpkg install python3
         ;;
     esac
 
