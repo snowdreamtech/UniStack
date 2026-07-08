@@ -20,20 +20,40 @@ var (
 	playbookFile      string
 	inventoryFile     string
 	pipIndexUrl       string
-	limit             string
-	tags              []string
-	skipTags          []string
-	extraVars         []string
-	become            bool
-	askBecomePass     bool
-	user              string
-	askPass           bool
-	privateKey        string
-	check             bool
-	diff              bool
-	syntaxCheck       bool
-	forks             int
-	vaultPasswordFile string
+	limit                   string
+	tags                    []string
+	skipTags                []string
+	extraVars               []string
+	become                  bool
+	askBecomePass           bool
+	user                    string
+	askPass                 bool
+	privateKey              string
+	check                   bool
+	diff                    bool
+	syntaxCheck             bool
+	forks                   int
+	vaultPasswordFile       string
+	becomePasswordFile      string
+	connectionPasswordFile  string
+	flushCache              bool
+	forceHandlers           bool
+	listHosts               bool
+	listTags                bool
+	listTasks               bool
+	startAtTask             string
+	step                    bool
+	vaultId                 []string
+	askVaultPass            bool
+	modulePath              []string
+	connection              string
+	timeout                 int
+	sshCommonArgs           string
+	sftpExtraArgs           string
+	scpExtraArgs            string
+	sshExtraArgs            string
+	becomeMethod            string
+	becomeUser              string
 )
 
 var runCmd = &cobra.Command{
@@ -120,6 +140,66 @@ var runCmd = &cobra.Command{
 		if vaultPasswordFile != "" {
 			dynamicArgs = append(dynamicArgs, "--vault-password-file", vaultPasswordFile)
 		}
+		if becomePasswordFile != "" {
+			dynamicArgs = append(dynamicArgs, "--become-password-file", becomePasswordFile)
+		}
+		if connectionPasswordFile != "" {
+			dynamicArgs = append(dynamicArgs, "--connection-password-file", connectionPasswordFile)
+		}
+		if flushCache {
+			dynamicArgs = append(dynamicArgs, "--flush-cache")
+		}
+		if forceHandlers {
+			dynamicArgs = append(dynamicArgs, "--force-handlers")
+		}
+		if listHosts {
+			dynamicArgs = append(dynamicArgs, "--list-hosts")
+		}
+		if listTags {
+			dynamicArgs = append(dynamicArgs, "--list-tags")
+		}
+		if listTasks {
+			dynamicArgs = append(dynamicArgs, "--list-tasks")
+		}
+		if startAtTask != "" {
+			dynamicArgs = append(dynamicArgs, "--start-at-task", startAtTask)
+		}
+		if step {
+			dynamicArgs = append(dynamicArgs, "--step")
+		}
+		for _, vid := range vaultId {
+			dynamicArgs = append(dynamicArgs, "--vault-id", vid)
+		}
+		if askVaultPass {
+			dynamicArgs = append(dynamicArgs, "--ask-vault-pass")
+		}
+		for _, mp := range modulePath {
+			dynamicArgs = append(dynamicArgs, "--module-path", mp)
+		}
+		if connection != "" {
+			dynamicArgs = append(dynamicArgs, "--connection", connection)
+		}
+		if timeout != 0 {
+			dynamicArgs = append(dynamicArgs, "--timeout", fmt.Sprintf("%d", timeout))
+		}
+		if sshCommonArgs != "" {
+			dynamicArgs = append(dynamicArgs, "--ssh-common-args", sshCommonArgs)
+		}
+		if sftpExtraArgs != "" {
+			dynamicArgs = append(dynamicArgs, "--sftp-extra-args", sftpExtraArgs)
+		}
+		if scpExtraArgs != "" {
+			dynamicArgs = append(dynamicArgs, "--scp-extra-args", scpExtraArgs)
+		}
+		if sshExtraArgs != "" {
+			dynamicArgs = append(dynamicArgs, "--ssh-extra-args", sshExtraArgs)
+		}
+		if becomeMethod != "" {
+			dynamicArgs = append(dynamicArgs, "--become-method", becomeMethod)
+		}
+		if becomeUser != "" {
+			dynamicArgs = append(dynamicArgs, "--become-user", becomeUser)
+		}
 
 		// Append the explicitly mapped flags first, then append any unmapped args passed after --
 		dynamicArgs = append(dynamicArgs, args...)
@@ -153,4 +233,24 @@ func init() {
 	runCmd.Flags().BoolVar(&syntaxCheck, "syntax-check", false, "perform a syntax check on the playbook, but do not execute it")
 	runCmd.Flags().IntVarP(&forks, "forks", "f", 5, "specify number of parallel processes to use")
 	runCmd.Flags().StringVar(&vaultPasswordFile, "vault-password-file", "", "vault password file")
+	runCmd.Flags().StringVar(&becomePasswordFile, "become-password-file", "", "become password file")
+	runCmd.Flags().StringVar(&connectionPasswordFile, "connection-password-file", "", "connection password file")
+	runCmd.Flags().BoolVar(&flushCache, "flush-cache", false, "clear the fact cache for every host in inventory")
+	runCmd.Flags().BoolVar(&forceHandlers, "force-handlers", false, "run handlers even if a task fails")
+	runCmd.Flags().BoolVar(&listHosts, "list-hosts", false, "outputs a list of matching hosts; does not execute anything else")
+	runCmd.Flags().BoolVar(&listTags, "list-tags", false, "list all available tags")
+	runCmd.Flags().BoolVar(&listTasks, "list-tasks", false, "list all tasks that would be executed")
+	runCmd.Flags().StringVar(&startAtTask, "start-at-task", "", "start the playbook at the task matching this name")
+	runCmd.Flags().BoolVar(&step, "step", false, "one-step-at-a-time: confirm each task before running")
+	runCmd.Flags().StringSliceVar(&vaultId, "vault-id", []string{}, "the vault identity to use")
+	runCmd.Flags().BoolVarP(&askVaultPass, "ask-vault-pass", "J", false, "ask for vault password")
+	runCmd.Flags().StringSliceVarP(&modulePath, "module-path", "M", []string{}, "prepend colon-separated path(s) to module library")
+	runCmd.Flags().StringVarP(&connection, "connection", "c", "", "connection type to use (default=ssh)")
+	runCmd.Flags().IntVarP(&timeout, "timeout", "T", 0, "override the connection timeout in seconds")
+	runCmd.Flags().StringVar(&sshCommonArgs, "ssh-common-args", "", "specify common arguments to pass to sftp/scp/ssh")
+	runCmd.Flags().StringVar(&sftpExtraArgs, "sftp-extra-args", "", "specify extra arguments to pass to sftp only")
+	runCmd.Flags().StringVar(&scpExtraArgs, "scp-extra-args", "", "specify extra arguments to pass to scp only")
+	runCmd.Flags().StringVar(&sshExtraArgs, "ssh-extra-args", "", "specify extra arguments to pass to ssh only")
+	runCmd.Flags().StringVar(&becomeMethod, "become-method", "", "privilege escalation method to use (default=sudo)")
+	runCmd.Flags().StringVar(&becomeUser, "become-user", "", "run operations as this user (default=root)")
 }
