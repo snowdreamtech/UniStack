@@ -1,6 +1,6 @@
 ---
-- name: Hello World Playbook
+- name: Ping Playbook
   hosts: all
   gather_facts: true
   roles:
-    - helloworld
+    - ping
