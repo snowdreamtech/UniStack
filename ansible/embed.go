@@ -7,5 +7,5 @@ import (
 	"embed"
 )
 
-//go:embed inventory playbooks roles ansible.cfg requirements.txt
+//go:embed inventory playbooks roles ansible.cfg requirements.txt requirements.yml
 var FS embed.FS

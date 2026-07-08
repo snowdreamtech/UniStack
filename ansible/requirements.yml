@@ -1,0 +1,37 @@
+---
+# =====================================================================
+# requirements.yml
+#
+# Purpose:
+#   External Ansible collection dependencies.
+#   Specifies the exact versions of community and vendor collections
+#   required for the project to ensure consistent execution
+#   environments.
+#
+# Simple Usage:
+#   ansible-galaxy collection install -r requirements.yml
+#
+# Comprehensive Usage:
+#   ansible-galaxy collection install -r requirements.yml -p ./collections
+#
+# =====================================================================
+
+collections:
+  - name: "community.general"
+    version: "9.5.0"
+
+  # POSIX utilities including SELinux management for RHEL-based systems.
+  - name: "ansible.posix"
+    version: "2.1.0"
+
+  # Podman management collection for enterprise-grade containers.
+  - name: "containers.podman"
+    version: "1.13.0"
+
+  # Docker management collection supporting Buildx, Swarm, and Compose v2.
+  - name: "community.docker"
+    version: "3.10.3"
+
+  # Kubernetes management collection for K8s deployments.
+  - name: "kubernetes.core"
+    version: "5.0.0"

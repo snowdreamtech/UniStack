@@ -54,9 +54,9 @@ func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, erro
 		}
 	}
 
-	// Install requirements
+	// Install requirements via pip
 	reqFile := filepath.Join(workDir, "requirements.txt")
-	fmt.Println("📦 Installing Ansible dependencies...")
+	fmt.Println("📦 Installing Ansible dependencies via pip...")
 	cmd = exec.Command(pipBin, "install", "-r", reqFile)
 	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
@@ -65,6 +65,24 @@ func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, erro
 
 	if _, err := os.Stat(venvBin); err != nil {
 		return "", nil, fmt.Errorf("ansible-playbook not found in venv after installation")
+	}
+
+	// Install Ansible Galaxy Collections
+	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
+	if _, err := os.Stat(galaxyReqFile); err == nil {
+		fmt.Println("🌌 Installing Ansible Galaxy Collections...")
+		galaxyBin := filepath.Join(venvDir, "bin", "ansible-galaxy")
+		
+		// Create the command with the venv environment so it installs correctly
+		cmd = exec.Command(galaxyBin, "collection", "install", "-r", galaxyReqFile)
+		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+		
+		// Set VIRTUAL_ENV and PATH for galaxy so it knows where to install
+		cmd.Env = buildVenvEnv(venvDir)
+		
+		if err := cmd.Run(); err != nil {
+			return "", nil, fmt.Errorf("failed to install Ansible Galaxy collections: %w", err)
+		}
 	}
 
 	return venvBin, buildVenvEnv(venvDir), nil
