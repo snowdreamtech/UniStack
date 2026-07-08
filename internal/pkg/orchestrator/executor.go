@@ -188,7 +188,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	}
 
 	// Successfully finished everything. Write atomic marker with the hash.
-	if file, err := os.Create(markerFile); err == nil {
+	if file, err := os.OpenFile(markerFile, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0600); err == nil {
 		file.WriteString(currentHash)
 		file.Close()
 	}
