@@ -29,8 +29,8 @@
 
 - name: "Set Venv Path"
   ansible.builtin.set_fact:
-    python_venv_path: "{{ resolved_home }}/.local/share/unistack/.ansible/venv"
-    bootstrap_flag_path: "{{ resolved_home }}/.local/share/unistack/.ansible/venv/.bootstrap_complete"
+    python_venv_path: "{{ python_venv_path | default(resolved_home ~ '/.local/share/unistack/.ansible/venv') }}"
+    bootstrap_flag_path: "{{ bootstrap_flag_path | default(resolved_home ~ '/.local/share/unistack/.ansible/venv/.bootstrap_complete') }}"
   tags: ["always"]
 
 - name: "Check if bootstrap flag and venv exist (raw)"
