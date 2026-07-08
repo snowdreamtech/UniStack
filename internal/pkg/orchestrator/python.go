@@ -6,6 +6,7 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -27,7 +28,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	}
 
 	if pythonCmd != "" {
-		fmt.Printf("✅ Found system Python at %s\n", pythonCmd)
+		slog.Debug(fmt.Sprintf("✅ Found system Python at %s\n", pythonCmd))
 		return pythonCmd, nil
 	}
 
@@ -37,11 +38,11 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	}
 
 	// 3. Attempt POSIX auto-installation
-	fmt.Println("⚠️ Python 3 not found. Attempting automatic installation via system package manager...")
+	slog.Debug("⚠️ Python 3 not found. Attempting automatic installation via system package manager...")
 
 	// Detect package manager
 	packageManagers := []string{
-		"apk", "apt-get", "microdnf", "dnf", "yum", "pacman", 
+		"apk", "apt-get", "microdnf", "dnf", "yum", "pacman",
 		"zypper", "xbps-install", "emerge", "pkg", "pkg_add", "brew", "port",
 		"swupd", "eopkg", "nix-env", "opkg", "tdnf", "urpmi", "slackpkg",
 	}
@@ -58,7 +59,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("could not detect a supported package manager for auto-installation. Please install Python 3 manually")
 	}
 
-	fmt.Printf("📦 Detected package manager: %s\n", detectedPM)
+	slog.Debug(fmt.Sprintf("📦 Detected package manager: %s\n", detectedPM))
 
 	// Map package manager to installation shell command
 	var installCmd string
@@ -109,7 +110,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	if os.Getuid() != 0 && detectedPM != "brew" {
 		// Verify sudo is available
 		if _, err := exec.LookPath("sudo"); err == nil {
-			fmt.Println("🔑 Root privileges required for installation. Attempting to use sudo (you may be prompted for your password)...")
+			slog.Debug("🔑 Root privileges required for installation. Attempting to use sudo (you may be prompted for your password)...")
 			installCmd = "sudo sh -c '" + strings.ReplaceAll(installCmd, "'", "'\\''") + "'"
 		} else {
 			return "", fmt.Errorf("installation requires root privileges, but 'sudo' is not installed. Please run as root or install Python 3 manually")
@@ -127,7 +128,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to install Python 3 automatically: %w", err)
 	}
 
-	fmt.Println("✅ Automatic Python 3 installation complete")
+	slog.Debug("✅ Automatic Python 3 installation complete")
 
 	// 4. Re-verify Python 3 installation
 	if _, err := exec.LookPath("python3"); err == nil {
@@ -142,7 +143,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 // buildVenvEnv creates environment variables needed to run binaries inside a virtualenv
 func buildVenvEnv(venvDir string) []string {
 	envVars := os.Environ()
-	
+
 	venvBinDir := filepath.Join(venvDir, "bin")
 	if runtime.GOOS == "windows" {
 		venvBinDir = filepath.Join(venvDir, "Scripts")
@@ -166,7 +167,7 @@ func buildVenvEnv(venvDir string) []string {
 
 // SetupVirtualEnvironment creates the Python venv and sets up the environment variables
 func SetupVirtualEnvironment(ctx context.Context, pythonCmd, venvDir string) ([]string, error) {
-	fmt.Println("🚀 Bootstrapping Python Virtual Environment for Ansible...")
+	slog.Debug("🚀 Bootstrapping Python Virtual Environment for Ansible...")
 
 	// Create venv
 	cmd := exec.CommandContext(ctx, pythonCmd, "-m", "venv", venvDir)

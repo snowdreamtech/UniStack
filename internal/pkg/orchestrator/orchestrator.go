@@ -6,10 +6,11 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
-	"os/exec"
 
 	"github.com/gofrs/flock"
 	"github.com/snowdreamtech/unistack/internal/pkg/env"
@@ -23,7 +24,7 @@ import (
 // 4. Detecting and deploying Ansible
 func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
 	rootDir := env.GetDataDir()
-	
+
 	// Ensure root directory exists before attempting to create the lock file, locked down to owner only
 	if err := os.MkdirAll(rootDir, 0700); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
@@ -66,9 +67,9 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 			break
 		}
 		if i == 0 {
-			fmt.Println("⏳ Another UniStack process is initializing. Waiting for global lock...")
+			slog.Debug("⏳ Another UniStack process is initializing. Waiting for global lock...")
 		}
-		
+
 		select {
 		case <-ctx.Done():
 			return "", "", nil, ctx.Err()
@@ -99,14 +100,14 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 
 	// 4. Post-flight Health Checks
 	// Extract python binary path from environment
-	pythonBin := filepath.Join(workDir, ".venv", "bin", "python") // fallback 
+	pythonBin := filepath.Join(workDir, ".venv", "bin", "python") // fallback
 	// To be perfectly precise, we should resolve pythonBin based on venvEnv or assume standard layout.
 	// Since ensureAnsibleInstalled guarantees standard layout (workDir/.ansible/venv/bin/python),
 	// we will pass the exact paths.
-	
+
 	// Wait, ensureAnsibleInstalled returns the ansible binary path, we can derive python from it
 	pythonBin = filepath.Join(filepath.Dir(binary), "python")
-	
+
 	if err := RunPostflightChecks(ctx, venvEnv, workDir, pythonBin, binary); err != nil {
 		return "", "", nil, err
 	}
@@ -140,7 +141,7 @@ func runAnsibleCommand(binaryName, workDir, binary string, venvEnv []string, arg
 
 	cmd := exec.Command(cmdPath, args...)
 	cmd.Dir, _ = os.Getwd()
-	
+
 	// Stream standard output and error directly to the console
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -152,14 +153,14 @@ func runAnsibleCommand(binaryName, workDir, binary string, venvEnv []string, arg
 	} else {
 		envVars = os.Environ()
 	}
-	
+
 	// Set ANSIBLE_CONFIG
 	envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
 	cmd.Env = envVars
 
 	// Provide a masked representation of the command for logging
-	fmt.Printf("🚀 Executing: %s %v in %s\n", cmdPath, args, workDir)
-	
+	slog.Debug(fmt.Sprintf("🚀 Executing: %s %v in %s\n", cmdPath, args, workDir))
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("%s execution failed: %w", binaryName, err)
 	}

@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"os/signal"
@@ -24,14 +25,14 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	// First check if ansible-playbook is already in the system PATH
 	sysBin, err := exec.LookPath("ansible-playbook")
 	if err == nil {
-		fmt.Printf("✅ Found system Ansible at %s\n", sysBin)
+		slog.Debug(fmt.Sprintf("✅ Found system Ansible at %s\n", sysBin))
 		return sysBin, nil, nil
 	}
 
 	// Paths for local venv - placed OUTSIDE workDir so it survives atomic file extractions
 	// when the UniStack binary is upgraded but python dependencies remain unchanged.
 	venvDir := filepath.Join(env.GetDataDir(), ".ansible", "venv")
-	
+
 	venvBinDir := filepath.Join(venvDir, "bin")
 	if runtime.GOOS == "windows" {
 		venvBinDir = filepath.Join(venvDir, "Scripts")
@@ -52,12 +53,12 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 				return venvBin, buildVenvEnv(venvDir), nil
 			}
 		} else {
-			fmt.Println("🔄 Dependencies have changed (binary upgrade detected). Rebuilding virtual environment...")
+			slog.Debug("🔄 Dependencies have changed (binary upgrade detected). Rebuilding virtual environment...")
 		}
 	}
 
 	// The global lock is now held by PrepareEnvironment, so we can proceed directly.
-	
+
 	// Double check marker after acquiring lock (not strictly needed now, but safe)
 	if markerData, err := os.ReadFile(markerFile); err == nil {
 		if string(markerData) == currentHash {
@@ -75,7 +76,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	bootstrapSuccess := false
 	defer func() {
 		if !bootstrapSuccess {
-			fmt.Println("💥 Bootstrap failed or was interrupted. Executing scorched earth rollback...")
+			slog.Debug("💥 Bootstrap failed or was interrupted. Executing scorched earth rollback...")
 			os.RemoveAll(venvDir)
 			os.Remove(markerFile)
 		}
@@ -102,10 +103,10 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	pipBin := filepath.Join(venvBinDir, "pip")
 
 	if pipIndexUrl != "" {
-		fmt.Printf("📦 Configuring pip mirror: %s\n", pipIndexUrl)
+		slog.Debug(fmt.Sprintf("📦 Configuring pip mirror: %s\n", pipIndexUrl))
 		cmd := exec.CommandContext(ctx, pipBin, "config", "set", "global.index-url", pipIndexUrl)
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("⚠️ Warning: failed to set pip mirror: %v\n", err)
+			slog.Debug(fmt.Sprintf("⚠️ Warning: failed to set pip mirror: %v\n", err))
 		}
 	}
 
@@ -114,7 +115,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		var lastErr error
 		for i := 0; i < maxRetries; i++ {
 			if i > 0 {
-				fmt.Printf("⚠️ %s failed, retrying in %v (attempt %d/%d)...\n", name, delay, i+1, maxRetries)
+				slog.Debug(fmt.Sprintf("⚠️ %s failed, retrying in %v (attempt %d/%d)...\n", name, delay, i+1, maxRetries))
 				select {
 				case <-time.After(delay):
 				case <-ctx.Done():
@@ -133,7 +134,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 
 	// Install requirements via pip
 	reqFile := filepath.Join(workDir, "requirements.txt")
-	fmt.Println("📦 Installing Ansible dependencies via pip...")
+	slog.Debug("📦 Installing Ansible dependencies via pip...")
 	err = runWithRetry("pip install", func(c context.Context) *exec.Cmd {
 		return exec.CommandContext(c, pipBin, "install", "-r", reqFile)
 	}, 3, 3*time.Second)
@@ -144,9 +145,9 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	// Install Ansible Galaxy Collections and Roles
 	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
 	if _, err := os.Stat(galaxyReqFile); err == nil {
-		fmt.Println("🌌 Installing Ansible Galaxy Dependencies (Collections & Roles)...")
+		slog.Debug("🌌 Installing Ansible Galaxy Dependencies (Collections & Roles)...")
 		galaxyBin := filepath.Join(venvBinDir, "ansible-galaxy")
-		
+
 		// Install Collections
 		err = runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
@@ -182,26 +183,22 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	return venvBin, venvEnv, nil
 }
 
-
-
-
-
 // calculateDependenciesHash computes a SHA-256 hash of the content of requirements.txt and requirements.yml.
 // This allows us to detect when the binary is upgraded and dependencies change, triggering a fresh bootstrap.
 func calculateDependenciesHash(workDir string) (string, error) {
 	hash := sha256.New()
-	
+
 	reqFile := filepath.Join(workDir, "requirements.txt")
 	reqData, err := os.ReadFile(reqFile)
 	if err == nil {
 		hash.Write(reqData)
 	}
-	
+
 	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
 	galaxyReqData, err := os.ReadFile(galaxyReqFile)
 	if err == nil {
 		hash.Write(galaxyReqData)
 	}
-	
+
 	return hex.EncodeToString(hash.Sum(nil)), nil
 }

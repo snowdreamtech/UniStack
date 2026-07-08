@@ -5,6 +5,7 @@ package orchestrator
 
 import (
 	"fmt"
+	"log/slog"
 	"path/filepath"
 	"runtime"
 )
@@ -12,7 +13,7 @@ import (
 // RunPreflightChecks inspects the host operating system and hardware resources
 // to ensure the environment meets the minimum requirements for running Ansible.
 func RunPreflightChecks(rootDir string) error {
-	fmt.Println("🚀 Running Pre-flight System Checks...")
+	slog.Debug("🚀 Running Pre-flight System Checks...")
 
 	// 1. Operating System Check
 	if runtime.GOOS == "windows" {
@@ -26,7 +27,7 @@ func RunPreflightChecks(rootDir string) error {
 			return fmt.Errorf("🚨 FATAL: Insufficient disk space. Required: 1024 MB (1GB), Available: %d MB. Boot aborted to prevent corruption", freeSpace/(1024*1024))
 		}
 	} else {
-		fmt.Printf("⚠️ Warning: Failed to check disk space: %v\n", err)
+		slog.Debug(fmt.Sprintf("⚠️ Warning: Failed to check disk space: %v\n", err))
 	}
 
 	// 3. Physical Memory Check: Require at least 1GB (1024 * 1024 * 1024 bytes)
@@ -36,7 +37,7 @@ func RunPreflightChecks(rootDir string) error {
 			return fmt.Errorf("🚨 FATAL: Insufficient physical memory (%d MB). Ansible execution requires at least 1024 MB (1GB) to prevent OOM crashes", totalMemory/(1024*1024))
 		}
 	} else {
-		fmt.Printf("⚠️ Warning: Failed to check physical memory: %v\n", err)
+		slog.Debug(fmt.Sprintf("⚠️ Warning: Failed to check physical memory: %v\n", err))
 	}
 
 	return nil

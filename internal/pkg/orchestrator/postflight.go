@@ -6,16 +6,17 @@ package orchestrator
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
-	"strings"
 	"path/filepath"
+	"strings"
 )
 
 // RunPostflightChecks validates that the initialized environment (Python, Ansible)
 // is functional and capable of executing payloads on the host system.
 func RunPostflightChecks(ctx context.Context, venvEnv []string, workDir, pythonBin, ansibleBin string) error {
-	fmt.Println("🚀 Running Post-flight System Checks...")
+	slog.Debug("🚀 Running Post-flight System Checks...")
 
 	// Create unified environment map for command execution
 	var envVars []string
@@ -34,7 +35,7 @@ func RunPostflightChecks(ctx context.Context, venvEnv []string, workDir, pythonB
 		return fmt.Errorf("🚨 FATAL: Python health check failed. The environment is broken or incompatible with this architecture.\nError: %w\nOutput: %s", err, string(pyOutput))
 	}
 	pyVersion := strings.TrimSpace(string(pyOutput))
-	fmt.Printf("✅ [Postflight] Python interpreter is healthy (%s)\n", pyVersion)
+	slog.Debug(fmt.Sprintf("✅ [Postflight] Python interpreter is healthy (%s)\n", pyVersion))
 
 	// 2. Ansible Health Check
 	ansibleCmd := exec.CommandContext(ctx, ansibleBin, "--version")
@@ -43,11 +44,11 @@ func RunPostflightChecks(ctx context.Context, venvEnv []string, workDir, pythonB
 	if err != nil {
 		return fmt.Errorf("🚨 FATAL: Ansible health check failed. Modules may be missing or corrupted.\nError: %w\nOutput: %s", err, string(ansibleOutput))
 	}
-	
+
 	// Just print the first line of ansible --version to keep it clean
 	ansibleVersionLines := strings.Split(string(ansibleOutput), "\n")
 	if len(ansibleVersionLines) > 0 {
-		fmt.Printf("✅ [Postflight] Ansible core is healthy (%s)\n", strings.TrimSpace(ansibleVersionLines[0]))
+		slog.Debug(fmt.Sprintf("✅ [Postflight] Ansible core is healthy (%s)\n", strings.TrimSpace(ansibleVersionLines[0])))
 	}
 
 	return nil

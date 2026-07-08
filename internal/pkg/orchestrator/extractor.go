@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/fs"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -32,7 +33,7 @@ func extractAnsibleFS() (string, error) {
 	// 0. Crash Recovery: Check if previous swap was interrupted
 	if _, errOld := os.Stat(oldDir); errOld == nil {
 		if _, errNew := os.Stat(ansibleDir); os.IsNotExist(errNew) {
-			fmt.Println("⚠️ Recovering from incomplete previous extraction swap...")
+			slog.Debug("⚠️ Recovering from incomplete previous extraction swap...")
 			_ = os.Rename(oldDir, ansibleDir)
 		}
 	}
@@ -67,7 +68,7 @@ func extractAnsibleFS() (string, error) {
 				if !tampered {
 					return ansibleDir, nil
 				}
-				fmt.Println("⚠️ Tampering or file corruption detected. Forcing re-extraction...")
+				slog.Debug("⚠️ Tampering or file corruption detected. Forcing re-extraction...")
 			}
 		}
 	}
@@ -104,7 +105,7 @@ func extractAnsibleFS() (string, error) {
 				return err
 			}
 			os.Chmod(targetPath, 0700)
-			
+
 			// Fsync directory to ensure metadata is flushed
 			if dirF, err := os.Open(targetPath); err == nil {
 				dirF.Sync()
@@ -151,7 +152,7 @@ func extractAnsibleFS() (string, error) {
 			return err
 		}
 		os.Chmod(targetPath, perm)
-		
+
 		// Sync parent directory
 		if parentF, err := os.Open(filepath.Dir(targetPath)); err == nil {
 			parentF.Sync()
