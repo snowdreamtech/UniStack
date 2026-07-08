@@ -115,9 +115,11 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 }
 
 // ExecutePlaybook is the unified entry point to run the prepared Ansible environment.
-func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string) error {
+func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string, extraArgs ...string) error {
 	// Prepare the command
-	cmd := exec.Command(binary, "-i", inventory, playbook)
+	args := []string{"-i", inventory, playbook}
+	args = append(args, extraArgs...)
+	cmd := exec.Command(binary, args...)
 	cmd.Dir = workDir
 	
 	// Stream standard output and error directly to the console

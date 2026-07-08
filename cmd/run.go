@@ -62,7 +62,7 @@ var runCmd = &cobra.Command{
 			}
 		}
 
-		err = orchestrator.ExecutePlaybook(workDir, pb, inv, binary, venvEnv)
+		err = orchestrator.ExecutePlaybook(workDir, pb, inv, binary, venvEnv, args...)
 		if err != nil {
 			slog.Error("Playbook execution failed", "error", err)
 			os.Exit(1)
