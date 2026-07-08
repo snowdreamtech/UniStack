@@ -82,10 +82,10 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		}
 	}()
 
-	// Global context for all network operations (20 minute timeout), wrapped in a signal trap for Ctrl+C
+	// Global context for all network operations (30 minute timeout), wrapped in a signal trap for Ctrl+C
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	ctx, cancel := context.WithTimeout(sigCtx, 20*time.Minute)
+	ctx, cancel := context.WithTimeout(sigCtx, 30*time.Minute)
 	defer cancel()
 
 	// Delegate Python discovery and auto-installation to the python module

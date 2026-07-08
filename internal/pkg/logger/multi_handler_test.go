@@ -64,7 +64,7 @@ func TestMultiHandler(t *testing.T) {
 
 	err = json.Unmarshal(buf1.Bytes(), &jsonMap)
 	assert.NoError(t, err)
-	
+
 	group, ok := jsonMap["mygroup"].(map[string]interface{})
 	assert.True(t, ok)
 	assert.Equal(t, "gval", group["gkey"])
