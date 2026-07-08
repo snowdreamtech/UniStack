@@ -26,6 +26,9 @@
     echo "[UNISTACK_BOOTSTRAP] Creating venv at {{ python_venv_path }}..."
     $PY -m venv "{{ python_venv_path }}"
 
+    echo "[UNISTACK_BOOTSTRAP] Upgrading core pip packages..."
+    "{{ python_venv_path }}/bin/python3" -m pip install --upgrade pip wheel setuptools || true
+
     echo "[UNISTACK_BOOTSTRAP] Virtual environment created successfully"
   changed_when: true
   args:
