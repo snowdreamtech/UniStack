@@ -54,13 +54,32 @@ func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, erro
 		}
 	}
 
+	// Helper function for command retry
+	runWithRetry := func(name string, createCmd func() *exec.Cmd, maxRetries int, delay time.Duration) error {
+		var err error
+		for i := 0; i < maxRetries; i++ {
+			if i > 0 {
+				fmt.Printf("⚠️ %s failed, retrying in %v (attempt %d/%d)...\n", name, delay, i+1, maxRetries)
+				time.Sleep(delay)
+			}
+			cmd := createCmd()
+			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+			err = cmd.Run()
+			if err == nil {
+				return nil
+			}
+		}
+		return fmt.Errorf("%s failed after %d attempts: %w", name, maxRetries, err)
+	}
+
 	// Install requirements via pip
 	reqFile := filepath.Join(workDir, "requirements.txt")
 	fmt.Println("📦 Installing Ansible dependencies via pip...")
-	cmd = exec.Command(pipBin, "install", "-r", reqFile)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-	if err := cmd.Run(); err != nil {
-		return "", nil, fmt.Errorf("failed to install requirements via pip: %w", err)
+	err := runWithRetry("pip install", func() *exec.Cmd {
+		return exec.Command(pipBin, "install", "-r", reqFile)
+	}, 3, 3*time.Second)
+	if err != nil {
+		return "", nil, err
 	}
 
 	if _, err := os.Stat(venvBin); err != nil {
@@ -73,15 +92,13 @@ func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, erro
 		fmt.Println("🌌 Installing Ansible Galaxy Collections...")
 		galaxyBin := filepath.Join(venvDir, "bin", "ansible-galaxy")
 		
-		// Create the command with the venv environment so it installs correctly
-		cmd = exec.Command(galaxyBin, "collection", "install", "-r", galaxyReqFile)
-		cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-		
-		// Set VIRTUAL_ENV and PATH for galaxy so it knows where to install
-		cmd.Env = buildVenvEnv(venvDir)
-		
-		if err := cmd.Run(); err != nil {
-			return "", nil, fmt.Errorf("failed to install Ansible Galaxy collections: %w", err)
+		err = runWithRetry("ansible-galaxy install", func() *exec.Cmd {
+			cmd := exec.Command(galaxyBin, "collection", "install", "-r", galaxyReqFile)
+			cmd.Env = buildVenvEnv(venvDir)
+			return cmd
+		}, 3, 3*time.Second)
+		if err != nil {
+			return "", nil, err
 		}
 	}
 
