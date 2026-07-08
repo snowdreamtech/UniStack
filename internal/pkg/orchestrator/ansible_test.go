@@ -9,7 +9,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
+
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
 
 func TestEnsureAnsibleInstalled(t *testing.T) {
@@ -142,6 +145,54 @@ exit 0
 	if cmd3 != venvAnsible {
 		t.Fatalf("Expected venv ansible path after install %s, got %s", venvAnsible, cmd3)
 	}
+
+	// 4. Test missing python (EnsurePythonInstalled fails)
+	t.Setenv("PATH", t.TempDir()) // Empty PATH
+	os.RemoveAll(filepath.Join(env.GetDataDir(), ".ansible"))
+	if runtime.GOOS != "windows" {
+		_, _, err = ensureAnsibleInstalled(workDir, "")
+		if err == nil {
+			t.Fatalf("Expected ensureAnsibleInstalled to fail when python is missing")
+		}
+	}
+
+	// 5. Test venv failure
+	prependPath(t, tempDirInstall)
+	// We'll modify the fake python to fail venv creation
+	os.Remove(filepath.Join(tempDirInstall, pyName))
+	createFakeExecutable(t, filepath.Join(tempDirInstall, pyName), 1, "venv failure")
+	_, _, err = ensureAnsibleInstalled(workDir, "")
+	if err == nil || !strings.Contains(err.Error(), "failed to create venv") {
+		t.Fatalf("Expected ensureAnsibleInstalled to fail on venv creation, got %v", err)
+	}
+
+	// 6. Test pip install failure
+	os.Remove(filepath.Join(tempDirInstall, pyName))
+	pyScript = `#!/bin/sh
+if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then
+	/bin/mkdir -p "$3/bin"
+	echo "#!/bin/sh" > "$3/bin/pip"
+	echo "exit 1" >> "$3/bin/pip"
+	/bin/chmod +x "$3/bin/pip"
+fi
+exit 0
+`
+	if runtime.GOOS == "windows" {
+		pyScript = `@echo off
+if "%1"=="-m" if "%2"=="venv" (
+	mkdir "%~3\Scripts"
+	echo @echo off > "%~3\Scripts\pip.bat"
+	echo exit /b 1 >> "%~3\Scripts\pip.bat"
+)
+exit /b 0
+`
+	}
+	os.WriteFile(filepath.Join(tempDirInstall, pyName), []byte(pyScript), 0755)
+	_, _, err = ensureAnsibleInstalled(workDir, "")
+	if err == nil || !strings.Contains(err.Error(), "pip install failed") {
+		t.Fatalf("Expected ensureAnsibleInstalled to fail on pip install, got %v", err)
+	}
+
 }
 
 func TestCalculateDependenciesHash(t *testing.T) {

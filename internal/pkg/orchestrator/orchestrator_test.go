@@ -58,7 +58,6 @@ func TestPrepareEnvironmentAndExecution(t *testing.T) {
 	if binary == "" {
 		t.Fatalf("Expected binary to be returned")
 	}
-
 	// 2. Test ExecutePlaybook
 	playbookFile := filepath.Join(tempDir, "test_playbook.yml")
 	os.WriteFile(playbookFile, []byte("- hosts: all\n"), 0644)
@@ -72,5 +71,19 @@ func TestPrepareEnvironmentAndExecution(t *testing.T) {
 	err = ExecuteAdHoc(workDir, "all", binary, venvEnv, "-m", "ping")
 	if err != nil {
 		t.Fatalf("ExecuteAdHoc failed: %v", err)
+	}
+}
+
+func TestPrepareEnvironmentFailures(t *testing.T) {
+	ctx := context.Background()
+	tempDir := t.TempDir()
+
+	t.Setenv("UNISTACK_DATA_DIR", tempDir)
+
+	// Test PrepareEnvironment with NO python
+	t.Setenv("PATH", t.TempDir()) // empty PATH
+	_, _, _, err := PrepareEnvironment(ctx, "")
+	if err == nil {
+		t.Fatalf("Expected PrepareEnvironment to fail without Python, got nil")
 	}
 }

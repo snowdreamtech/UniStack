@@ -81,22 +81,20 @@ func TestEnsurePythonInstalled(t *testing.T) {
 		t.Fatalf("Expected python3, got %s", cmd)
 	}
 
-	// 2. Test auto-installation path (POSIX only, Windows will fail early)
+		// 2. Test auto-installation path (POSIX only, Windows will fail early)
 	if runtime.GOOS != "windows" {
 		tempDirAuto := t.TempDir()
-		// No python in PATH, but we provide a fake package manager
-		// And a fake `sh` to successfully pretend installation happened
+		
+		// Setup fake apt-get
 		fakeApt := filepath.Join(tempDirAuto, "apt-get")
 		createFakeExecutable(t, fakeApt, 0, "")
 
-		// Provide a fake sudo so the root check doesn't fail
+		// Setup fake sudo
 		fakeSudo := filepath.Join(tempDirAuto, "sudo")
 		createFakeExecutable(t, fakeSudo, 0, "")
 
+		// Setup fake sh (success case)
 		fakeSh := filepath.Join(tempDirAuto, "sh")
-		// The fake sh will act as the installer, and then it MUST make `python3` available in PATH
-		// so the subsequent check `exec.LookPath("python3")` passes.
-		// Our fake sh will literally touch "python3" in the tempDirAuto and make it executable.
 		shScript := `#!/bin/sh
 echo "#!/bin/sh" > ` + filepath.Join(tempDirAuto, "python3") + `
 echo "exit 0" >> ` + filepath.Join(tempDirAuto, "python3") + `
@@ -104,18 +102,63 @@ echo "exit 0" >> ` + filepath.Join(tempDirAuto, "python3") + `
 exit 0
 `
 		os.WriteFile(fakeSh, []byte(shScript), 0755)
-
+		
 		t.Setenv("PATH", tempDirAuto)
 		
-		// Run EnsurePythonInstalled
-		// It won't find python3 initially, will find apt-get, will run `sh -c ...`
-		// which will create python3 in tempDirAuto (which is in PATH).
 		cmd, err = EnsurePythonInstalled(ctx)
 		if err != nil {
 			t.Fatalf("Expected auto-installation to succeed, got %v", err)
 		}
 		if cmd != "python3" {
 			t.Fatalf("Expected python3 after installation, got %s", cmd)
+		}
+
+		// 3. Test missing sudo
+		os.Remove(fakeSudo)
+		os.Remove(filepath.Join(tempDirAuto, "python3"))
+		// We expect EnsurePythonInstalled to fail because it requires sudo
+		// (unless the test is run as root, but we assume it's not)
+		if os.Getuid() != 0 {
+			_, err = EnsurePythonInstalled(ctx)
+			if err == nil || !strings.Contains(err.Error(), "requires root privileges") {
+				t.Fatalf("Expected failure due to missing sudo, got %v", err)
+			}
+		}
+
+		// Restore sudo for remaining tests
+		createFakeExecutable(t, fakeSudo, 0, "")
+
+		// 4. Test installation command failure
+		os.Remove(filepath.Join(tempDirAuto, "python3"))
+		// Modify fake sh to fail
+		os.WriteFile(fakeSh, []byte("#!/bin/sh\nexit 1\n"), 0755)
+		
+		_, err = EnsurePythonInstalled(ctx)
+		if err == nil || !strings.Contains(err.Error(), "failed to install Python 3 automatically") {
+			t.Fatalf("Expected failure due to command failure, got %v", err)
+		}
+
+		// 5. Test installation success but python still missing
+		// Modify fake sh to succeed, but NOT create python3
+		os.WriteFile(fakeSh, []byte("#!/bin/sh\nexit 0\n"), 0755)
+		
+		_, err = EnsurePythonInstalled(ctx)
+		if err == nil || !strings.Contains(err.Error(), "still not in PATH") {
+			t.Fatalf("Expected failure due to missing python after install, got %v", err)
+		}
+
+		// 6. Test no supported package manager found
+		os.Remove(fakeApt)
+		_, err = EnsurePythonInstalled(ctx)
+		if err == nil || !strings.Contains(err.Error(), "could not detect a supported package manager") {
+			t.Fatalf("Expected failure due to missing package manager, got %v", err)
+		}
+	} else {
+		// 7. Test Windows missing python early exit
+		t.Setenv("PATH", t.TempDir()) // Empty PATH
+		_, err = EnsurePythonInstalled(ctx)
+		if err == nil || !strings.Contains(err.Error(), "must be installed manually on Windows") {
+			t.Fatalf("Expected early failure on Windows, got %v", err)
 		}
 	}
 }
@@ -145,5 +188,26 @@ func TestSetupVirtualEnvironment(t *testing.T) {
 	}
 	if len(envVars) == 0 {
 		t.Fatalf("Expected envVars to be returned")
+	}
+}
+
+func TestSetupVirtualEnvironmentFailure(t *testing.T) {
+	ctx := context.Background()
+	tempDir := t.TempDir()
+
+	var pyName string
+	if runtime.GOOS == "windows" {
+		pyName = "python.bat"
+	} else {
+		pyName = "python"
+	}
+	fakePy := filepath.Join(tempDir, pyName)
+	createFakeExecutable(t, fakePy, 1, "venv creation error")
+
+	prependPath(t, tempDir)
+
+	_, err := SetupVirtualEnvironment(ctx, pyName, filepath.Join(tempDir, "venv2"))
+	if err == nil || !strings.Contains(err.Error(), "failed to create venv") {
+		t.Fatalf("Expected SetupVirtualEnvironment to fail, got %v", err)
 	}
 }
