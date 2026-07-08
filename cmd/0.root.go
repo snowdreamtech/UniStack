@@ -18,7 +18,7 @@ import (
 var (
 	quiet       bool
 	silent      bool
-	verbose     bool
+	verbose     int
 	jsonOutput  bool
 	cdDir       string
 	yes         bool
@@ -45,8 +45,8 @@ var rootCmd = &cobra.Command{
 		}
 
 		// Initialize the global logger before any command runs.
-		// If --verbose is set, treat it as debug logging
-		logger.Init(verbose, quiet, silent, jsonOutput)
+		// If --verbose (-v) is used at least once, treat it as debug logging for UniStack
+		logger.Init(verbose > 0, quiet, silent, jsonOutput)
 
 		// Asynchronously check for a newer version (non-blocking).
 		updater.CheckUpdateAsync(env.GitTag)
@@ -68,12 +68,12 @@ var rootCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringVarP(&cdDir, "cd", "C", "", "change directory before running command")
+	rootCmd.PersistentFlags().StringVar(&cdDir, "cd", "", "change directory before running command")
 	rootCmd.PersistentFlags().BoolVarP(&jsonOutput, "json", "j", false, "enable JSON output format")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "enable quiet mode (minimal output)")
 	rootCmd.PersistentFlags().BoolVar(&silent, "silent", false, "suppress all task output and non-error messages")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "V", false, "enable verbose output (debug logging)")
-	rootCmd.Flags().BoolVarP(&showVersion, "version", "v", false, "display version information")
+	rootCmd.PersistentFlags().CountVarP(&verbose, "verbose", "v", "enable verbose output (use -v, -vv, -vvv, etc. for more detail)")
+	rootCmd.Flags().BoolVarP(&showVersion, "version", "V", false, "display version information")
 	rootCmd.PersistentFlags().BoolVarP(&yes, "yes", "y", false, "answer yes to all confirmation prompts")
 	rootCmd.PersistentFlags().Bool("help", false, "help for this command")
 

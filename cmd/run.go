@@ -201,9 +201,9 @@ var runCmd = &cobra.Command{
 			dynamicArgs = append(dynamicArgs, "--become-user", becomeUser)
 		}
 		
-		// Map UniStack global verbose (-V) to Ansible verbose (-vvv)
-		if verbose {
-			dynamicArgs = append(dynamicArgs, "-vvv")
+		// Map UniStack global verbose (-v) count to Ansible verbose
+		if verbose > 0 {
+			dynamicArgs = append(dynamicArgs, "-"+strings.Repeat("v", verbose))
 		}
 
 		// Append the explicitly mapped flags first, then append any unmapped args passed after --
@@ -233,7 +233,7 @@ func init() {
 	runCmd.Flags().StringVarP(&user, "user", "u", "", "connect as this user")
 	runCmd.Flags().BoolVarP(&askPass, "ask-pass", "k", false, "ask for connection password")
 	runCmd.Flags().StringVar(&privateKey, "private-key", "", "use this file to authenticate the connection")
-	runCmd.Flags().BoolVar(&check, "check", false, "don't make any changes; instead, try to predict some of the changes that may occur")
+	runCmd.Flags().BoolVarP(&check, "check", "C", false, "don't make any changes; instead, try to predict some of the changes that may occur")
 	runCmd.Flags().BoolVarP(&diff, "diff", "D", false, "when changing (small) files and templates, show the differences in those files")
 	runCmd.Flags().BoolVar(&syntaxCheck, "syntax-check", false, "perform a syntax check on the playbook, but do not execute it")
 	runCmd.Flags().IntVarP(&forks, "forks", "f", 5, "specify number of parallel processes to use")

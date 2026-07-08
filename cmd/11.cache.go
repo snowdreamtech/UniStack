@@ -177,7 +177,7 @@ func runCacheList(cmd *cobra.Command, args []string) error {
 		NoColor: false,
 		Writer:  os.Stdout,
 		Quiet:   quiet,
-		Verbose: verbose,
+		Verbose: verbose > 0,
 	})
 
 	// Walk the cache directory to list files
@@ -228,7 +228,7 @@ func runCacheClear(cmd *cobra.Command, args []string) error {
 		NoColor: false,
 		Writer:  os.Stdout,
 		Quiet:   quiet,
-		Verbose: verbose,
+		Verbose: verbose > 0,
 	})
 
 	ctx := context.Background()
@@ -269,7 +269,7 @@ func runCachePurge(cmd *cobra.Command, args []string) error {
 		NoColor: false,
 		Writer:  os.Stdout,
 		Quiet:   quiet,
-		Verbose: verbose,
+		Verbose: verbose > 0,
 	})
 
 	ctx := context.Background()
@@ -298,7 +298,7 @@ func runCacheStats(cmd *cobra.Command, args []string) error {
 		NoColor: false,
 		Writer:  os.Stdout,
 		Quiet:   quiet,
-		Verbose: verbose,
+		Verbose: verbose > 0,
 	})
 
 	ctx := context.Background()
