@@ -1,4 +1,13 @@
 ---
-- name: Output Hello World
+- name: Verify connectivity and reliability (Ping)
+  ansible.builtin.ping:
+
+- name: Output System Diagnostics
   ansible.builtin.debug:
-    msg: "Hello World! UniStack Fat CLI MVP is working!"
+    msg: 
+      - "✅ Reachability Test Passed!"
+      - "Hostname: {{ ansible_hostname }}"
+      - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+      - "Kernel: {{ ansible_kernel }}"
+      - "Architecture: {{ ansible_architecture }}"
+      - "Python Version: {{ ansible_python_version }}"
