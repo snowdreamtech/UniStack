@@ -63,7 +63,7 @@ var applyCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		slog.Debug("Starting UniStack Fat CLI MVP...")
 
-		ctx, cancel := context.WithTimeout(cmd.Context(), 15*time.Minute)
+		ctx, cancel := context.WithTimeout(cmd.Context(), 30*time.Minute)
 		defer cancel()
 
 		workDir, binary, venvEnv, err := orchestrator.PrepareEnvironment(ctx, pipIndexUrl)
