@@ -60,6 +60,8 @@ node = '26.3.0'
 'npm:prettier' = '3.8.3'
 'npm:sort-package-json' = "4.0.0"
 'npm:stylelint' = "17.12.0"
+'pipx:ansible-core' = "2.21.1"
+'pipx:ansible-lint' = "26.6.0"
 'pipx:clang-format' = "22.1.5"
 'pipx:pip-audit' = "2.10.0"
 'pipx:pre-commit' = '4.6.0'
@@ -243,16 +245,8 @@ env = { GOTOOLCHAIN = 'local', CGO_ENABLED = '0' }
 [tasks."test:ansible"]
 description = 'Run Ansible playbook syntax checks and linting'
 run = '''
-if ! command -v ansible-playbook >/dev/null 2>&1; then
-    echo "⚠️  ansible-playbook not found in PATH. Skipping Ansible tests."
-    exit 0
-fi
-ansible-playbook --syntax-check ansible/playbooks/bootstrap.yml ansible/playbooks/healthcheck.yml
-if command -v ansible-lint >/dev/null 2>&1; then
-    ansible-lint ansible/
-else
-    echo "⚠️  ansible-lint not found in PATH. Skipping linting."
-fi
+unirtm exec -- ansible-playbook --syntax-check ansible/playbooks/bootstrap.yml ansible/playbooks/healthcheck.yml
+unirtm exec -- ansible-lint ansible/
 '''
 output = 'interleaved'
 
