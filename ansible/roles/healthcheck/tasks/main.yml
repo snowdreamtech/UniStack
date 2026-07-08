@@ -10,4 +10,8 @@
       - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
       - "Kernel: {{ ansible_kernel }}"
       - "Architecture: {{ ansible_architecture }}"
+      - "CPU Cores: {{ ansible_processor_vcpus | default('Unknown') }}"
+      - "Total RAM: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB"
+      - "Primary IP: {{ ansible_default_ipv4.address | default('N/A') }}"
       - "Python Version: {{ ansible_python_version }}"
+      - "Ansible Version: {{ ansible_version.string }}"
