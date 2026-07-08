@@ -18,6 +18,7 @@ PIP_TRUSTED_HOST = '{% if env.CI is defined %}pypi.org{% else %}mirrors.aliyun.c
 PYTHONUTF8 = '1'
 PYTHONUNBUFFERED = '1'
 PYTHON_BUILD_MIRROR_URL = '{% if env.CI is defined %}https://www.python.org/ftp/python/{% else %}https://mirrors.aliyun.com/python/{% endif %}'
+ANSIBLE_ROLES_PATH = 'ansible/roles'
 RUBY_BUILD_MIRROR_URL = '{% if env.CI is defined %}https://cache.ruby-lang.org/pub/ruby/{% else %}https://mirrors.aliyun.com/ruby-build/{% endif %}'
 RUSTUP_DIST_SERVER = '{% if env.CI is defined %}https://static.rust-lang.org{% else %}https://mirrors.aliyun.com/rustup{% endif %}'
 RUSTUP_UPDATE_ROOT = '{% if env.CI is defined %}https://static.rust-lang.org/rustup{% else %}https://mirrors.aliyun.com/rustup/rustup{% endif %}'
