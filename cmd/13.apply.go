@@ -61,7 +61,7 @@ var applyCmd = &cobra.Command{
 	Short: "Apply an Ansible playbook",
 	Long:  `Apply an Ansible playbook in the UniStack isolated environment.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		slog.Info("Starting UniStack Fat CLI MVP...")
+		slog.Debug("Starting UniStack Fat CLI MVP...")
 
 		ctx, cancel := context.WithTimeout(cmd.Context(), 15*time.Minute)
 		defer cancel()
@@ -71,7 +71,7 @@ var applyCmd = &cobra.Command{
 			slog.Error("Failed to initialize UniStack environment", "error", err)
 			os.Exit(1)
 		}
-		slog.Info("Successfully initialized UniStack environment", "workDir", workDir)
+		slog.Debug("Successfully initialized UniStack environment", "workDir", workDir)
 
 		var pb string
 		if playbookFile != "" {
@@ -106,7 +106,7 @@ var applyCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		inv := "inventory"
+		inv := ""
 		if inventoryFile != "" {
 			if !strings.Contains(inventoryFile, ",") {
 				absInv, err := filepath.Abs(inventoryFile)
