@@ -4,86 +4,139 @@
 package orchestrator
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
 
-// ensureAnsibleInstalled checks if ansible-playbook exists. If not, it creates a venv and installs it.
-func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, error) {
-	// 1. Check global PATH
-	if binary, err := exec.LookPath("ansible-playbook"); err == nil {
-		return binary, nil, nil
+// ensureAnsibleInstalled checks for ansible and installs it in a venv if missing
+func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []string, error) {
+	// First check if ansible-playbook is already in the system PATH
+	sysBin, err := exec.LookPath("ansible-playbook")
+	if err == nil {
+		fmt.Printf("✅ Found system Ansible at %s\n", sysBin)
+		return sysBin, nil, nil
 	}
 
-	// 2. Define venv paths
-	// workDir is ~/.local/share/unistack/ansible, so venv is ~/.local/share/unistack/.venv
-	baseDir := filepath.Dir(workDir)
-	venvDir := filepath.Join(baseDir, ".venv")
+	// Paths for local venv
+	venvDir := filepath.Join(workDir, ".venv")
 	venvBin := filepath.Join(venvDir, "bin", "ansible-playbook")
+	markerFile := filepath.Join(workDir, ".bootstrap_complete")
+	lockDir := filepath.Join(workDir, ".bootstrap.lock")
 
-	// 3. Check if already installed in venv
-	if _, err := os.Stat(venvBin); err == nil {
-		return venvBin, buildVenvEnv(venvDir), nil
+	// If atomic marker exists, check binary
+	if _, err := os.Stat(markerFile); err == nil {
+		if _, err := os.Stat(venvBin); err == nil {
+			return venvBin, buildVenvEnv(venvDir), nil
+		}
 	}
 
-	// 4. Need to bootstrap. Check for python3.
-	pythonBin, err := exec.LookPath("python3")
-	if err != nil {
-		return "", nil, fmt.Errorf("python3 is required to bootstrap Ansible but was not found in PATH")
+	// Wait for lock if another process is bootstrapping
+	lockAcquired := false
+	for i := 0; i < 60; i++ {
+		err := os.Mkdir(lockDir, 0755)
+		if err == nil {
+			lockAcquired = true
+			break
+		}
+		if !os.IsExist(err) {
+			return "", nil, fmt.Errorf("failed to create lock directory: %w", err)
+		}
+		if i == 0 {
+			fmt.Println("⏳ Another UniStack process is bootstrapping. Waiting for lock...")
+		}
+		time.Sleep(2 * time.Second)
 	}
+	if !lockAcquired {
+		return "", nil, fmt.Errorf("timeout waiting for bootstrap lock")
+	}
+
+	// Ensure lock is released at the end
+	defer os.RemoveAll(lockDir)
+
+	// Double check marker after acquiring lock
+	if _, err := os.Stat(markerFile); err == nil {
+		if _, err := os.Stat(venvBin); err == nil {
+			return venvBin, buildVenvEnv(venvDir), nil
+		}
+	}
+
+	// We are going to bootstrap. Remove incomplete venv if exists (Scorched Earth)
+	os.RemoveAll(venvDir)
+	os.Remove(markerFile)
+
+	// Define robust execution closure with scorched earth on final failure
+	bootstrapSuccess := false
+	defer func() {
+		if !bootstrapSuccess {
+			fmt.Println("💥 Bootstrap failed or was interrupted. Executing scorched earth rollback...")
+			os.RemoveAll(venvDir)
+			os.Remove(markerFile)
+		}
+	}()
 
 	fmt.Println("🚀 Bootstrapping Python Virtual Environment for Ansible...")
 
-	// Create Venv
-	cmd := exec.Command(pythonBin, "-m", "venv", venvDir)
-	cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
+	// Find python3
+	pythonCmd, err := exec.LookPath("python3")
+	if err != nil {
+		return "", nil, fmt.Errorf("python3 not found in PATH, required for bootstrapping")
+	}
+
+	// Global context for all network operations (10 minute timeout)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Minute)
+	defer cancel()
+
+	// Create venv
+	cmd := exec.CommandContext(ctx, pythonCmd, "-m", "venv", venvDir)
 	if err := cmd.Run(); err != nil {
-		return "", nil, fmt.Errorf("failed to create virtual environment: %w", err)
+		return "", nil, fmt.Errorf("failed to create venv: %w", err)
 	}
 
 	pipBin := filepath.Join(venvDir, "bin", "pip")
 
-	// Set Pip Index URL if provided
+	// Set pip mirror if provided
 	if pipIndexUrl != "" {
 		fmt.Printf("📦 Configuring pip mirror: %s\n", pipIndexUrl)
-		cmd = exec.Command(pipBin, "config", "set", "global.index-url", pipIndexUrl)
+		cmd = exec.CommandContext(ctx, pipBin, "config", "set", "global.index-url", pipIndexUrl)
 		if err := cmd.Run(); err != nil {
-			fmt.Printf("⚠️ Warning: Failed to set pip index-url: %v\n", err)
+			fmt.Printf("⚠️ Warning: failed to set pip mirror: %v\n", err)
 		}
 	}
 
-	// Helper function for command retry
-	runWithRetry := func(name string, createCmd func() *exec.Cmd, maxRetries int, delay time.Duration) error {
-		var err error
+	// Helper function for command retry with context
+	runWithRetry := func(name string, createCmd func(context.Context) *exec.Cmd, maxRetries int, delay time.Duration) error {
+		var lastErr error
 		for i := 0; i < maxRetries; i++ {
 			if i > 0 {
 				fmt.Printf("⚠️ %s failed, retrying in %v (attempt %d/%d)...\n", name, delay, i+1, maxRetries)
-				time.Sleep(delay)
+				select {
+				case <-time.After(delay):
+				case <-ctx.Done():
+					return fmt.Errorf("context timeout during %s", name)
+				}
 			}
-			cmd := createCmd()
+			cmd := createCmd(ctx)
 			cmd.Stdout, cmd.Stderr = os.Stdout, os.Stderr
-			err = cmd.Run()
-			if err == nil {
+			lastErr = cmd.Run()
+			if lastErr == nil {
 				return nil
 			}
 		}
-		return fmt.Errorf("%s failed after %d attempts: %w", name, maxRetries, err)
+		return fmt.Errorf("%s failed after %d attempts: %w", name, maxRetries, lastErr)
 	}
 
 	// Install requirements via pip
 	reqFile := filepath.Join(workDir, "requirements.txt")
 	fmt.Println("📦 Installing Ansible dependencies via pip...")
-	err := runWithRetry("pip install", func() *exec.Cmd {
-		return exec.Command(pipBin, "install", "-r", reqFile)
+	err = runWithRetry("pip install", func(c context.Context) *exec.Cmd {
+		return exec.CommandContext(c, pipBin, "install", "-r", reqFile)
 	}, 3, 3*time.Second)
 	if err != nil {
 		return "", nil, err
-	}
-
-	if _, err := os.Stat(venvBin); err != nil {
-		return "", nil, fmt.Errorf("ansible-playbook not found in venv after installation")
 	}
 
 	// Install Ansible Galaxy Collections
@@ -92,16 +145,23 @@ func ensureAnsibleInstalled(workDir, pipIndexUrl string) (string, []string, erro
 		fmt.Println("🌌 Installing Ansible Galaxy Collections...")
 		galaxyBin := filepath.Join(venvDir, "bin", "ansible-galaxy")
 		
-		err = runWithRetry("ansible-galaxy install", func() *exec.Cmd {
-			cmd := exec.Command(galaxyBin, "collection", "install", "-r", galaxyReqFile)
-			cmd.Env = buildVenvEnv(venvDir)
-			return cmd
+		err = runWithRetry("ansible-galaxy install", func(c context.Context) *exec.Cmd {
+			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
+			cCmd.Env = buildVenvEnv(venvDir)
+			return cCmd
 		}, 3, 3*time.Second)
 		if err != nil {
 			return "", nil, err
 		}
 	}
 
+	// Successfully finished everything. Write atomic marker.
+	if file, err := os.Create(markerFile); err == nil {
+		file.WriteString(time.Now().Format(time.RFC3339))
+		file.Close()
+	}
+
+	bootstrapSuccess = true
 	return venvBin, buildVenvEnv(venvDir), nil
 }
 
