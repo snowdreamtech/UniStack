@@ -95,6 +95,15 @@ func extractAnsibleFS() (string, error) {
 	oldDir := filepath.Join(rootDir, "ansible.old")
 	_ = os.RemoveAll(oldDir) // Ensure old backup is gone
 
+	// Clean up any stale tmp dirs from previous crashed runs (e.g. killed during extraction)
+	if matches, err := filepath.Glob(filepath.Join(rootDir, "ansible.tmp.*")); err == nil {
+		for _, m := range matches {
+			if m != tmpDir {
+				_ = os.RemoveAll(m)
+			}
+		}
+	}
+
 	// If the current ansible dir exists, move it out of the way
 	if _, err := os.Stat(ansibleDir); err == nil {
 		if err := os.Rename(ansibleDir, oldDir); err != nil {
@@ -144,6 +153,12 @@ func getVersionID() (string, error) {
 // to protect both extraction and pip bootstrapping against concurrent executions.
 func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
 	rootDir := env.GetDataDir()
+	
+	// Ensure root directory exists before attempting to create the lock file
+	if err := os.MkdirAll(rootDir, 0755); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
+	}
+
 	lockFile := filepath.Join(rootDir, ".init.lock")
 	fileLock := flock.New(lockFile)
 

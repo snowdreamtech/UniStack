@@ -29,7 +29,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 
 	// Paths for local venv - placed OUTSIDE workDir so it survives atomic file extractions
 	// when the UniStack binary is upgraded but python dependencies remain unchanged.
-	venvDir := filepath.Join(env.GetDataDir(), "venv")
+	venvDir := filepath.Join(env.GetDataDir(), ".ansible", "venv")
 	venvBin := filepath.Join(venvDir, "bin", "ansible-playbook")
 	markerFile := filepath.Join(venvDir, ".bootstrap_complete")
 
