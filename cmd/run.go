@@ -200,6 +200,11 @@ var runCmd = &cobra.Command{
 		if becomeUser != "" {
 			dynamicArgs = append(dynamicArgs, "--become-user", becomeUser)
 		}
+		
+		// Map UniStack global verbose (-V) to Ansible verbose (-vvv)
+		if verbose {
+			dynamicArgs = append(dynamicArgs, "-vvv")
+		}
 
 		// Append the explicitly mapped flags first, then append any unmapped args passed after --
 		dynamicArgs = append(dynamicArgs, args...)
