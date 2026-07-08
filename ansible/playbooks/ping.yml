@@ -1,6 +1,0 @@
----
-- name: Ping Playbook
-  hosts: all
-  gather_facts: true
-  roles:
-    - ping

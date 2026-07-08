@@ -91,7 +91,7 @@ var applyCmd = &cobra.Command{
 			args = args[1:]
 		} else {
 			// Try to find a default playbook in current directory
-			defaults := []string{"site.yml", "main.yml", "playbook.yml", "ping.yml", "ansible/playbooks/ping.yml"}
+			defaults := []string{"site.yml", "main.yml", "playbook.yml", "healthcheck.yml", "ansible/playbooks/healthcheck.yml"}
 			for _, def := range defaults {
 				if _, err := os.Stat(def); err == nil {
 					absPb, _ := filepath.Abs(def)

@@ -1,0 +1,6 @@
+---
+- name: Health Check Playbook
+  hosts: all
+  gather_facts: true
+  roles:
+    - healthcheck
