@@ -4,7 +4,6 @@ package orchestrator
 
 import (
 	"golang.org/x/sys/windows"
-	"unsafe"
 )
 
 // getFreeDiskSpace returns the available disk space in bytes for the given path
