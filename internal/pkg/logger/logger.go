@@ -7,6 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"os"
+
+	"github.com/pterm/pterm"
 )
 
 // Init configures the global slog default logger based on the provided flags.
@@ -37,7 +39,7 @@ func Init(debug, quiet, silent, jsonFmt bool) {
 	if jsonFmt {
 		handler = slog.NewJSONHandler(os.Stderr, opts)
 	} else {
-		handler = NewPtermHandler(level)
+		pterm.EnableDebugMessages(); handler = NewPtermHandler(level)
 	}
 
 	// 3. Set global logger
