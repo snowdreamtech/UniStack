@@ -67,7 +67,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	// Disk Pre-flight Check: Require at least 500MB (500 * 1024 * 1024 bytes) of free space
 	freeSpace, err := getFreeDiskSpace(filepath.Dir(workDir))
 	if err == nil && freeSpace < 500*1024*1024 {
-		return "", nil, fmt.Errorf("🚨 致命错误: 目标磁盘空间不足 500MB，剩余 %d MB。为了防止解压和安装过程中出现损坏，引导流程已自动中断！", freeSpace/(1024*1024))
+		return "", nil, fmt.Errorf("🚨 FATAL: Insufficient disk space. Required: 500MB, Available: %d MB. Bootstrap aborted to prevent corruption", freeSpace/(1024*1024))
 	} else if err != nil {
 		fmt.Printf("⚠️ Warning: failed to check disk space: %v\n", err)
 	}
