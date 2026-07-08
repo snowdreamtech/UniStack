@@ -13,7 +13,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 	"time"
 
@@ -68,14 +67,6 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		}
 	}
 
-	// Disk Pre-flight Check: Require at least 500MB (500 * 1024 * 1024 bytes) of free space
-	freeSpace, err := getFreeDiskSpace(filepath.Dir(workDir))
-	if err == nil && freeSpace < 500*1024*1024 {
-		return "", nil, fmt.Errorf("🚨 FATAL: Insufficient disk space. Required: 500MB, Available: %d MB. Bootstrap aborted to prevent corruption", freeSpace/(1024*1024))
-	} else if err != nil {
-		fmt.Printf("⚠️ Warning: failed to check disk space: %v\n", err)
-	}
-
 	// We are going to bootstrap. Remove incomplete venv if exists (Scorched Earth)
 	os.RemoveAll(venvDir)
 	os.Remove(markerFile)
@@ -90,36 +81,29 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		}
 	}()
 
-	fmt.Println("🚀 Bootstrapping Python Virtual Environment for Ansible...")
-
-	// Find python3 (or python on Windows)
-	pythonCmd := "python3"
-	if _, err := exec.LookPath(pythonCmd); err != nil {
-		if _, err := exec.LookPath("python"); err == nil {
-			pythonCmd = "python"
-		} else {
-			return "", nil, fmt.Errorf("python3 (or python) not found in PATH, required for bootstrapping")
-		}
-	}
-
 	// Global context for all network operations (10 minute timeout), wrapped in a signal trap for Ctrl+C
 	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	ctx, cancel := context.WithTimeout(sigCtx, 10*time.Minute)
 	defer cancel()
 
-	// Create venv
-	cmd := exec.CommandContext(ctx, pythonCmd, "-m", "venv", venvDir)
-	if err := cmd.Run(); err != nil {
-		return "", nil, fmt.Errorf("failed to create venv: %w", err)
+	// Delegate Python discovery and auto-installation to the python module
+	pythonCmd, err := EnsurePythonInstalled(ctx)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Delegate venv creation to the python module
+	venvEnv, err := SetupVirtualEnvironment(ctx, pythonCmd, venvDir)
+	if err != nil {
+		return "", nil, err
 	}
 
 	pipBin := filepath.Join(venvBinDir, "pip")
 
-	// Set pip mirror if provided
 	if pipIndexUrl != "" {
 		fmt.Printf("📦 Configuring pip mirror: %s\n", pipIndexUrl)
-		cmd = exec.CommandContext(ctx, pipBin, "config", "set", "global.index-url", pipIndexUrl)
+		cmd := exec.CommandContext(ctx, pipBin, "config", "set", "global.index-url", pipIndexUrl)
 		if err := cmd.Run(); err != nil {
 			fmt.Printf("⚠️ Warning: failed to set pip mirror: %v\n", err)
 		}
@@ -167,7 +151,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		err = runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
 			cCmd.Dir = workDir
-			env := buildVenvEnv(venvDir)
+			env := venvEnv
 			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
 			cCmd.Env = env
 			return cCmd
@@ -180,7 +164,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		_ = runWithRetry("ansible-galaxy role install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "role", "install", "-r", galaxyReqFile)
 			cCmd.Dir = workDir
-			env := buildVenvEnv(venvDir)
+			env := venvEnv
 			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
 			cCmd.Env = env
 			return cCmd
@@ -195,65 +179,12 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	os.Chmod(markerFile, 0600) // Immunity against umask stripping read permissions (which would break future fast paths)
 
 	bootstrapSuccess = true
-	return venvBin, buildVenvEnv(venvDir), nil
+	return venvBin, venvEnv, nil
 }
 
-// buildVenvEnv creates environment variables needed to run binaries inside a virtualenv
-func buildVenvEnv(venvDir string) []string {
-	env := os.Environ()
-	
-	venvBinDir := filepath.Join(venvDir, "bin")
-	if runtime.GOOS == "windows" {
-		venvBinDir = filepath.Join(venvDir, "Scripts")
-	}
 
-	pathUpdated := false
-	for i, e := range env {
-		if strings.HasPrefix(strings.ToUpper(e), "PATH=") {
-			env[i] = fmt.Sprintf("PATH=%s%c%s", venvBinDir, os.PathListSeparator, e[5:])
-			pathUpdated = true
-			break
-		}
-	}
 
-	if !pathUpdated {
-		env = append(env, fmt.Sprintf("PATH=%s", venvBinDir))
-	}
-	env = append(env, fmt.Sprintf("VIRTUAL_ENV=%s", venvDir))
-	return env
-}
 
-// ExecutePlaybook runs ansible-playbook from the given working directory.
-func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string) error {
-
-	// Prepare the command
-	cmd := exec.Command(binary, "-i", inventory, playbook)
-	cmd.Dir = workDir
-	
-	// Stream standard output and error directly to the console
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	// Start with the venv environment if we are using the venv, otherwise system environment
-	var env []string
-	if len(venvEnv) > 0 {
-		env = venvEnv
-	} else {
-		env = os.Environ()
-	}
-	
-	// Set ANSIBLE_CONFIG
-	env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
-	cmd.Env = env
-
-	fmt.Printf("🚀 Executing: %s -i %s %s in %s\n", binary, inventory, playbook, workDir)
-	
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("playbook execution failed: %w", err)
-	}
-
-	return nil
-}
 
 // calculateDependenciesHash computes a SHA-256 hash of the content of requirements.txt and requirements.yml.
 // This allows us to detect when the binary is upgraded and dependencies change, triggering a fresh bootstrap.
