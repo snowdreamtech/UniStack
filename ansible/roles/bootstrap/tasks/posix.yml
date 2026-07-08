@@ -15,6 +15,13 @@
   become: false
   tags: ["always"]
 
+- name: "Resolve target user ID (raw)"
+  ansible.builtin.raw: "id -u"
+  register: raw_uid_probe
+  changed_when: false
+  become: false
+  tags: ["always"]
+
 - name: "Set UniStack cache paths"
   ansible.builtin.set_fact:
     resolved_home: "{{ raw_home_probe.stdout | trim }}"

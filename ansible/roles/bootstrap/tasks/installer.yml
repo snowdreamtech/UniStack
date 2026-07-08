@@ -155,7 +155,7 @@
     fi
 
     echo "[UNISTACK_BOOTSTRAP] Python bootstrap completed successfully"
-  become: true
+  become: "{{ (raw_uid_probe.stdout | trim) != '0' }}"
   changed_when: true
   tags: ["always"]
   args:
