@@ -192,6 +192,7 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		file.WriteString(currentHash)
 		file.Close()
 	}
+	os.Chmod(markerFile, 0600) // Immunity against umask stripping read permissions (which would break future fast paths)
 
 	bootstrapSuccess = true
 	return venvBin, buildVenvEnv(venvDir), nil

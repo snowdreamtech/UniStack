@@ -112,9 +112,11 @@ func extractAnsibleFS() (string, error) {
 	}
 
 	// 5. Write the hash file to indicate completion inside the temporary directory
-	if err := os.WriteFile(filepath.Join(tmpDir, ".unistack_hash"), []byte(embeddedHash), 0600); err != nil {
+	hashFilePath := filepath.Join(tmpDir, ".unistack_hash")
+	if err := os.WriteFile(hashFilePath, []byte(embeddedHash), 0600); err != nil {
 		return "", fmt.Errorf("failed to write hash file: %w", err)
 	}
+	os.Chmod(hashFilePath, 0600) // Guarantee readability in future runs regardless of umask
 
 	// 6. Atomically swap the directories
 	// To safely swap without relying purely on POSIX rename-over-nonempty semantics:
@@ -201,6 +203,7 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 	if f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0600); err == nil {
 		f.Close()
 	}
+	os.Chmod(lockFile, 0600) // Immunity against umask removing read/write bits
 	fileLock := flock.New(lockFile)
 
 	// 1. Acquire OS-level file lock
