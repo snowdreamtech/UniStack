@@ -4,6 +4,7 @@
 package orchestrator
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -15,9 +16,9 @@ import (
 	"github.com/snowdreamtech/unistack/internal/pkg/env"
 )
 
-// ExtractAnsibleFS extracts the embedded Ansible files to the root data directory idempotently.
+// extractAnsibleFS extracts the embedded Ansible files to the root data directory idempotently.
 // It uses an atomic directory swap pattern to ensure extraction is never left in a half-finished state.
-func ExtractAnsibleFS() (string, error) {
+func extractAnsibleFS() (string, error) {
 	rootDir := env.GetDataDir()
 	ansibleDir := filepath.Join(rootDir, "ansible")
 
@@ -135,4 +136,52 @@ func getVersionID() (string, error) {
 
 	// Format: size-timestamp
 	return fmt.Sprintf("%d-%d", info.Size(), info.ModTime().UnixNano()), nil
+}
+
+// PrepareEnvironment sets up the data directory, safely extracts files, and ensures
+// the python virtual environment is perfectly bootstrapped. It uses a unified global lock
+// to protect both extraction and pip bootstrapping against concurrent executions.
+func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
+	rootDir := env.GetDataDir()
+	lockDir := filepath.Join(rootDir, ".init.lock")
+
+	// 1. Acquire global lock
+	lockAcquired := false
+	for i := 0; i < 60; i++ {
+		err := os.Mkdir(lockDir, 0755)
+		if err == nil {
+			lockAcquired = true
+			break
+		}
+		if !os.IsExist(err) {
+			return "", "", nil, fmt.Errorf("failed to create global lock directory: %w", err)
+		}
+		if i == 0 {
+			fmt.Println("⏳ Another UniStack process is initializing. Waiting for global lock...")
+		}
+		
+		select {
+		case <-ctx.Done():
+			return "", "", nil, ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
+	}
+	if !lockAcquired {
+		return "", "", nil, fmt.Errorf("timeout waiting for global lock at %s", lockDir)
+	}
+	defer os.RemoveAll(lockDir)
+
+	// 2. Safely extract files (protected by global lock)
+	workDir, err := extractAnsibleFS()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("failed to extract embedded files: %w", err)
+	}
+
+	// 3. Bootstrapping dependencies (protected by global lock)
+	binary, venvEnv, err := ensureAnsibleInstalled(workDir, pipIndexUrl)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("failed to ensure dependencies: %w", err)
+	}
+
+	return workDir, binary, venvEnv, nil
 }

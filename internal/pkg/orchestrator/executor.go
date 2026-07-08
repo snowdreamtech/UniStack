@@ -29,7 +29,6 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 	venvDir := filepath.Join(workDir, ".venv")
 	venvBin := filepath.Join(venvDir, "bin", "ansible-playbook")
 	markerFile := filepath.Join(workDir, ".bootstrap_complete")
-	lockDir := filepath.Join(workDir, ".bootstrap.lock")
 
 	// Calculate dependency hash to detect version upgrades
 	currentHash, _ := calculateDependenciesHash(workDir)
@@ -45,30 +44,9 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		}
 	}
 
-	// Wait for lock if another process is bootstrapping
-	lockAcquired := false
-	for i := 0; i < 60; i++ {
-		err := os.Mkdir(lockDir, 0755)
-		if err == nil {
-			lockAcquired = true
-			break
-		}
-		if !os.IsExist(err) {
-			return "", nil, fmt.Errorf("failed to create lock directory: %w", err)
-		}
-		if i == 0 {
-			fmt.Println("⏳ Another UniStack process is bootstrapping. Waiting for lock...")
-		}
-		time.Sleep(2 * time.Second)
-	}
-	if !lockAcquired {
-		return "", nil, fmt.Errorf("timeout waiting for bootstrap lock")
-	}
-
-	// Ensure lock is released at the end
-	defer os.RemoveAll(lockDir)
-
-	// Double check marker after acquiring lock
+	// The global lock is now held by PrepareEnvironment, so we can proceed directly.
+	
+	// Double check marker after acquiring lock (not strictly needed now, but safe)
 	if markerData, err := os.ReadFile(markerFile); err == nil {
 		if string(markerData) == currentHash {
 			if _, err := os.Stat(venvBin); err == nil {
@@ -213,11 +191,7 @@ func buildVenvEnv(venvDir string) []string {
 }
 
 // ExecutePlaybook runs ansible-playbook from the given working directory.
-func ExecutePlaybook(workDir, playbook string, inventory string, pipIndexUrl string) error {
-	binary, venvEnv, err := ensureAnsibleInstalled(workDir, pipIndexUrl)
-	if err != nil {
-		return fmt.Errorf("ansible-playbook setup failed: %w", err)
-	}
+func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string) error {
 
 	// Prepare the command
 	cmd := exec.Command(binary, "-i", inventory, playbook)

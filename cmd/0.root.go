@@ -73,12 +73,12 @@ var rootCmd = &cobra.Command{
 		
 		slog.Info("Starting UniStack Fat CLI MVP...")
 
-		workDir, err := orchestrator.ExtractAnsibleFS()
+		workDir, binary, venvEnv, err := orchestrator.PrepareEnvironment(cmd.Context(), pipIndexUrl)
 		if err != nil {
-			slog.Error("Failed to extract embedded Ansible files", "error", err)
+			slog.Error("Failed to initialize UniStack environment", "error", err)
 			os.Exit(1)
 		}
-		slog.Info("Successfully extracted embedded files", "workDir", workDir)
+		slog.Info("Successfully initialized UniStack environment", "workDir", workDir)
 
 		// Determine Playbook path
 		pb := "playbooks/helloworld.yml"
@@ -108,7 +108,7 @@ var rootCmd = &cobra.Command{
 			}
 		}
 
-		err = orchestrator.ExecutePlaybook(workDir, pb, inv, pipIndexUrl)
+		err = orchestrator.ExecutePlaybook(workDir, pb, inv, binary, venvEnv)
 		if err != nil {
 			slog.Error("Playbook execution failed", "error", err)
 			os.Exit(1)
