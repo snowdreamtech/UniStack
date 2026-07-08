@@ -2,6 +2,12 @@
 - name: Verify connectivity and reliability (Ping)
   ansible.builtin.ping:
 
+- name: Get Root Disk Space (Cross-Platform fallback)
+  ansible.builtin.shell: df -h / | awk 'NR==2 {print $4 " Free / " $2 " Total"}'
+  register: root_disk_space
+  changed_when: false
+
+
 - name: Output System Diagnostics
   ansible.builtin.debug:
     msg: 
@@ -12,6 +18,7 @@
       - "Architecture: {{ ansible_architecture }}"
       - "CPU Cores: {{ ansible_processor_vcpus | default('Unknown') }}"
       - "Total RAM: {{ (ansible_memtotal_mb / 1024) | round(2) }} GB"
+      - "Root Disk: {{ root_disk_space.stdout }}"
       - "Primary IP: {{ ansible_default_ipv4.address | default('N/A') }}"
       - "Python Version: {{ ansible_python_version }}"
       - "Ansible Version: {{ ansible_version.string }}"
