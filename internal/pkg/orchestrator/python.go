@@ -162,6 +162,8 @@ func buildVenvEnv(venvDir string) []string {
 		envVars = append(envVars, fmt.Sprintf("PATH=%s", venvBinDir))
 	}
 	envVars = append(envVars, fmt.Sprintf("VIRTUAL_ENV=%s", venvDir))
+	// Suppress Python DeprecationWarning from multiprocessing fork() and ResourceWarning
+	envVars = append(envVars, "PYTHONWARNINGS=ignore::DeprecationWarning,ignore::ResourceWarning")
 	return envVars
 }
 
