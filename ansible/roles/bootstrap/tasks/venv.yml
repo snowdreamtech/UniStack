@@ -25,7 +25,7 @@
     mkdir -p "$(dirname "{{ python_venv_path }}")"
 
     echo "[UNISTACK_BOOTSTRAP] Creating venv at {{ python_venv_path }}..."
-    $PY -m venv "{{ python_venv_path }}"
+    $PY -m venv "{{ python_venv_path }}" --clear
 
     echo "[UNISTACK_BOOTSTRAP] Upgrading core pip packages (timeout 5s)..."
     "{{ python_venv_path }}/bin/python3" -m pip install --upgrade --retries 1 --timeout 5 pip wheel setuptools || true
