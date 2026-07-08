@@ -159,7 +159,10 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		
 		err = runWithRetry("ansible-galaxy install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
-			cCmd.Env = buildVenvEnv(venvDir)
+			cCmd.Dir = workDir
+			env := buildVenvEnv(venvDir)
+			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+			cCmd.Env = env
 			return cCmd
 		}, 3, 3*time.Second)
 		if err != nil {
