@@ -169,6 +169,10 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 	if err := os.MkdirAll(rootDir, 0700); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
+	// Pre-create the logs directory so Ansible doesn't complain that it can't write to ansible.log
+	if err := os.MkdirAll(filepath.Join(rootDir, ".ansible", "logs"), 0700); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create logs directory: %w", err)
+	}
 
 	lockFile := filepath.Join(rootDir, ".init.lock")
 	fileLock := flock.New(lockFile)
