@@ -2,9 +2,9 @@
 - name: Verify connectivity and reliability (Ping)
   ansible.builtin.ping:
 
-- name: Get Root Disk Space (macOS fallback)
+- name: Get Root Disk Space (Fallback)
   ansible.builtin.shell: df -h / | awk 'NR==2 {print $4 " Free / " $2 " Total"}'
-  register: root_disk_space_mac
+  register: root_disk_space_fallback
   changed_when: false
   when: (ansible_mounts | default([]) | selectattr('mount', 'equalto', '/') | list | length) == 0
 
@@ -23,7 +23,7 @@
           ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_available / 1024 / 1024 / 1024) | round(2) | string + 'GB Free / ' + 
           ((ansible_mounts | selectattr('mount', 'equalto', '/') | first).size_total / 1024 / 1024 / 1024) | round(2) | string + 'GB Total'
           if (ansible_mounts | default([]) | selectattr('mount', 'equalto', '/') | list | length) > 0 
-          else root_disk_space_mac.stdout | default('Unknown') 
+          else root_disk_space_fallback.stdout | default('Unknown') 
         }}"
       - "Primary IP: {{ ansible_default_ipv4.address | default('N/A') }}"
       - "Python Version: {{ ansible_python_version }}"
