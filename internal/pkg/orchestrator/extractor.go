@@ -169,10 +169,17 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 	if err := os.MkdirAll(rootDir, 0700); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
+	os.Chmod(rootDir, 0700) // Retroactively secure if it already existed with loose permissions
+
 	// Pre-create the logs directory so Ansible doesn't complain that it can't write to ansible.log
-	if err := os.MkdirAll(filepath.Join(rootDir, ".ansible", "logs"), 0700); err != nil {
+	ansibleDir := filepath.Join(rootDir, ".ansible")
+	logsDir := filepath.Join(ansibleDir, "logs")
+	if err := os.MkdirAll(logsDir, 0700); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create logs directory: %w", err)
 	}
+	// Explicitly tighten permissions on the entire Ansible state namespace
+	os.Chmod(ansibleDir, 0700)
+	os.Chmod(logsDir, 0700)
 
 	lockFile := filepath.Join(rootDir, ".init.lock")
 	// Pre-create the lock file with strict permissions (0600) to prevent cross-user DoS attacks
