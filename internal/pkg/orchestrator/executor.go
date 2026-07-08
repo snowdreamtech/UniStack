@@ -143,13 +143,14 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		return "", nil, err
 	}
 
-	// Install Ansible Galaxy Collections
+	// Install Ansible Galaxy Collections and Roles
 	galaxyReqFile := filepath.Join(workDir, "requirements.yml")
 	if _, err := os.Stat(galaxyReqFile); err == nil {
-		fmt.Println("🌌 Installing Ansible Galaxy Collections...")
+		fmt.Println("🌌 Installing Ansible Galaxy Dependencies (Collections & Roles)...")
 		galaxyBin := filepath.Join(venvDir, "bin", "ansible-galaxy")
 		
-		err = runWithRetry("ansible-galaxy install", func(c context.Context) *exec.Cmd {
+		// Install Collections
+		err = runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
 			cCmd.Dir = workDir
 			env := buildVenvEnv(venvDir)
@@ -160,6 +161,16 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 		if err != nil {
 			return "", nil, err
 		}
+
+		// Install Roles (ignore errors if no roles are defined in requirements.yml)
+		_ = runWithRetry("ansible-galaxy role install", func(c context.Context) *exec.Cmd {
+			cCmd := exec.CommandContext(c, galaxyBin, "role", "install", "-r", galaxyReqFile)
+			cCmd.Dir = workDir
+			env := buildVenvEnv(venvDir)
+			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+			cCmd.Env = env
+			return cCmd
+		}, 3, 3*time.Second)
 	}
 
 	// Successfully finished everything. Write atomic marker with the hash.

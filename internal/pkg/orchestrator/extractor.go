@@ -41,7 +41,7 @@ func extractAnsibleFS() (string, error) {
 	// 3. We need to extract. Create a unique temporary directory to avoid conflicts.
 	// This guarantees that if the process dies halfway, the main ansible/ directory is untouched.
 	tmpDir := filepath.Join(rootDir, fmt.Sprintf("ansible.tmp.%d", time.Now().UnixNano()))
-	if err := os.MkdirAll(tmpDir, 0755); err != nil {
+	if err := os.MkdirAll(tmpDir, 0700); err != nil {
 		return "", fmt.Errorf("failed to create temporary extraction directory: %w", err)
 	}
 
@@ -66,7 +66,12 @@ func extractAnsibleFS() (string, error) {
 		targetPath := filepath.Join(tmpDir, path)
 
 		if d.IsDir() {
-			return os.MkdirAll(targetPath, 0755)
+			return os.MkdirAll(targetPath, 0700)
+		}
+
+		info, err := d.Info()
+		if err != nil {
+			return err
 		}
 
 		data, err := fs.ReadFile(ansible.FS, path)
@@ -74,7 +79,13 @@ func extractAnsibleFS() (string, error) {
 			return fmt.Errorf("failed to read embedded file %s: %w", path, err)
 		}
 
-		if err := os.WriteFile(targetPath, data, 0644); err != nil {
+		// Preserve executable bits (critical for dynamic inventories) but lock down permissions to the current user (0700 mask)
+		perm := info.Mode().Perm() & 0700
+		if perm == 0 {
+			perm = 0600 // Default to readable/writable by owner if no perms
+		}
+
+		if err := os.WriteFile(targetPath, data, perm); err != nil {
 			return fmt.Errorf("failed to write file %s: %w", targetPath, err)
 		}
 
@@ -154,8 +165,8 @@ func getVersionID() (string, error) {
 func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
 	rootDir := env.GetDataDir()
 	
-	// Ensure root directory exists before attempting to create the lock file
-	if err := os.MkdirAll(rootDir, 0755); err != nil {
+	// Ensure root directory exists before attempting to create the lock file, locked down to owner only
+	if err := os.MkdirAll(rootDir, 0700); err != nil {
 		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
 	}
 
