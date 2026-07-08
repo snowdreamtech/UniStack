@@ -1,0 +1,135 @@
+// Copyright (c) 2026 SnowdreamTech. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
+package orchestrator
+
+import (
+	"context"
+	"fmt"
+	"os"
+	"path/filepath"
+	"time"
+	"os/exec"
+
+	"github.com/gofrs/flock"
+	"github.com/snowdreamtech/unistack/internal/pkg/env"
+)
+
+// PrepareEnvironment is the unified entry point that prepares the entire execution environment.
+// It handles:
+// 1. Concurrency locking to prevent race conditions
+// 2. Unpacking embedded files to disk
+// 3. Detecting and deploying Python (if missing)
+// 4. Detecting and deploying Ansible
+func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string, []string, error) {
+	rootDir := env.GetDataDir()
+	
+	// Ensure root directory exists before attempting to create the lock file, locked down to owner only
+	if err := os.MkdirAll(rootDir, 0700); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create data directory: %w", err)
+	}
+	if err := os.Chmod(rootDir, 0700); err != nil {
+		return "", "", nil, fmt.Errorf("SECURITY ABORT: cannot secure root data directory %s (possible squatting attack): %w", rootDir, err)
+	}
+
+	// Pre-create the logs directory so Ansible doesn't complain that it can't write to ansible.log
+	ansibleDir := filepath.Join(rootDir, ".ansible")
+	logsDir := filepath.Join(ansibleDir, "logs")
+	if err := os.MkdirAll(logsDir, 0700); err != nil {
+		return "", "", nil, fmt.Errorf("failed to create logs directory: %w", err)
+	}
+	// Explicitly tighten permissions on the entire Ansible state namespace
+	if err := os.Chmod(ansibleDir, 0700); err != nil {
+		return "", "", nil, fmt.Errorf("SECURITY ABORT: cannot secure .ansible directory: %w", err)
+	}
+	if err := os.Chmod(logsDir, 0700); err != nil {
+		return "", "", nil, fmt.Errorf("SECURITY ABORT: cannot secure logs directory: %w", err)
+	}
+
+	lockFile := filepath.Join(rootDir, ".init.lock")
+	// Pre-create the lock file with strict permissions (0600) to prevent cross-user DoS attacks
+	if f, err := os.OpenFile(lockFile, os.O_CREATE|os.O_RDWR, 0600); err == nil {
+		f.Close()
+	}
+	os.Chmod(lockFile, 0600) // Immunity against umask removing read/write bits
+	fileLock := flock.New(lockFile)
+
+	// 1. Acquire OS-level file lock
+	lockAcquired := false
+	for i := 0; i < 60; i++ {
+		locked, err := fileLock.TryLock()
+		if err != nil {
+			return "", "", nil, fmt.Errorf("failed to attempt global lock: %w", err)
+		}
+		if locked {
+			lockAcquired = true
+			break
+		}
+		if i == 0 {
+			fmt.Println("⏳ Another UniStack process is initializing. Waiting for global lock...")
+		}
+		
+		select {
+		case <-ctx.Done():
+			return "", "", nil, ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
+	}
+	if !lockAcquired {
+		return "", "", nil, fmt.Errorf("timeout waiting for global lock at %s", lockFile)
+	}
+	defer fileLock.Unlock()
+
+	// Pre-flight Disk Check: Require at least 500MB (500 * 1024 * 1024 bytes) of free space
+	freeSpace, err := getFreeDiskSpace(filepath.Dir(rootDir))
+	if err == nil && freeSpace < 500*1024*1024 {
+		return "", "", nil, fmt.Errorf("🚨 FATAL: Insufficient disk space. Required: 500MB, Available: %d MB. Extraction aborted to prevent corruption", freeSpace/(1024*1024))
+	} else if err != nil {
+		fmt.Printf("⚠️ Warning: failed to check disk space: %v\n", err)
+	}
+
+	// 2. Safely extract files (protected by global lock)
+	workDir, err := extractAnsibleFS()
+	if err != nil {
+		return "", "", nil, fmt.Errorf("failed to extract embedded files: %w", err)
+	}
+
+	// 3. Bootstrapping dependencies (protected by global lock)
+	binary, venvEnv, err := ensureAnsibleInstalled(workDir, pipIndexUrl)
+	if err != nil {
+		return "", "", nil, fmt.Errorf("failed to ensure dependencies: %w", err)
+	}
+
+	return workDir, binary, venvEnv, nil
+}
+
+// ExecutePlaybook is the unified entry point to run the prepared Ansible environment.
+func ExecutePlaybook(workDir, playbook, inventory, binary string, venvEnv []string) error {
+	// Prepare the command
+	cmd := exec.Command(binary, "-i", inventory, playbook)
+	cmd.Dir = workDir
+	
+	// Stream standard output and error directly to the console
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	// Start with the venv environment if we are using the venv, otherwise system environment
+	var envVars []string
+	if len(venvEnv) > 0 {
+		envVars = venvEnv
+	} else {
+		envVars = os.Environ()
+	}
+	
+	// Set ANSIBLE_CONFIG
+	envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+	cmd.Env = envVars
+
+	fmt.Printf("🚀 Executing: %s -i %s %s in %s\n", binary, inventory, playbook, workDir)
+	
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("playbook execution failed: %w", err)
+	}
+
+	return nil
+}
