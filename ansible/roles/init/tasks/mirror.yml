@@ -57,7 +57,7 @@
 
 - name: "Update Debian apt cache"
   ansible.builtin.apt:
-    update_cache: yes
+    update_cache: true
   when: os_family == 'debian'
   become: "{{ become_enabled }}"
 
