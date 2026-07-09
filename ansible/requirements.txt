@@ -37,4 +37,4 @@ subprocess-tee==0.4.2
 urllib3==2.7.0
 wcmatch==10.2.1
 yamllint==1.38.0
-yarg==0.1.10
+yarg==0.1.9
