@@ -234,8 +234,8 @@ jobs:
           - "debian:12"
           - "alpine:3.24"
           - "alpine:3.23"
-
-          - "rockylinux:9"
+          - "rockylinux/rockylinux:9"
+          - "rockylinux/rockylinux:10"
     permissions:
       contents: read
     steps:
