@@ -11,9 +11,9 @@
 # Tag Metadata (for validation and documentation)
 # =====================================================================
 tag_metadata:
-  version: "4.0"
-  total_tags: 29
-  categories: 6
+  version: "5.0"
+  total_tags: 22
+  categories: 5
 
   # Mutually exclusive tag groups
   conflicts:
@@ -39,7 +39,7 @@ tag_map:
   # =====================================================================
   physical: is_physical # Physical server
   vm: is_vm # Virtual machine
-  container_node: is_container_node # Container-based
+  wsl: is_wsl # Windows Subsystem for Linux
 
   # =====================================================================
   # 3. Control & Managed Node
@@ -60,18 +60,7 @@ tag_map:
   k8s_worker: is_k8s_worker # K8s worker
 
   # =====================================================================
-  # 5. CPU Architecture
-  # =====================================================================
-  x86_64: is_x86_64 # x86_64/AMD64
-  amd64: is_amd64 # AMD64 (alias)
-  arm64: is_arm64 # ARM64
-  aarch64: is_aarch64 # AArch64 (alias)
-  armv7: is_armv7 # ARMv7
-
-  # =====================================================================
-  # 6. System Type
+  # 5. System Type
   # =====================================================================
   desktop: is_desktop # Desktop environment system
   server: is_server # Server system
-  develop: is_develop # Develop environment system
-  deploy: is_deploy # Deploy environment system
