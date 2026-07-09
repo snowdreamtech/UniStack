@@ -59,3 +59,41 @@ func prependPath(t *testing.T, dir string) {
 
 	t.Setenv("PATH", newPath)
 }
+
+// createSmartFakePython generates a fake python executable that simulates "python -m venv <dir>"
+// by actually creating the necessary dummy bin/pip and bin/ansible-galaxy files.
+func createSmartFakePython(t *testing.T, path string) {
+	t.Helper()
+	var pyScript string
+	if runtime.GOOS == "windows" {
+		pyScript = `@echo off
+if "%1"=="-m" if "%2"=="venv" (
+	mkdir "%3\Scripts" 2>nul
+	echo @echo off > "%3\Scripts\pip.exe"
+	echo exit /b 0 >> "%3\Scripts\pip.exe"
+	echo @echo off > "%3\Scripts\ansible-galaxy.exe"
+	echo exit /b 0 >> "%3\Scripts\ansible-galaxy.exe"
+	echo @echo off > "%3\Scripts\ansible-playbook.exe"
+	echo exit /b 0 >> "%3\Scripts\ansible-playbook.exe"
+)
+exit /b 0
+`
+	} else {
+		pyScript = `#!/bin/sh
+if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then
+	/bin/mkdir -p "$3/bin"
+	echo "#!/bin/sh" > "$3/bin/pip"
+	echo "exit 0" >> "$3/bin/pip"
+	/bin/chmod +x "$3/bin/pip"
+	echo "#!/bin/sh" > "$3/bin/ansible-galaxy"
+	echo "exit 0" >> "$3/bin/ansible-galaxy"
+	/bin/chmod +x "$3/bin/ansible-galaxy"
+	echo "#!/bin/sh" > "$3/bin/ansible-playbook"
+	echo "exit 0" >> "$3/bin/ansible-playbook"
+	/bin/chmod +x "$3/bin/ansible-playbook"
+fi
+exit 0
+`
+	}
+	os.WriteFile(path, []byte(pyScript), 0755)
+}

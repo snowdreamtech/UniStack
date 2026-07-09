@@ -66,7 +66,7 @@ func TestEnsureAnsibleInstalled(t *testing.T) {
 	}
 	createFakeExecutable(t, venvAnsible, 0, "")
 
-	markerFile := filepath.Join(venvDir, ".bootstrap_complete")
+	markerFile := filepath.Join(tempDataDir, ".ansible", ".bootstrap_complete")
 	os.WriteFile(markerFile, []byte(hash), 0644)
 
 	cmd2, envVars, err2 := ensureAnsibleInstalled(workDir, "")
@@ -99,38 +99,7 @@ func TestEnsureAnsibleInstalled(t *testing.T) {
 	// We need our fake python to ACTUALLY create the venv binaries when called as "python -m venv <venvDir>"
 	// otherwise EnsureAnsibleInstalled will fail when trying to run the pip binary that should have been created!
 	fakePythonPath := filepath.Join(tempDirInstall, pyName)
-	var pyScript string
-	if runtime.GOOS == "windows" {
-		pyScript = `@echo off
-if "%1"=="-m" if "%2"=="venv" (
-	mkdir "%3\Scripts" 2>nul
-	echo @echo off > "%3\Scripts\pip.exe"
-	echo exit /b 0 >> "%3\Scripts\pip.exe"
-	echo @echo off > "%3\Scripts\ansible-galaxy.exe"
-	echo exit /b 0 >> "%3\Scripts\ansible-galaxy.exe"
-	echo @echo off > "%3\Scripts\ansible-playbook.exe"
-	echo exit /b 0 >> "%3\Scripts\ansible-playbook.exe"
-)
-exit /b 0
-`
-	} else {
-		pyScript = `#!/bin/sh
-if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then
-	/bin/mkdir -p "$3/bin"
-	echo "#!/bin/sh" > "$3/bin/pip"
-	echo "exit 0" >> "$3/bin/pip"
-	/bin/chmod +x "$3/bin/pip"
-	echo "#!/bin/sh" > "$3/bin/ansible-galaxy"
-	echo "exit 0" >> "$3/bin/ansible-galaxy"
-	/bin/chmod +x "$3/bin/ansible-galaxy"
-	echo "#!/bin/sh" > "$3/bin/ansible-playbook"
-	echo "exit 0" >> "$3/bin/ansible-playbook"
-	/bin/chmod +x "$3/bin/ansible-playbook"
-fi
-exit 0
-`
-	}
-	os.WriteFile(fakePythonPath, []byte(pyScript), 0755)
+	createSmartFakePython(t, fakePythonPath)
 
 	createFakeExecutable(t, filepath.Join(tempDirInstall, pipName), 0, "")
 	createFakeExecutable(t, filepath.Join(tempDirInstall, galaxyName), 0, "")
@@ -168,6 +137,7 @@ exit 0
 
 	// 6. Test pip install failure
 	os.Remove(filepath.Join(tempDirInstall, pyName))
+	var pyScript string
 	pyScript = `#!/bin/sh
 if [ "$1" = "-m" ] && [ "$2" = "venv" ]; then
 	/bin/mkdir -p "$3/bin"

@@ -22,20 +22,23 @@ func TestPrepareEnvironmentAndExecution(t *testing.T) {
 	fakeBinDir := filepath.Join(tempDir, "fake_bin")
 	os.MkdirAll(fakeBinDir, 0755)
 
-	var pyName, playbookName, ansibleName string
+	var pyName, playbookName, ansibleName, galaxyName string
 	if runtime.GOOS == "windows" {
 		pyName = "python3.bat"
 		playbookName = "ansible-playbook.bat"
 		ansibleName = "ansible.bat"
+		galaxyName = "ansible-galaxy.bat"
 	} else {
 		pyName = "python3"
 		playbookName = "ansible-playbook"
 		ansibleName = "ansible"
+		galaxyName = "ansible-galaxy"
 	}
 
-	createFakeExecutable(t, filepath.Join(fakeBinDir, pyName), 0, "Python 3.12.0")
+	createSmartFakePython(t, filepath.Join(fakeBinDir, pyName))
 	createFakeExecutable(t, filepath.Join(fakeBinDir, playbookName), 0, "ansible-playbook 2.15.0")
 	createFakeExecutable(t, filepath.Join(fakeBinDir, ansibleName), 0, "ansible 2.15.0")
+	createFakeExecutable(t, filepath.Join(fakeBinDir, galaxyName), 0, "ansible-galaxy 2.15.0")
 
 	// In Windows EnsurePythonInstalled returns an error if neither python3 nor python is found
 	if runtime.GOOS == "windows" {
