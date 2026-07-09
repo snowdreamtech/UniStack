@@ -5,14 +5,15 @@
 # Purpose:
 #   Global default variables for the native infrastructure layer.
 #   Contains the core node_tags_map for deriving boolean architectural facts.
+#   Only tags that require human declaration and cannot be auto-detected.
 # =====================================================================
 
 # =====================================================================
 # Tag Metadata (for validation and documentation)
 # =====================================================================
 tag_metadata:
-  version: "6.0"
-  total_tags: 17
+  version: "7.0"
+  total_tags: 14
   categories: 5
 
   # Mutually exclusive tag groups
@@ -30,7 +31,6 @@ tag_map:
   test: is_test # Testing environment
   stage: is_stage # Staging environment
   prod: is_prod # Production environment
-  sandbox: is_sandbox # Sandbox/playground
   airgap: is_airgap # Air-gapped / disconnected network
   ci: is_ci_env # CI/CD automation environment
 
@@ -39,7 +39,6 @@ tag_map:
   # =====================================================================
   physical: is_physical # Physical server
   vm: is_vm # Virtual machine
-  wsl: is_wsl # Windows Subsystem for Linux
 
   # =====================================================================
   # 3. Control Node
@@ -50,7 +49,6 @@ tag_map:
   # 4. Container & Orchestration
   # =====================================================================
   container: is_container # Running inside a container
-  k8s_node: is_k8s_node # K8s node
   k8s_control_plane: is_k8s_control_plane # K8s control plane
   k8s_worker: is_k8s_worker # K8s worker
 
