@@ -3,20 +3,12 @@
 # roles/context/tasks/detect_container.yml
 #
 # Purpose:
-#   Multivariate container environment discovery engine.
-#   Identifies the active or preferred container runtime (Docker,
-#   Podman, Containerd) and detects Kubernetes node presence.
-#
-# Notes:
-#   - All comments are English-only per engineering standards.
-#   - Detection logic guarantees a defined fallback even when no
-#     container runtime is installed.
-#   - Designed for orchestrator-wide consumption.
-#
+#   Detect container runtime (Docker, Podman, Containerd) and
+#   Kubernetes node presence.
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Kubernetes Detection: determine whether kubelet is present.
+# Kubernetes Detection
 # ---------------------------------------------------------------------
 - name: "Detect kubelet binary presence"
   ansible.builtin.command: >
@@ -33,7 +25,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Runtime Discovery: detect installed container runtime binaries.
+# Runtime Discovery
 # ---------------------------------------------------------------------
 - name: "Locate container runtime binaries (Bulk)"
   ansible.builtin.shell: |-
@@ -50,8 +42,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Runtime Selection: choose the first available runtime.
-# If none are installed, return None to trigger fallback logic.
+# Runtime Selection
 # ---------------------------------------------------------------------
 - name: "Auto-select available container engine"
   ansible.builtin.set_fact:
@@ -60,60 +51,16 @@
         'docker' if 'docker' in _runtimes_probe.stdout_lines
         else 'podman' if 'podman' in _runtimes_probe.stdout_lines
         else 'containerd' if 'containerd' in _runtimes_probe.stdout_lines
-        else None
+        else 'none'
       }}
   when:
     - container_engine is not defined
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Global Fallback: ensure a deterministic default (Docker).
-# ---------------------------------------------------------------------
-- name: "Apply global container engine fallback"
-  ansible.builtin.set_fact:
-    container_engine_detected: "docker"
-  when:
-    - container_engine_detected in [None, '', false]
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Docker-Specific Analysis: retrieve storage driver information.
-# ---------------------------------------------------------------------
-- name: "Retrieve Docker storage driver"
-  ansible.builtin.shell: 'set -eu; PATH="{{ os_paths }}:$PATH" docker info -f ''{{ ''{{.Driver}}'' }}'''
-  register: detect_storage
-  changed_when: false
-  failed_when: false
-  when:
-    - container_engine_detected == 'docker'
-    - not ansible_check_mode | default(false, true) | bool
-  become: "{{ become_enabled }}"
-  tags: ["always"]
-
-- name: "Persist Docker storage driver fact (success)"
-  ansible.builtin.set_fact:
-    detect_storage_driver: "{{ detect_storage.stdout | trim }}"
-  when:
-    - container_engine_detected == 'docker'
-    - detect_storage is defined
-    - detect_storage is succeeded
-    - detect_storage.stdout is defined
-    - detect_storage.stdout | trim | length > 0
-  tags: ["always"]
-
-- name: "Handle Docker storage driver detection failure"
-  ansible.builtin.set_fact:
-    detect_storage_driver: "unknown"
-  when:
-    - container_engine_detected == 'docker'
-    - detect_storage is defined
-    - (detect_storage is failed or detect_storage.rc != 0 or detect_storage.stdout | default('') | trim | length == 0)
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Finalization: export the orchestrator-wide container_engine variable.
+# Finalization
 # ---------------------------------------------------------------------
 - name: "Finalize effective container_engine value"
   ansible.builtin.set_fact:
-    container_engine: "{{ container_engine_detected }}"
+    container_engine: "{{ container_engine_detected | default('none', true) }}"
   tags: ["always"]

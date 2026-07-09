@@ -4,10 +4,6 @@
 #
 # Purpose:
 #   Detect intrinsic system capabilities and attributes.
-#   - Locality (localhost vs remote)
-#   - Init System (Launchd, Systemd, OpenRC, etc.)
-#   - Cgroup version
-#   - WSL status
 # =====================================================================
 
 # ---------------------------------------------------------------------
@@ -18,7 +14,7 @@
     is_localhost: >-
       {{
         (ansible_connection | default('ssh', true)) == 'local'
-        or (ansible_host | default('', true) in ['127.0.0.1', '127.0.1.1', '::1', '0:0:0:0:0:0:0:1'])
+        or (ansible_host | default('', true) in ['127.0.0.1', '127.0.1.1', '::1'])
         or inventory_hostname in ['localhost', 'localhost.localdomain']
       }}
   tags: ["always"]
@@ -52,7 +48,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Virtualization: Detect WSL (Linux only)
+# WSL Detection (Linux only)
 # ---------------------------------------------------------------------
 - name: "Identify WSL environment"
   ansible.builtin.command: "grep -i microsoft /proc/version"

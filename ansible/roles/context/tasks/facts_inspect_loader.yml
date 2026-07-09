@@ -7,100 +7,40 @@
 #   Allows printing either a curated list of common OS facts or the
 #   entire ansible_facts dictionary in a readable YAML format.
 #
-# Simple Usage:
+# Usage:
 #   - ansible.builtin.include_role:
-#       name: native
+#       name: context
 #       tasks_from: facts_inspect_loader
-#
-# Comprehensive Usage:
-#   - ansible.builtin.include_role:
-#       name: native
-#       tasks_from: facts_inspect_loader
-#     vars:
-#       mode: "full"
-#
 # =====================================================================
 
-# ---------------------------------------------------------------------
-# Normalization: Set the inspection mode (defaults to 'common').
-# ---------------------------------------------------------------------
 - name: "Set default mode to common"
   ansible.builtin.set_fact:
     facts_mode: "{{ mode | default('common', true) }}"
   tags: ["always"]
 
-# ---------------------------------------------------------------------
-# Processing: curating grouped OS facts for the 'common' mode.
-# Includes OS, Kernel, Network, Hardware, Python, and Standardized facts.
-# ---------------------------------------------------------------------
 - name: "Build grouped common facts"
   ansible.builtin.set_fact:
     grouped_facts:
-      OS:
-        ansible_os_family: "{{ ansible_os_family | default('undefined', true) }}"
-        ansible_distribution: "{{ ansible_distribution | default('undefined', true) }}"
-        ansible_distribution_major_version: "{{ ansible_distribution_major_version | default('undefined', true) }}"
-        ansible_distribution_version: "{{ ansible_distribution_version | default('undefined', true) }}"
-        ansible_distribution_release: "{{ ansible_distribution_release | default('undefined', true) }}"
-        ansible_distribution_file_variety: "{{ ansible_distribution_file_variety | default('undefined', true) }}"
-        ansible_distribution_file_path: "{{ ansible_distribution_file_path | default('undefined', true) }}"
-        platform_id: "{{ ansible_facts.platform_id | default('undefined', true) }}"
-        os_release_id: "{{ (ansible_facts.os_release | default({}, true)).ID | default('undefined', true) }}"
-        os_release_version_id: "{{ (ansible_facts.os_release | default({}, true)).VERSION_ID | default('undefined', true) }}"
-        os_release_pretty_name: "{{ (ansible_facts.os_release | default({}, true)).PRETTY_NAME | default('undefined', true) }}"
-
-      Kernel:
-        ansible_system: "{{ ansible_system | default('undefined', true) }}"
-        ansible_kernel: "{{ ansible_kernel | default('undefined', true) }}"
-        ansible_architecture: "{{ ansible_architecture | default('undefined', true) }}"
-        ansible_machine: "{{ ansible_machine | default('undefined', true) }}"
-
-      Network:
-        default_ipv4_address: "{{ ansible_default_ipv4.address | default('undefined', true) }}"
-        default_ipv4_interface: "{{ ansible_default_ipv4.interface | default('undefined', true) }}"
-        all_ipv4_addresses: "{{ ansible_all_ipv4_addresses | default([], true) }}"
-        all_ipv6_addresses: "{{ ansible_all_ipv6_addresses | default([], true) }}"
-        interfaces: "{{ ansible_interfaces | default([], true) }}"
-
-      Hardware:
-        cpu_vcpus: "{{ ansible_processor_vcpus | default('undefined', true) }}"
-        cpu_cores: "{{ ansible_processor_cores | default('undefined', true) }}"
-        cpu_count: "{{ ansible_processor_count | default('undefined', true) }}"
-        mem_total_mb: "{{ ansible_memtotal_mb | default('undefined', true) }}"
-        mem_free_mb: "{{ ansible_memfree_mb | default('undefined', true) }}"
-        swap_free_mb: "{{ ansible_swapfree_mb | default('undefined', true) }}"
-
-      Python:
-        python_version: "{{ ansible_python_version | default('undefined', true) }}"
-        python_executable: "{{ ansible_python_executable | default('undefined', true) }}"
-
-      Time_and_Uptime:
-        local_time: "{{ ansible_facts['date_time']['iso8601'] | default('undefined', true) }}"
-        uptime_seconds: "{{ ansible_facts['uptime_seconds'] | default('undefined', true) }}"
-
-      Standardized:
+      OS_Base:
         os_family: "{{ os_family | default('undefined', true) }}"
-        os_distribution: "{{ os_distribution | default('undefined', true) }}"
-        os_version_major: "{{ os_version_major | default('undefined', true) }}"
-        os_version_minor: "{{ os_version_minor | default('undefined', true) }}"
-        os_version_full: "{{ os_version_full | default('undefined', true) }}"
-        os_codename: "{{ os_codename | default('undefined', true) }}"
-        os_architecture: "{{ os_architecture | default('undefined', true) }}"
-        os_system: "{{ os_system | default('undefined', true) }}"
-        os_local_time: "{{ os_local_time | default('undefined', true) }}"
-        os_uptime_seconds: "{{ os_uptime_seconds | default('undefined', true) }}"
+        os_architecture_oci: "{{ os_architecture_oci | default('undefined', true) }}"
 
-      Virtualization:
-        is_container: "{{ is_container | default(false, true) }}"
-        virt_type: "{{ virtualization_type | default('phys', true) }}"
-        virt_role: "{{ virtualization_role | default('host', true) }}"
-
-      Internal_State:
+      Context_Identity:
         is_root_user: "{{ is_root_user | default(false, true) }}"
-        is_localhost: "{{ is_localhost | default(false, true) }}"
         become_enabled: "{{ become_enabled | default(false, true) }}"
-        is_managed_node: "{{ is_managed_node | default(false, true) }}"
-        is_control_node: "{{ is_control_node | default(false, true) }}"
+        ansible_user_home: "{{ ansible_user_home | default('undefined', true) }}"
+        os_paths: "{{ os_paths | default('undefined', true) }}"
+
+      System_Capabilities:
+        is_localhost: "{{ is_localhost | default(false, true) }}"
+        detect_init_system: "{{ detect_init_system | default('undefined', true) }}"
+        detect_cgroup_version: "{{ detect_cgroup_version | default('undefined', true) }}"
+        detect_wsl: "{{ detect_wsl | default(false, true) }}"
+
+      Container_Orchestration:
+        is_container: "{{ is_container | default(false, true) }}"
+        container_engine: "{{ container_engine | default('none', true) }}"
+        detect_k8s_node: "{{ detect_k8s_node | default(false, true) }}"
 
       Active_Tags:
         node_tags: "{{ node_tags | default([], true) }}"
@@ -112,17 +52,10 @@
             {%- endif -%}
           {%- endfor -%}
           {{ active | sort }}
-
-      System_Managers:
-        os_pkg_mgr: "{{ os_pkg_mgr | default('undefined', true) }}"
-        os_service_mgr: "{{ os_service_mgr | default('undefined', true) }}"
   when:
     - facts_mode == "common"
   tags: ["always"]
 
-# ---------------------------------------------------------------------
-# Formatting: Convert the selected facts into a readable YAML string.
-# ---------------------------------------------------------------------
 - name: "Convert grouped_facts to YAML"
   ansible.builtin.set_fact:
     facts_output: "{{ grouped_facts | to_nice_yaml(indent=2) }}"
@@ -137,9 +70,6 @@
     - facts_mode == "full"
   tags: ["always"]
 
-# ---------------------------------------------------------------------
-# Output: Print the formatted facts to the console.
-# ---------------------------------------------------------------------
 - name: "Print facts output"
   ansible.builtin.debug:
-    msg: "[FACTS_{{ facts_mode | upper }}] {{ facts_output }}"
+    msg: "[FACTS_{{ facts_mode | upper }}]\n{{ facts_output }}"

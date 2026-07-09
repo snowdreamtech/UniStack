@@ -3,44 +3,26 @@
 # roles/context/tasks/main.yml
 #
 # Purpose:
-#   Unified facts loader (snake_case version).
-#   Orchestrates the loading of system facts through modular sub-tasks.
+#   Unified facts loader. Orchestrates system context through 4 stages.
 #
-# Structure:
-#   1. facts_os.yml        : Core setup, snake_case OS vars, Fingerprint
-#   2. facts_context.yml   : User Identity, Permissions (Become), Node Tags
-#   3. detect_system.yml   : System capabilities (Init, WSL, Cgroup, Localhost)
-#   4. detect_container.yml: Container Runtime Engine (Docker/Podman/K8s)
-#
-# Author: Native AI Team
-#
-# Simple Usage:
+# Usage:
 #   - ansible.builtin.include_role:
 #       name: "context"
 #
-# Comprehensive Usage:
+# Debug (optional, not loaded by default):
 #   - ansible.builtin.include_role:
 #       name: "context"
-#     vars:
-#       node_tags: ["prod", "web", "docker_host"]
+#       tasks_from: "facts_inspect_loader"
 # =====================================================================
 
-# ---------------------------------------------------------------------
-# Stage 1: Core OS Facts & Fingerprint
-# ---------------------------------------------------------------------
+# Stage 1: Core OS Facts & Architecture Normalization
 - ansible.builtin.import_tasks: facts_os.yml
 
-# ---------------------------------------------------------------------
-# Stage 2: System Capabilities (Init, WSL, Localhost)
-# ---------------------------------------------------------------------
+# Stage 2: Identity, Permissions, Tags, Paths
+- ansible.builtin.import_tasks: facts_context.yml
+
+# Stage 3: System Capabilities (Init, WSL, Cgroup, Localhost)
 - ansible.builtin.import_tasks: detect_system.yml
 
-# ---------------------------------------------------------------------
-# Stage 3: Container Runtime Detection
-# ---------------------------------------------------------------------
+# Stage 4: Container Runtime Detection
 - ansible.builtin.import_tasks: detect_container.yml
-
-# ---------------------------------------------------------------------
-# Stage 4: Context (Identity, Permissions, Tags)
-# ---------------------------------------------------------------------
-- ansible.builtin.import_tasks: facts_context.yml

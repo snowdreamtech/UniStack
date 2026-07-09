@@ -3,10 +3,8 @@
 # roles/context/tasks/facts_os.yml
 #
 # Purpose:
-#   Core OS fact gathering and normalization.
-#   - Runs ansible.builtin.setup
-#   - Standardizes OS variables to snake_case
-#   - Builds the os_fingerprint
+#   Core OS fact gathering and architecture normalization.
+#   Only extracts what Ansible does not natively provide.
 # =====================================================================
 
 # ---------------------------------------------------------------------
@@ -22,80 +20,21 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# OS Information: Extract and normalize into snake_case
+# OS Basics: Only what downstream tasks truly need
 # ---------------------------------------------------------------------
-- name: "Build OS fact variables"
+- name: "Build essential OS facts"
   ansible.builtin.set_fact:
-    # Basic classification
     os_family: "{{ ansible_facts.os_family | lower }}"
-    os_distribution: "{{ ansible_facts.distribution | lower }}"
-    os_system: "{{ ansible_facts.system | lower }}"
-
-    # Virtualization and Container Detection (Basic)
+    os_architecture: "{{ ansible_facts.architecture }}"
     is_container: >-
       {{
-        ansible_facts.virtualization_type | default('', true) in ['docker', 'lxc', 'container', 'containerd', 'podman', 'proot']
-        or (ansible_facts.os_release.id | default('', true) == 'alpine' and lookup('file', '/proc/1/cgroup', errors='ignore') is search('docker|lxc|container'))
+        ansible_facts.virtualization_type | default('', true)
+        in ['docker', 'lxc', 'container', 'containerd', 'podman', 'proot']
       }}
-    virtualization_type: "{{ ansible_facts.virtualization_type | default('phys', true) }}"
-    virtualization_role: "{{ ansible_facts.virtualization_role | default('host', true) }}"
-
-    # Architecture
-    os_architecture: "{{ ansible_facts.architecture }}"
-
-    # Version info
-    os_version_major: "{{ ansible_facts.distribution_version.split('.')[0] | default('0', true) | int }}"
-    os_version_minor: "{{ ansible_facts.distribution_version.split('.')[1] | default('0', true) | int }}"
-    os_version_full: "{{ ansible_facts.distribution_version }}"
-
-    # Codename
-    os_codename: "{{ (ansible_facts.distribution_release | default(ansible_facts.lsb.codename | default('unknown', true), true)) | lower }}"
-
-    # Package and Service Manager
-    os_pkg_mgr: "{{ ansible_facts.pkg_mgr | default('unknown', true) }}"
-    os_service_mgr: "{{ ansible_facts.service_mgr | default('sysvinit', true) }}"
-
-    # Time and Uptime
-    os_local_time: "{{ ansible_facts.date_time.iso8601 }}"
-    os_uptime_seconds: "{{ ansible_facts.uptime_seconds | default(0, true) }}"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Package Manager Refinement (Darwin)
-# ---------------------------------------------------------------------
-# ---------------------------------------------------------------------
-# Package Manager Refinement (Darwin)
-# ---------------------------------------------------------------------
-- name: "Refine os_pkg_mgr for macOS (Priority: Homebrew > MacPorts > Default)"
-  when: os_family == 'darwin'
-  block:
-    - name: "Check for Homebrew"
-      ansible.builtin.shell: "PATH={{ os_paths }} command -v brew"
-      register: _check_brew
-      failed_when: false
-      changed_when: false
-
-    - name: "Check for MacPorts"
-      ansible.builtin.shell: "PATH={{ os_paths }} command -v port"
-      register: _check_port
-      failed_when: false
-      changed_when: false
-
-    - name: "Override os_pkg_mgr to homebrew (User Preference 1)"
-      ansible.builtin.set_fact:
-        os_pkg_mgr: "homebrew"
-      when: _check_brew.rc == 0
-
-    - name: "Override os_pkg_mgr to macports (User Preference 2)"
-      ansible.builtin.set_fact:
-        os_pkg_mgr: "macports"
-      when:
-        - _check_brew.rc != 0
-        - _check_port.rc == 0
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Architecture Normalization
+# Architecture Normalization (OCI/Docker/Go style)
 # ---------------------------------------------------------------------
 - name: "Normalize architecture map"
   ansible.builtin.set_fact:
@@ -125,41 +64,4 @@
         architecture_map[os_architecture]
         | default(os_architecture, true)
       }}
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Global Fingerprint
-# ---------------------------------------------------------------------
-- name: "Build os_fingerprint"
-  ansible.builtin.set_fact:
-    os_fingerprint: >-
-      {{ ansible_facts.distribution }} {{ ansible_facts.distribution_version }}
-      ({{ ansible_facts.architecture }}) @ {{ inventory_hostname }}
-      [{{ ansible_facts.os_family }}]
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Structured Information (os_info)
-# ---------------------------------------------------------------------
-- name: "Build Combined OS dictionary (os_info)"
-  ansible.builtin.set_fact:
-    os_info:
-      family: "{{ os_family }}"
-      distribution: "{{ os_distribution }}"
-      codename: "{{ os_codename }}"
-      arch: "{{ os_architecture }}"
-      architecture_oci: "{{ os_architecture_oci }}"
-      system: "{{ os_system }}"
-      pkg_mgr: "{{ os_pkg_mgr }}"
-      service_mgr: "{{ os_service_mgr }}"
-      version:
-        full: "{{ os_version_full }}"
-        major: "{{ os_version_major }}"
-        minor: "{{ os_version_minor }}"
-      time: "{{ os_local_time }}"
-      uptime: "{{ os_uptime_seconds }}"
-      virtualization:
-        type: "{{ virtualization_type }}"
-        role: "{{ virtualization_role }}"
-        is_container: "{{ is_container }}"
   tags: ["always"]
