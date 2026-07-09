@@ -11,8 +11,8 @@
 # Tag Metadata (for validation and documentation)
 # =====================================================================
 tag_metadata:
-  version: "5.0"
-  total_tags: 22
+  version: "6.0"
+  total_tags: 17
   categories: 5
 
   # Mutually exclusive tag groups
@@ -42,19 +42,14 @@ tag_map:
   wsl: is_wsl # Windows Subsystem for Linux
 
   # =====================================================================
-  # 3. Control & Managed Node
+  # 3. Control Node
   # =====================================================================
   control: is_control_node # Ansible control node
-  managed: is_managed_node # Ansible managed node
 
   # =====================================================================
   # 4. Container & Orchestration
   # =====================================================================
-  container: is_container # Generic container
-  docker_container: is_docker_container # Docker container
-  podman_container: is_podman_container # Podman container
-  docker_host: is_docker_host # Docker host
-  podman_host: is_podman_host # Podman host
+  container: is_container # Running inside a container
   k8s_node: is_k8s_node # K8s node
   k8s_control_plane: is_k8s_control_plane # K8s control plane
   k8s_worker: is_k8s_worker # K8s worker
