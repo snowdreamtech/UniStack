@@ -4,53 +4,25 @@
 #
 # Purpose:
 #   Global default variables for the native infrastructure layer.
-#   Contains the enterprise-grade node_tags_map for deriving boolean
-#   architectural facts, and repository management command templates
-#   for RedHat-family distributions.
-#
-# Simple Usage:
-#   These defaults are automatically loaded when the 'native' role
-#   is included or referenced.
-#
-# Comprehensive Usage:
-#   Override specific repo commands or tag mappings in group_vars
-#   to customize infrastructure behavior per-environment.
-#
+#   Contains the core node_tags_map for deriving boolean architectural facts.
 # =====================================================================
 
 # =====================================================================
 # Tag Metadata (for validation and documentation)
 # =====================================================================
 tag_metadata:
-  version: "2.1"
-  total_tags: 286 # ← Added kubespray_host
-  categories: 16
+  version: "3.0"
+  total_tags: 55
+  categories: 8
 
   # Mutually exclusive tag groups
   conflicts:
     - [prod, dev, test, stage] # Environment conflicts
-    - [ipv4_only, ipv6_only] # IP protocol conflicts
-    - [stateful, stateless] # State conflicts
-    - [immutable, mutable] # Mutability conflicts
-    - [ephemeral, long_running] # Lifecycle conflicts
 
   # Deprecated tags (will be removed in future versions)
   deprecated:
-    db_master: "Use db_primary instead (deprecated since v2.0)"
-    db_slave: "Use db_replica instead (deprecated since v2.0)"
-    k8s_master: "Use k8s_control_plane instead (deprecated since v2.0)"
-
-  # Required combinations
-  requires:
-    k8s_worker: [k8s_node] # k8s_worker requires k8s_node
-    k8s_control_plane: [k8s_node] # k8s_control_plane requires k8s_node
-    db_replica: [db] # db_replica requires db
-
-  # Recommended combinations
-  recommends:
-    prod: [monitored, backup_enabled, ha]
-    db: [backup_enabled]
-    public_ip: [ddos_protected, waf_protected]
+    db_master: "Use db_primary instead"
+    db_slave: "Use db_replica instead"
 
 # =====================================================================
 # Tag Map
@@ -58,549 +30,68 @@ tag_metadata:
 tag_map:
   # =====================================================================
   # 1. Environment Classification
-  # Category: environment
-  # Mutually Exclusive: yes (only one primary environment)
   # =====================================================================
-
-  # 1.1 Standard Environments
   dev: is_dev # Development environment
   test: is_test # Testing environment
-  qa: is_qa # Quality assurance
-  uat: is_uat # User acceptance testing
   stage: is_stage # Staging environment
   prod: is_prod # Production environment
-
-  # 1.2 Special Environments
   sandbox: is_sandbox # Sandbox/playground
-  lab: is_lab # Laboratory/research
-  demo: is_demo # Demo/showcase
-  training: is_training # Training environment
-
-  # 1.3 Deployment Strategies
-  canary: is_canary # Canary deployment
-  blue: is_blue # Blue-green (blue)
-  green: is_green # Blue-green (green)
-  ab_test: is_ab_test # A/B testing
-
-  # 1.4 Disaster Recovery
-  dr: is_dr # Disaster recovery
-  dr_primary: is_dr_primary # DR primary site
-  dr_secondary: is_dr_secondary # DR secondary site
 
   # =====================================================================
-  # 2. Network Classification
-  # Category: network
-  # Mutually Exclusive: partial (see subcategories)
-  # =====================================================================
-
-  # 2.1 Network Connectivity Type
-  open_network: is_open_network # Open internet access
-  restricted_network: is_restricted_network # Restricted (proxy/VPN required)
-  isolated_network: is_isolated_network # Isolated (no external access)
-  dmz_network: is_dmz_network # DMZ zone
-  airgap: is_airgap # Air-gapped network
-
-  # 2.2 Network Speed/Performance (mutually exclusive)
-  ultra_fast: is_ultra_fast # Ultra-fast (10G+, InfiniBand)
-  fast: is_fast # Fast (datacenter, LAN)
-  medium: is_medium # Medium (regular broadband)
-  slow: is_slow # Slow (cross-border, satellite)
-
-  # 2.3 Network Trust Level
-  trusted: is_trusted # Trusted (internal, VPC)
-  untrusted: is_untrusted # Untrusted (public internet)
-  dmz: is_dmz # DMZ zone
-
-  # 2.4 Network Access & Security
-  vpn_only: is_vpn_only # VPN-only access
-  proxy_required: is_proxy_required # Proxy required
-  vpn_required: is_vpn_required # VPN required
-  firewall_traversal: is_firewall_traversal # Firewall traversal needed
-  ddos_protected: is_ddos_protected # DDoS protection
-  waf_protected: is_waf_protected # WAF protection
-  load_balanced: is_load_balanced # Behind load balancer
-  cdn_enabled: is_cdn_enabled # CDN enabled
-  rate_limited: is_rate_limited # Rate limiting enabled
-
-  # 2.5 NAT & Gateway
-  nated: is_nated # Behind NAT
-  vpn_gateway: is_vpn_gateway # VPN gateway
-  proxy_server: is_proxy_server # Proxy server
-  nat_gateway: is_nat_gateway # NAT gateway
-
-  # 2.6 IP Address Type
-  public_ip: is_public_ip # Public IP
-  private_ip: is_private_ip # Private IP only
-  elastic_ip: is_elastic_ip # Elastic/static IP
-  floating_ip: is_floating_ip # Floating IP
-  loopback_ip: is_loopback_ip # Loopback IP
-  link_local_ip: is_link_local_ip # Link-local IP
-  cgnat: is_cgnat_ip # Carrier-grade NAT
-
-  # 2.7 IP Protocol (mutually exclusive)
-  ipv4_only: is_ipv4_only # IPv4 only
-  ipv6_only: is_ipv6_only # IPv6 only
-  dual_stack: is_dual_stack # IPv4 and IPv6
-
-  # 2.8 Special IP Addressing
-  multicast: is_multicast_ip # Multicast IP
-  broadcast: is_broadcast_ip # Broadcast IP
-  anycast: is_anycast_ip # Anycast IP
-  documentation: is_documentation_ip # Documentation IP
-
-  # =====================================================================
-  # 3. Infrastructure Type (Primary)
-  # Category: infrastructure_type
-  # Mutually Exclusive: yes (primary type only)
+  # 2. Infrastructure Type
   # =====================================================================
   physical: is_physical # Physical server
   baremetal: is_baremetal # Bare metal (alias)
   vm: is_vm # Virtual machine
   cloud: is_cloud # Cloud instance
-  edge: is_edge_node # Edge computing
   container_node: is_container_node # Container-based
-  serverless: is_serverless # Serverless/FaaS
-  hybrid: is_hybrid # Hybrid infrastructure
 
   # =====================================================================
-  # 4. Infrastructure Subtype (Secondary)
-  # Category: infrastructure_subtype
-  # Mutually Exclusive: no
+  # 3. Application Role
   # =====================================================================
-
-  # 4.1 Edge Computing
-  edge_5g: is_edge_5g # 5G edge
-  edge_gateway: is_edge_gateway # Edge gateway
-  edge_iot: is_edge_iot # IoT edge
-  edge_cdn: is_edge_cdn # CDN edge
-  edge_mec: is_edge_mec # Multi-access edge computing
-
-  # 4.2 Cloud Instance Types
-  cloud_spot: is_cloud_spot # Spot/preemptible
-  cloud_reserved: is_cloud_reserved # Reserved instance
-  cloud_on_demand: is_cloud_on_demand # On-demand
-  cloud_savings: is_cloud_savings # Savings plan
-  cloud_dedicated: is_cloud_dedicated # Dedicated host
-
-  # 4.3 Bare Metal Optimization
-  baremetal_gpu: is_baremetal_gpu # GPU-equipped
-  baremetal_storage: is_baremetal_storage # Storage-optimized
-  baremetal_compute: is_baremetal_compute # Compute-optimized
-  baremetal_network: is_baremetal_network # Network-optimized
-  baremetal_memory: is_baremetal_memory # Memory-optimized
-
-  # 4.4 Virtual Machine Types
-  vm_low_cost: is_vm_low_cost # Low-cost VM
-  vm_high_perf: is_vm_high_perf # High-performance
-  vm_burstable: is_vm_burstable # Burstable performance
-  vm_spot: is_vm_spot # Spot VM
-
-  # =====================================================================
-  # 5. Application Role Classification
-  # Category: application_role
-  # Mutually Exclusive: no (can have multiple roles)
-  # =====================================================================
-
-  # 5.1 Frontend & API
   web: is_web_node # Web server
   api: is_api_node # API server
   frontend: is_frontend_node # Frontend app
-  cdn: is_cdn_node # CDN node
-  gateway: is_gateway_node # API gateway
-
-  # 5.2 Backend & Processing
   backend: is_backend_node # Backend app
   worker: is_worker_node # Background worker
-  scheduler: is_scheduler_node # Job scheduler
   cron: is_cron_node # Cron jobs
-  batch: is_batch_node # Batch processing
-
-  # 5.3 Data Tier
   db: is_db_node # Database
   db_primary: is_db_primary # DB primary/master
   db_replica: is_db_replica # DB replica
-  db_master: is_db_master # DB master (deprecated)
-  db_slave: is_db_slave # DB slave (deprecated)
-  db_read: is_db_read # Read replica
-  db_write: is_db_write # Write node
   cache: is_cache_node # Cache server
-  search: is_search_node # Search engine
-
-  # 5.4 Messaging & Streaming
   queue: is_queue_node # Message queue
-  broker: is_broker_node # Message broker
-  streaming: is_streaming_node # Stream processing
-  kafka: is_kafka_node # Kafka node
-  rabbitmq: is_rabbitmq_node # RabbitMQ node
-  pulsar: is_pulsar_node # Apache Pulsar
-
-  # 5.5 Storage
   storage: is_storage_node # Storage server
-  nas: is_nas_node # NAS
-  san: is_san_node # SAN
-  object: is_object_node # Object storage
-  block: is_block_node # Block storage
-  file: is_file_node # File storage
-
-  # 5.6 Infrastructure Services
-  dns: is_dns_node # DNS server
-  dhcp: is_dhcp_node # DHCP server
-  ntp: is_ntp_node # NTP server
-  ldap: is_ldap_node # LDAP server
-  ad: is_ad_node # Active Directory
-  mail: is_mail_node # Mail server
-
-  # 5.7 Security & Access
   bastion: is_bastion_node # Bastion host
-  jump: is_jump_node # Jump server
-  firewall: is_firewall_node # Firewall
-  ids: is_ids_node # IDS
-  ips: is_ips_node # IPS
-  waf: is_waf_node # WAF
-  vpn: is_vpn_node # VPN server
-
-  # 5.8 Monitoring & Observability
-  monitor: is_monitor_node # Monitoring
-  logging: is_logging_node # Log aggregation
-  metrics: is_metrics_node # Metrics collection
-  tracing: is_tracing_node # Distributed tracing
-  apm: is_apm_node # APM
-  alerting: is_alerting_node # Alerting
-
-  # 5.9 CI/CD & DevOps
-  ci: is_ci_node # CI server
-  cd: is_cd_node # CD server
-  build: is_build_node # Build server
-  artifact: is_artifact_node # Artifact repo
-  registry: is_registry_node # Container registry
-  gitops: is_gitops_node # GitOps controller
 
   # =====================================================================
-  # 5.x Control & Managed Node Classification
+  # 4. Control & Managed Node
   # =====================================================================
   control: is_control_node # Ansible control node
   managed: is_managed_node # Ansible managed node
 
   # =====================================================================
-  # 6. Container & Orchestration
-  # Category: container_orchestration
+  # 5. Container & Orchestration
   # =====================================================================
-
-  # 6.1 Container Runtime
   container: is_container # Generic container
   docker_container: is_docker_container # Docker container
   podman_container: is_podman_container # Podman container
-  lxc_container: is_lxc_container # LXC container
-  lxd_container: is_lxd_container # LXD container
-
-  # 6.2 Container Host
   docker_host: is_docker_host # Docker host
   podman_host: is_podman_host # Podman host
-  containerd_host: is_containerd_host # Containerd host
-  crio_host: is_crio_host # CRI-O host
-  lxc_host: is_lxc_host # LXC host
-  k8s_host: is_k8s_host # K8s host
-  k3s_host: is_k3s_host # K3s host
-  kubeadm_host: is_kubeadm_host # Kubeadm host
-  kubespray_host: is_kubespray_host # Kubespray host
-
-  # 6.3 Kubernetes
   k8s_node: is_k8s_node # K8s node
   k8s_control_plane: is_k8s_control_plane # K8s control plane
   k8s_worker: is_k8s_worker # K8s worker
-  k8s_master: is_k8s_master # K8s master (deprecated)
-  k8s_etcd: is_k8s_etcd # K8s etcd
-  k8s_ingress: is_k8s_ingress # K8s ingress controller
-
-  # 6.4 Other Orchestration
-  swarm_manager: is_swarm_manager # Docker Swarm manager
-  swarm_worker: is_swarm_worker # Docker Swarm worker
-  nomad_server: is_nomad_server # Nomad server
-  nomad_client: is_nomad_client # Nomad client
-  mesos_master: is_mesos_master # Mesos master
-  mesos_agent: is_mesos_agent # Mesos agent
 
   # =====================================================================
-  # 7. Hardware Capabilities
-  # Category: hardware
+  # 6. CPU Architecture
   # =====================================================================
-
-  # 7.1 Compute Accelerators
-  has_gpu: is_gpu_node # GPU hardware
-  has_nvidia_driver: is_nvidia_driver # NVIDIA driver
-  has_nvidia_gpu: is_nvidia_gpu # NVIDIA GPU
-  has_amd_gpu: is_amd_gpu # AMD GPU
-  has_intel_gpu: is_intel_gpu # Intel GPU
-  has_tpu: is_tpu_node # TPU
-  high_cpu: is_high_cpu # High CPU count
-  high_memory: is_high_memory # High memory
-
-  # 7.2 Storage Hardware
-  ssd: is_ssd_node # SSD storage
-  nvme: is_nvme_node # NVMe storage
-  hdd: is_hdd_node # HDD storage
-  raid: is_raid_node # RAID config
-  raid0: is_raid0 # RAID 0
-  raid1: is_raid1 # RAID 1
-  raid5: is_raid5 # RAID 5
-  raid10: is_raid10 # RAID 10
-
-  # 7.3 Network Hardware
-  high_bandwidth: is_high_bandwidth # High bandwidth
-  infiniband: is_infiniband # InfiniBand
-  rdma: is_rdma # RDMA capable
-  roce: is_roce # RoCE
-  ib_fdr: is_ib_fdr # InfiniBand FDR
-  ib_edr: is_ib_edr # InfiniBand EDR
-  ib_hdr: is_ib_hdr # InfiniBand HDR
-
-  # 7.4 CPU Architecture
   x86_64: is_x86_64 # x86_64/AMD64
   amd64: is_amd64 # AMD64 (alias)
   arm64: is_arm64 # ARM64
   aarch64: is_aarch64 # AArch64 (alias)
   armv7: is_armv7 # ARMv7
-  riscv: is_riscv # RISC-V
-  ppc64le: is_ppc64le # PowerPC 64-bit LE
-  s390x: is_s390x # IBM Z
-
-  # 7.5 Special Hardware
-  has_containerd: is_containerd_node # Containerd runtime
-  has_fpga: is_fpga_node # FPGA
-  has_asic: is_asic_node # ASIC
-  has_smartnic: is_smartnic # SmartNIC
-  has_dpu: is_dpu # DPU
 
   # =====================================================================
-  # 8. Cloud Provider
-  # Category: cloud_provider
-  # Mutually Exclusive: yes (primary provider)
-  # =====================================================================
-
-  # Major cloud providers
-  aws: is_aws # AWS
-  gcp: is_gcp # GCP
-  azure: is_azure # Azure
-  alicloud: is_alicloud # Alibaba Cloud
-  aliyun: is_aliyun # Aliyun (alias)
-  tencentcloud: is_tencentcloud # Tencent Cloud
-  oracle_cloud: is_oracle_cloud # Oracle Cloud
-  oci: is_oci # OCI (alias)
-  huaweicloud: is_huaweicloud # Huawei Cloud
-
-  # Alternative cloud providers
-  digitalocean: is_digitalocean # DigitalOcean
-  linode: is_linode # Linode/Akamai
-  vultr: is_vultr # Vultr
-  hetzner: is_hetzner # Hetzner
-  ovh: is_ovh # OVH Cloud
-  scaleway: is_scaleway # Scaleway
-
-  # Enterprise platforms
-  ibm_cloud: is_ibm_cloud # IBM Cloud
-  vmware: is_vmware # VMware Cloud
-  openstack: is_openstack # OpenStack
-  cloudstack: is_cloudstack # CloudStack
-  proxmox: is_proxmox # Proxmox
-
-  # On-premises
-  on_prem: is_on_prem # On-premises
-  private_cloud: is_private_cloud # Private cloud
-
-  # =====================================================================
-  # 9. Geographic Region
-  # Category: geographic_region
-  # =====================================================================
-
-  # 9.1 Greater China
-  cn_mainland: is_in_cn_mainland # Mainland China
-  cn_hongkong: is_in_cn_hongkong # Hong Kong
-  cn_taiwan: is_in_cn_taiwan # Taiwan
-  cn_macau: is_in_cn_macau # Macau
-
-  # 9.2 Asia Pacific
-  asia_pacific: is_in_asia_pacific # Asia Pacific
-  ap_southeast: is_in_ap_southeast # Southeast Asia
-  ap_northeast: is_in_ap_northeast # Northeast Asia
-  ap_south: is_in_ap_south # South Asia
-  japan: is_in_japan # Japan
-  korea: is_in_korea # Korea
-  singapore: is_in_singapore # Singapore
-  australia: is_in_australia # Australia
-  india: is_in_india # India
-  thailand: is_in_thailand # Thailand
-  vietnam: is_in_vietnam # Vietnam
-  indonesia: is_in_indonesia # Indonesia
-
-  # 9.3 Americas
-  north_america: is_in_north_america # North America
-  us_east: is_in_us_east # US East
-  us_west: is_in_us_west # US West
-  us_central: is_in_us_central # US Central
-  canada: is_in_canada # Canada
-  south_america: is_in_south_america # South America
-  brazil: is_in_brazil # Brazil
-  mexico: is_in_mexico # Mexico
-
-  # 9.4 Europe
-  europe: is_in_europe # Europe
-  eu_west: is_in_eu_west # Western Europe
-  eu_central: is_in_eu_central # Central Europe
-  eu_north: is_in_eu_north # Northern Europe
-  eu_south: is_in_eu_south # Southern Europe
-  uk: is_in_uk # United Kingdom
-  germany: is_in_germany # Germany
-  france: is_in_france # France
-  netherlands: is_in_netherlands # Netherlands
-  ireland: is_in_ireland # Ireland
-
-  # 9.5 Middle East & Africa
-  middle_east: is_in_middle_east # Middle East
-  africa: is_in_africa # Africa
-  uae: is_in_uae # UAE
-  saudi: is_in_saudi # Saudi Arabia
-
-  # 9.6 Multi-region
-  global: is_global # Global
-  multi_region: is_multi_region # Multi-region
-
-  # =====================================================================
-  # 10. Security & Compliance
-  # Category: security_compliance
-  # =====================================================================
-
-  # 10.1 Security Hardening
-  hardened: is_hardened_node # Security-hardened
-  cis_hardened: is_cis_hardened # CIS hardened
-  stig_hardened: is_stig_hardened # STIG hardened
-  nist_hardened: is_nist_hardened # NIST hardened
-
-  # 10.2 Compliance Standards
-  compliance: is_compliance_node # Compliance-required
-  pci_dss: is_pci_dss # PCI DSS
-  pci: is_pci_node # PCI (alias)
-  hipaa: is_hipaa # HIPAA
-  sox: is_sox # SOX
-  gdpr: is_gdpr # GDPR
-  ccpa: is_ccpa # CCPA
-  iso27001: is_iso27001_node # ISO 27001
-  iso9001: is_iso9001 # ISO 9001
-  fedramp: is_fedramp # FedRAMP
-  fisma: is_fisma # FISMA
-
-  # 10.3 Security Features
-  encrypted: is_encrypted # Encryption enabled
-  tls_required: is_tls_required # TLS required
-  mtls: is_mtls # Mutual TLS
-  selinux: is_selinux # SELinux enabled
-  apparmor: is_apparmor # AppArmor enabled
-
-  # 10.4 Access Control
-  mfa_required: is_mfa_required # MFA required
-  sso_enabled: is_sso_enabled # SSO enabled
-  rbac: is_rbac # RBAC enabled
-  abac: is_abac # ABAC enabled
-
-  # =====================================================================
-  # 11. Lifecycle & State Management
-  # Category: lifecycle
-  # Mutually Exclusive: partial (see conflicts)
-  # =====================================================================
-  ephemeral: is_ephemeral # Ephemeral/temporary
-  long_running: is_long_running # Long-running
-  stateful: is_stateful # Stateful
-  stateless: is_stateless # Stateless
-  immutable: is_immutable # Immutable infra
-  mutable: is_mutable # Mutable infra
-  auto_scaling: is_auto_scaling # Auto-scaling
-  spot_instance: is_spot_instance # Spot instance
-  persistent: is_persistent # Persistent storage
-
-  # =====================================================================
-  # 12. Monitoring & Observability
-  # Category: monitoring
-  # =====================================================================
-  monitored: is_monitored # Monitoring enabled
-  prometheus: is_prometheus # Prometheus
-  grafana: is_grafana # Grafana
-  elk: is_elk # ELK stack
-  datadog: is_datadog # Datadog
-  newrelic: is_newrelic # New Relic
-  dynatrace: is_dynatrace # Dynatrace
-  splunk: is_splunk # Splunk
-  zabbix: is_zabbix # Zabbix
-  nagios: is_nagios # Nagios
-
-  # =====================================================================
-  # 13. Backup & Disaster Recovery
-  # Category: backup_dr
-  # =====================================================================
-  backup_enabled: is_backup_enabled # Backup enabled
-  snapshot_enabled: is_snapshot_enabled # Snapshot enabled
-  replication: is_replication # Replication
-  ha: is_ha # High availability
-  dr_enabled: is_dr_enabled # DR enabled
-  multi_az: is_multi_az # Multi-AZ
-  multi_region_dr: is_multi_region_dr # Multi-region DR
-  active_active: is_active_active # Active-active
-  active_passive: is_active_passive # Active-passive
-
-  # =====================================================================
-  # 14. Cost Optimization
-  # Category: cost
-  # =====================================================================
-  cost_optimized: is_cost_optimized # Cost-optimized
-  reserved_capacity: is_reserved_capacity # Reserved capacity
-  savings_plan: is_savings_plan # Savings plan
-  budget_alert: is_budget_alert # Budget alerting
-
-  # =====================================================================
-  # 15. Database & Data Platform
-  # Category: database
-  # =====================================================================
-
-  # Relational databases
-  mysql: is_mysql # MySQL
-  mariadb: is_mariadb # MariaDB
-  postgres: is_postgres # PostgreSQL
-  postgresql: is_postgresql # PostgreSQL (alias)
-  oracle_db: is_oracle_db # Oracle Database
-  mssql: is_mssql # Microsoft SQL Server
-
-  # NoSQL databases
-  mongodb: is_mongodb # MongoDB
-  redis: is_redis # Redis
-  cassandra: is_cassandra # Cassandra
-  couchdb: is_couchdb # CouchDB
-  dynamodb: is_dynamodb # DynamoDB
-
-  # Search & Analytics
-  elasticsearch: is_elasticsearch # Elasticsearch
-  opensearch: is_opensearch # OpenSearch
-  solr: is_solr # Solr
-
-  # Time-series & Specialized
-  influxdb: is_influxdb # InfluxDB
-  timescaledb: is_timescaledb # TimescaleDB
-  clickhouse: is_clickhouse # ClickHouse
-
-  # =====================================================================
-  # 16. Custom Tags
-  # Category: custom
-  # =====================================================================
-  antigravity_node: is_antigravity_node # Antigravity-specific
-  vscode_node: is_vscode_node # VSCode-specific
-  experimental: is_experimental # Experimental
-  raspberry_pi: is_pi # Raspberry Pi
-  deprecated: is_deprecated # Deprecated
-  maintenance: is_maintenance # Under maintenance
-  quarantine: is_quarantine # Quarantined
-  migration: is_migration # Migration in progress
-  decommission: is_decommission # To be decommissioned
-
-  # =====================================================================
-  # 17. Application Specific
-  # Category: application
+  # 7. Application Specific
   # =====================================================================
   git: is_git_node # Git
   zsh: is_zsh_node # Zsh
@@ -614,8 +105,7 @@ tag_map:
   pnpm: is_pnpm_node # pnpm
 
   # =====================================================================
-  # 18. System Type
-  # Category: system_type
+  # 8. System Type
   # =====================================================================
   desktop: is_desktop # Desktop environment system
   server: is_server # Server system
