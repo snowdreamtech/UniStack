@@ -75,28 +75,3 @@
     os_paths: "{{ _os_paths_probe.stdout_lines | join(':') }}"
   tags: ["always"]
 
-# ---------------------------------------------------------------------
-# Tag Derivation
-# ---------------------------------------------------------------------
-- name: "Ensure node_tags exists"
-  ansible.builtin.set_fact:
-    node_tags: "{{ node_tags | default([], true) }}"
-  tags: ["always"]
-
-- name: "Initialize and derive tag variables (Bulk)"
-  ansible.builtin.set_fact: "{{ derived_tags }}"
-  vars:
-    derived_tags: >-
-      {%- set results = {} -%}
-      {%- for tag_name, tag_var in tag_map.items() -%}
-        {%- set _ = results.update({tag_var: tag_name in (node_tags | default([], true))}) -%}
-      {%- endfor -%}
-      {{ results }}
-  tags: ["always"]
-
-- name: "Default to managed node when no control tag is present"
-  ansible.builtin.set_fact:
-    is_managed_node: true
-  when:
-    - not (is_control_node | default(false, true) | bool)
-  tags: ["always"]

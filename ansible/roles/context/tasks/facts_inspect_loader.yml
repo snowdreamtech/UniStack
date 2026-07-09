@@ -42,16 +42,7 @@
         container_engine: "{{ container_engine | default('none', true) }}"
         detect_k8s_node: "{{ detect_k8s_node | default(false, true) }}"
 
-      Active_Tags:
-        node_tags: "{{ node_tags | default([], true) }}"
-        derived_active: >-
-          {%- set active = [] -%}
-          {%- for tag, var in tag_map.items() -%}
-            {%- if lookup('vars', var, default=false) -%}
-              {%- set _ = active.append(tag ~ ' (' ~ var ~ ')') -%}
-            {%- endif -%}
-          {%- endfor -%}
-          {{ active | sort }}
+
   when:
     - facts_mode == "common"
   tags: ["always"]
