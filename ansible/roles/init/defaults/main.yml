@@ -24,7 +24,7 @@ init_mirror_url_epel: "https://mirrors.tuna.tsinghua.edu.cn/epel"
 init_user_name: "ansible"
 # init_user_password: "$6$..." # Optional
 
-# -----------------------------------------------------d d d d d d----------------
+# ---------------------------------------------------------------------
 # SSH Configuration
 # ---------------------------------------------------------------------
 init_sshd_port: 22
