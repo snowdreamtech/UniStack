@@ -3,7 +3,7 @@
 # roles/context/tasks/main.yml
 #
 # Purpose:
-#   Unified facts loader. Orchestrates system context through 4 stages.
+#   Unified facts loader. Orchestrates fundamental system context.
 #
 # Usage:
 #   - ansible.builtin.include_role:
@@ -18,11 +18,5 @@
 # Stage 1: Core OS Facts & Architecture Normalization
 - ansible.builtin.import_tasks: facts_os.yml
 
-# Stage 2: Identity, Permissions, Tags, Paths
+# Stage 2: Identity & Permissions
 - ansible.builtin.import_tasks: facts_context.yml
-
-# Stage 3: System Capabilities (Init, WSL, Cgroup, Localhost)
-- ansible.builtin.import_tasks: detect_system.yml
-
-# Stage 4: Container Runtime Detection
-- ansible.builtin.import_tasks: detect_container.yml

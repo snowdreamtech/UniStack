@@ -3,7 +3,7 @@
 # roles/context/tasks/facts_context.yml
 #
 # Purpose:
-#   Derive context variables: Identity, Permissions, Tags, Paths.
+#   Derive context variables: Identity, Permissions, Paths.
 # =====================================================================
 
 # ---------------------------------------------------------------------
@@ -37,41 +37,3 @@
       {%- set root_path = '/var/root' if os_family == 'darwin' else '/root' -%}
       {{- root_path if is_root_user else base_path ~ '/' ~ ansible_user -}}
   tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Path Discovery (minimal system paths only)
-# ---------------------------------------------------------------------
-- name: "Scan for canonical binary directories"
-  ansible.builtin.shell: |-
-    set -eu
-    for d in {{ paths_to_check | join(' ') }}; do
-      if [ -d "$d" ]; then
-        echo "$d"
-      fi
-    done
-  vars:
-    paths_to_check:
-      # User-level
-      - "{{ ansible_user_home }}/.local/bin"
-      # macOS Specific
-      - "/opt/homebrew/bin"
-      - "/opt/homebrew/sbin"
-      - "/opt/local/bin"
-      - "/opt/local/sbin"
-      # Standard Unix / Linux
-      - "/usr/local/bin"
-      - "/usr/local/sbin"
-      - "/usr/bin"
-      - "/usr/sbin"
-      - "/bin"
-      - "/sbin"
-  register: _os_paths_probe
-  changed_when: false
-  become: "{{ become_enabled }}"
-  tags: ["always"]
-
-- name: "Build canonical os_paths fact"
-  ansible.builtin.set_fact:
-    os_paths: "{{ _os_paths_probe.stdout_lines | join(':') }}"
-  tags: ["always"]
-

@@ -24,24 +24,12 @@
       OS_Base:
         os_family: "{{ os_family | default('undefined', true) }}"
         os_architecture_oci: "{{ os_architecture_oci | default('undefined', true) }}"
+        is_container: "{{ is_container | default(false, true) }}"
 
       Context_Identity:
         is_root_user: "{{ is_root_user | default(false, true) }}"
         become_enabled: "{{ become_enabled | default(false, true) }}"
         ansible_user_home: "{{ ansible_user_home | default('undefined', true) }}"
-        os_paths: "{{ os_paths | default('undefined', true) }}"
-
-      System_Capabilities:
-        is_localhost: "{{ is_localhost | default(false, true) }}"
-        detect_init_system: "{{ detect_init_system | default('undefined', true) }}"
-        detect_cgroup_version: "{{ detect_cgroup_version | default('undefined', true) }}"
-        detect_wsl: "{{ detect_wsl | default(false, true) }}"
-
-      Container_Orchestration:
-        is_container: "{{ is_container | default(false, true) }}"
-        container_engine: "{{ container_engine | default('none', true) }}"
-        detect_k8s_node: "{{ detect_k8s_node | default(false, true) }}"
-
 
   when:
     - facts_mode == "common"
