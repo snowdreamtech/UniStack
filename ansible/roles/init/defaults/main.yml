@@ -9,6 +9,16 @@
 init_mirror_enabled: false
 
 # ---------------------------------------------------------------------
+# Mirror Source URLs (Used only when init_mirror_enabled: true)
+# ---------------------------------------------------------------------
+init_mirror_url_alpine: "https://mirrors.tuna.tsinghua.edu.cn/alpine"
+init_mirror_url_debian: "https://mirrors.tuna.tsinghua.edu.cn/debian"
+init_mirror_url_debian_security: "https://mirrors.tuna.tsinghua.edu.cn/debian-security"
+init_mirror_url_ubuntu: "https://mirrors.tuna.tsinghua.edu.cn/ubuntu"
+init_mirror_url_centos: "https://mirrors.tuna.tsinghua.edu.cn/centos"
+init_mirror_url_epel: "https://mirrors.tuna.tsinghua.edu.cn/epel"
+
+# ---------------------------------------------------------------------
 # User Configuration
 # ---------------------------------------------------------------------
 init_user_name: "ansible"
