@@ -17,6 +17,7 @@ PIP_INDEX_URL = '{% if env.CI is defined %}https://pypi.org/simple{% else %}http
 PIP_TRUSTED_HOST = '{% if env.CI is defined %}pypi.org{% else %}mirrors.aliyun.com{% endif %}'
 PYTHONUTF8 = '1'
 PYTHONUNBUFFERED = '1'
+PYTHONWARNINGS = 'ignore::DeprecationWarning,ignore::ResourceWarning'
 PYTHON_BUILD_MIRROR_URL = '{% if env.CI is defined %}https://www.python.org/ftp/python/{% else %}https://mirrors.aliyun.com/python/{% endif %}'
 ANSIBLE_ROLES_PATH = 'ansible/roles'
 RUBY_BUILD_MIRROR_URL = '{% if env.CI is defined %}https://cache.ruby-lang.org/pub/ruby/{% else %}https://mirrors.aliyun.com/ruby-build/{% endif %}'
