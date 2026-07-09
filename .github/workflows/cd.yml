@@ -236,6 +236,10 @@ jobs:
           - "alpine:3.23"
           - "rockylinux/rockylinux:9"
           - "rockylinux/rockylinux:10"
+          - "archlinux:latest"
+          - "fedora:41"
+          - "fedora:40"
+          - "opensuse/tumbleweed:latest"
     permissions:
       contents: read
     steps:
