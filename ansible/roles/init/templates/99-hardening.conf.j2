@@ -128,7 +128,7 @@ PrintMotd {{ yesno(sshd.print_motd, 'no') }}
 PrintLastLog {{ yesno(sshd.print_last_log, 'yes') }}
 {% endif %}
 TCPKeepAlive {{ yesno(sshd.tcp_keep_alive, 'yes') }}
-{% if sshd.permit_user_environment is string and sshd.permit_user_environment not in ['yes', 'no'] %}
+{% if (sshd.permit_user_environment | default('no')) is string and (sshd.permit_user_environment | default('no')) not in ['yes', 'no'] %}
 PermitUserEnvironment "{{ sshd.permit_user_environment }}"
 {% else %}
 PermitUserEnvironment {{ ssh_option(sshd.permit_user_environment, 'no') }}
@@ -155,19 +155,19 @@ Subsystem sftp {{ sshd.subsystem_sftp | default('internal-sftp', true) }}
    ============================================ #}
 
 {% if sshd.allow_users | default([], true) | length > 0 %}
-AllowUsers {{ sshd.allow_users | join(' ') }}
+AllowUsers {{ (sshd.allow_users | default([])) | join(' ') }}
 {% endif %}
 
 {% if sshd.allow_groups | default([], true) | length > 0 %}
-AllowGroups {{ sshd.allow_groups | join(' ') }}
+AllowGroups {{ (sshd.allow_groups | default([])) | join(' ') }}
 {% endif %}
 
 {% if sshd.deny_users | default([], true) | length > 0 %}
-DenyUsers {{ sshd.deny_users | join(' ') }}
+DenyUsers {{ (sshd.deny_users | default([])) | join(' ') }}
 {% endif %}
 
 {% if sshd.deny_groups | default([], true) | length > 0 %}
-DenyGroups {{ sshd.deny_groups | join(' ') }}
+DenyGroups {{ (sshd.deny_groups | default([])) | join(' ') }}
 {% endif %}
 
 {# ============================================
@@ -175,22 +175,22 @@ DenyGroups {{ sshd.deny_groups | join(' ') }}
    ============================================ #}
 
 {% if sshd.match_user | default([], true) | length > 0 %}
-Match User {{ sshd.match_user | join(' ') }}
+Match User {{ (sshd.match_user | default([])) | join(' ') }}
 {{ sshd.match_user_options | indent(4) }}
 {% endif %}
 
 {% if sshd.match_group | default([], true) | length > 0 %}
-Match Group {{ sshd.match_group | join(' ') }}
+Match Group {{ (sshd.match_group | default([])) | join(' ') }}
 {{ sshd.match_group_options | indent(4) }}
 {% endif %}
 
 {% if sshd.match_address | default([], true) | length > 0 %}
-Match Address {{ sshd.match_address | join(',') }}
+Match Address {{ (sshd.match_address | default([])) | join(',') }}
 {{ sshd.match_address_options | indent(4) }}
 {% endif %}
 
 {% if sshd.match_blocks | default([], true) | length > 0 %}
-{% for block in sshd.match_blocks %}
+{% for block in (sshd.match_blocks | default([])) %}
 Match {{ block.conditions }}
 {{ block.options | indent(4) }}
 {% endfor %}
