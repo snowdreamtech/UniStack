@@ -29,7 +29,6 @@
       Context_Identity:
         is_root_user: "{{ is_root_user | default(false, true) }}"
         become_enabled: "{{ become_enabled | default(false, true) }}"
-        ansible_user_home: "{{ ansible_user_home | default('undefined', true) }}"
 
   when:
     - facts_mode == "common"
