@@ -459,12 +459,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
           UNIRTM_VERIFY_PROVENANCE: "0"
 
-      - name: "📥 Run Bootstrap Playbook"
-        run: unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/bootstrap.yml
+      - name: "📥 Run Init Playbook"
+        run: unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/init.yml
 
       - name: "🔁 Verify Idempotency"
         run: |
-          unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/bootstrap.yml > ansible_output.txt
+          unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/init.yml > ansible_output.txt
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
