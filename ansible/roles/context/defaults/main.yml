@@ -11,18 +11,13 @@
 # Tag Metadata (for validation and documentation)
 # =====================================================================
 tag_metadata:
-  version: "3.0"
-  total_tags: 45
-  categories: 7
+  version: "4.0"
+  total_tags: 29
+  categories: 6
 
   # Mutually exclusive tag groups
   conflicts:
     - [prod, dev, test, stage] # Environment conflicts
-
-  # Deprecated tags (will be removed in future versions)
-  deprecated:
-    db_master: "Use db_primary instead"
-    db_slave: "Use db_replica instead"
 
 # =====================================================================
 # Tag Map
@@ -36,41 +31,24 @@ tag_map:
   stage: is_stage # Staging environment
   prod: is_prod # Production environment
   sandbox: is_sandbox # Sandbox/playground
+  airgap: is_airgap # Air-gapped / disconnected network
+  ci: is_ci_env # CI/CD automation environment
 
   # =====================================================================
   # 2. Infrastructure Type
   # =====================================================================
   physical: is_physical # Physical server
-  baremetal: is_baremetal # Bare metal (alias)
   vm: is_vm # Virtual machine
-  cloud: is_cloud # Cloud instance
   container_node: is_container_node # Container-based
 
   # =====================================================================
-  # 3. Application Role
-  # =====================================================================
-  web: is_web_node # Web server
-  api: is_api_node # API server
-  frontend: is_frontend_node # Frontend app
-  backend: is_backend_node # Backend app
-  worker: is_worker_node # Background worker
-  cron: is_cron_node # Cron jobs
-  db: is_db_node # Database
-  db_primary: is_db_primary # DB primary/master
-  db_replica: is_db_replica # DB replica
-  cache: is_cache_node # Cache server
-  queue: is_queue_node # Message queue
-  storage: is_storage_node # Storage server
-  bastion: is_bastion_node # Bastion host
-
-  # =====================================================================
-  # 4. Control & Managed Node
+  # 3. Control & Managed Node
   # =====================================================================
   control: is_control_node # Ansible control node
   managed: is_managed_node # Ansible managed node
 
   # =====================================================================
-  # 5. Container & Orchestration
+  # 4. Container & Orchestration
   # =====================================================================
   container: is_container # Generic container
   docker_container: is_docker_container # Docker container
@@ -82,7 +60,7 @@ tag_map:
   k8s_worker: is_k8s_worker # K8s worker
 
   # =====================================================================
-  # 6. CPU Architecture
+  # 5. CPU Architecture
   # =====================================================================
   x86_64: is_x86_64 # x86_64/AMD64
   amd64: is_amd64 # AMD64 (alias)
@@ -91,7 +69,7 @@ tag_map:
   armv7: is_armv7 # ARMv7
 
   # =====================================================================
-  # 7. System Type
+  # 6. System Type
   # =====================================================================
   desktop: is_desktop # Desktop environment system
   server: is_server # Server system
