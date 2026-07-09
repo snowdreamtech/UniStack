@@ -3,6 +3,10 @@
   hosts: all
   gather_facts: false
   tasks:
+    - name: Bootstrap remote hosts (Install Python if missing)
+      ansible.builtin.include_role:
+        name: bootstrap
+
     - name: Load infrastructure context
       ansible.builtin.include_role:
         name: context
