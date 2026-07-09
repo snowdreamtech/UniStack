@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   Configure extra base repositories (e.g. EPEL for RedHat families).
-#   Debian and Alpine are skipped here because their default repos 
+#   Debian and Alpine are skipped here because their default repos
 #   are sufficient unless mirror.yml is triggered.
 # =====================================================================
 
@@ -15,7 +15,7 @@
   ansible.builtin.command: "dnf config-manager --set-enabled crb"
   changed_when: false
   failed_when: false
-  when: 
+  when:
     - os_family == 'redhat'
     - os_version_major | int >= 8
   become: "{{ become_enabled }}"

@@ -4,7 +4,7 @@
    Macros for SSH Configuration Values
    ============================================ #}
 
-{# 
+{#
   Standard boolean converter
   Use for simple yes/no options
 #}
@@ -12,15 +12,15 @@
 {{ (value | default(default, true) | bool) | ternary('yes', 'no') }}
 {%- endmacro %}
 
-{# 
+{#
   Smart SSH value handler
   Handles both boolean and special string values
-  
+
   Parameters:
     value: The value to convert
     default: Default value if undefined
     allowed_strings: List of allowed non-boolean string values
-  
+
   Examples:
     {{ ssh_option(var, 'no') }}                                    -> yes/no
     {{ ssh_option(var, 'no', ['clientspecified']) }}              -> yes/no/clientspecified

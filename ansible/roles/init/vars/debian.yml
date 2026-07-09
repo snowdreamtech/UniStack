@@ -9,5 +9,3 @@ init_openssh_packages:
   - "openssh-client"
 init_sshd_service: "ssh"
 init_sshd_use_pam: "yes"
-
-

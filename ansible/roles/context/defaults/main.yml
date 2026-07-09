@@ -10,14 +10,14 @@
 # Architecture Normalization Map (OCI/Docker/Go style)
 # ---------------------------------------------------------------------
 architecture_map:
-  'x86_64': 'amd64'
-  'aarch64': 'arm64'
-  'armv7l': 'armv7'
-  'armv6l': 'armv6'
-  'ppc64le': 'ppc64le'
-  'ppc64': 'ppc64'
-  'riscv64': 'riscv64'
-  's390x': 's390x'
-  'loongarch64': 'loongarch64'
-  'mips64': 'mips64'
-  'mips': 'mips'
+  "x86_64": "amd64"
+  "aarch64": "arm64"
+  "armv7l": "armv7"
+  "armv6l": "armv6"
+  "ppc64le": "ppc64le"
+  "ppc64": "ppc64"
+  "riscv64": "riscv64"
+  "s390x": "s390x"
+  "loongarch64": "loongarch64"
+  "mips64": "mips64"
+  "mips": "mips"

@@ -4,9 +4,9 @@
 #
 # Purpose:
 #   Primary orchestration for base system initialization.
-#   Sequentially configures baseline security and access controls 
-#   including privileged escalation (Sudo), user accounts, 
-#   package sources (Mirror/Repositories), SSH access, and 
+#   Sequentially configures baseline security and access controls
+#   including privileged escalation (Sudo), user accounts,
+#   package sources (Mirror/Repositories), SSH access, and
 #   interactive experience (Fastfetch).
 # =====================================================================
 
@@ -43,5 +43,3 @@
 # Stage 4: OpenSSH Security
 # ---------------------------------------------------------------------
 - ansible.builtin.import_tasks: "openssh.yml"
-
-

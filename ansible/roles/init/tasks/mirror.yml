@@ -3,7 +3,7 @@
 # roles/init/tasks/mirror.yml
 #
 # Purpose:
-#   Configures domestic (CN) mirror sources for package managers 
+#   Configures domestic (CN) mirror sources for package managers
 #   to accelerate download speeds.
 #   Triggered only when init_mirror_enabled is true.
 # =====================================================================
