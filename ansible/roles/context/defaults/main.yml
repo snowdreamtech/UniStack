@@ -12,8 +12,8 @@
 # =====================================================================
 tag_metadata:
   version: "3.0"
-  total_tags: 55
-  categories: 8
+  total_tags: 45
+  categories: 7
 
   # Mutually exclusive tag groups
   conflicts:
@@ -91,21 +91,7 @@ tag_map:
   armv7: is_armv7 # ARMv7
 
   # =====================================================================
-  # 7. Application Specific
-  # =====================================================================
-  git: is_git_node # Git
-  zsh: is_zsh_node # Zsh
-  curl: is_curl_node # Curl
-  nginx: is_nginx_node # Nginx
-  python: is_python_node # Python
-  nvm: is_nvm_node # NVM
-  node: is_node_node # Node.js
-  go: is_go_node # Go
-  fd: is_fd_node # fd
-  pnpm: is_pnpm_node # pnpm
-
-  # =====================================================================
-  # 8. System Type
+  # 7. System Type
   # =====================================================================
   desktop: is_desktop # Desktop environment system
   server: is_server # Server system
