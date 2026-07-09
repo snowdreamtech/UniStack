@@ -11,6 +11,15 @@
 # ---------------------------------------------------------------------
 # RedHat: Enable EPEL Repository
 # ---------------------------------------------------------------------
+- name: "Enable CRB/PowerTools repository for EPEL dependencies"
+  ansible.builtin.command: "dnf config-manager --set-enabled crb"
+  changed_when: false
+  failed_when: false
+  when: 
+    - os_family == 'redhat'
+    - os_version_major | int >= 8
+  become: "{{ become_enabled }}"
+
 - name: "Install EPEL repository"
   ansible.builtin.package:
     name: "epel-release"

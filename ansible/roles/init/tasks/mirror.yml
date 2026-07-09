@@ -28,18 +28,32 @@
 # ---------------------------------------------------------------------
 # Debian Family (Debian / Ubuntu)
 # ---------------------------------------------------------------------
-- name: "Configure Debian/Ubuntu mirrors (legacy sources.list)"
+- name: "Check for deb822 source file presence"
+  ansible.builtin.stat:
+    path: "/etc/apt/sources.list.d/{{ os_distribution }}.sources"
+  register: _deb822_file
+  when: os_family == 'debian'
+  tags: ["always"]
+
+- name: "Configure Debian/Ubuntu mirrors (DEB822 format)"
   ansible.builtin.template:
-    src: "{{ 'ubuntu.sources.j2' if os_distribution == 'ubuntu' else 'apt_sources.list.j2' }}"
-    dest: "/etc/apt/sources.list"
+    src: "{{ os_distribution }}.sources.j2"
+    dest: "/etc/apt/sources.list.d/{{ os_distribution }}.sources"
     mode: "0644"
-  when: 
+  when:
     - os_family == 'debian'
-    - not (os_version_major | int >= 12 and os_distribution == 'debian')
-    - not (os_version_major | int >= 24 and os_distribution == 'ubuntu')
+    - _deb822_file.stat.exists
   become: "{{ become_enabled }}"
 
-# Note: Modern DEB822 support (e.g. debian.sources) can be added here as a branch if needed.
+- name: "Configure Debian/Ubuntu mirrors (Legacy format)"
+  ansible.builtin.template:
+    src: "apt_sources.list.j2"
+    dest: "/etc/apt/sources.list"
+    mode: "0644"
+  when:
+    - os_family == 'debian'
+    - not _deb822_file.stat.exists
+  become: "{{ become_enabled }}"
 
 - name: "Update Debian apt cache"
   ansible.builtin.apt:

@@ -14,7 +14,11 @@
 # Stage 0: Load OS-specific package mappings
 # ---------------------------------------------------------------------
 - name: "Load OS-specific variable mappings"
-  ansible.builtin.include_vars: "{{ os_family }}.yml"
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ os_family }}.yml"
+      skip: true
   tags: ["always"]
 
 # ---------------------------------------------------------------------
