@@ -1,0 +1,13 @@
+---
+- name: Native Context Playbook
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Load infrastructure context
+      ansible.builtin.include_role:
+        name: context
+
+    - name: Inspect loaded context facts
+      ansible.builtin.include_role:
+        name: context
+        tasks_from: facts_inspect_loader
