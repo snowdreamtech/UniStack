@@ -441,9 +441,9 @@ jobs:
           - "alpine:3.24"
           - "rockylinux/rockylinux:9"
           - "rockylinux/rockylinux:10"
-          - "archlinux:latest"
+          - "archlinux:base-20260709.0.553977"
           - "fedora:41"
-          - "opensuse/tumbleweed:latest"
+          - "opensuse/tumbleweed:20260708.38.28"
     permissions:
       contents: read
     steps:
