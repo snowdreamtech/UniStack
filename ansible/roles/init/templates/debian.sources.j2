@@ -1,0 +1,17 @@
+# =====================================================================
+# roles/mirror/templates/debian.sources.j2
+# =====================================================================
+
+# Standard Debian Repositories (Main, Updates, Backports)
+Types: deb
+URIs: {{ mirror_info.apt.debian_url }}
+Suites: {{ os_codename }} {{ os_codename }}-updates {{ os_codename }}-backports
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Debian Security Updates
+Types: deb
+URIs: {{ mirror_info.apt.debian_security_url }}
+Suites: {{ os_codename }}-security
+Components: main contrib non-free non-free-firmware
+Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg

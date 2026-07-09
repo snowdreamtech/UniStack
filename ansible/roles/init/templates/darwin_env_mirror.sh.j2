@@ -1,0 +1,52 @@
+#!/usr/bin/env sh
+
+# =====================================================================
+# roles/mirror/templates/darwin_env_mirror.sh.j2
+# Purpose: macOS Developer Environment Mirror Configuration
+# =====================================================================
+
+# Homebrew
+if command -v brew >/dev/null 2>&1; then
+    export HOMEBREW_BREW_GIT_REMOTE="{{ mirror_info.homebrew.brew_git }}"
+    export HOMEBREW_CORE_GIT_REMOTE="{{ mirror_info.homebrew.core_git }}"
+    export HOMEBREW_BOTTLE_DOMAIN="{{ mirror_info.homebrew.bottles }}"
+    {% if mirror_info.homebrew.cask_git is defined %}
+    export HOMEBREW_CASK_GIT_REMOTE="{{ mirror_info.homebrew.cask_git }}"
+    {% endif %}
+fi
+
+
+# Rustup
+if command -v rustup >/dev/null 2>&1; then
+{% if mirror_info.rustup is defined %}
+    export RUSTUP_DIST_SERVER="{{ mirror_info.rustup.dist_server }}"
+    export RUSTUP_UPDATE_ROOT="{{ mirror_info.rustup.update_root }}"
+{% endif %}
+fi
+
+# Flutter
+if command -v flutter >/dev/null 2>&1; then
+{% if mirror_info.flutter is defined %}
+    export PUB_HOSTED_URL="{{ mirror_info.flutter.pub_hosted_url }}"
+    export FLUTTER_STORAGE_BASE_URL="{{ mirror_info.flutter.storage_base_url }}"
+{% endif %}
+fi
+
+# Node (nvm / n / fnm)
+if { command -v nvm >/dev/null 2>&1 || command -v node >/dev/null 2>&1; }; then
+{% if mirror_info.node_mirror is defined %}
+    export NVM_NODEJS_ORG_MIRROR="{{ mirror_info.node_mirror }}"
+    export NODEJS_ORG_MIRROR="{{ mirror_info.node_mirror }}"
+    export NODE_MIRROR="{{ mirror_info.node_mirror }}"
+{% endif %}
+fi
+
+# Haskell (ghcup)
+if command -v ghcup >/dev/null 2>&1; then
+{% if mirror_info.ghcup is defined %}
+    export GHCUP_INSTALL_BASE_PREFIX="{{ ansible_user_home }}"
+{% endif %}
+fi
+
+
+

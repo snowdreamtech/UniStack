@@ -1,0 +1,9 @@
+# =====================================================================
+# roles/mirror/templates/pip.conf.j2
+# =====================================================================
+
+[global]
+index-url = {{ mirror_info.pip.index_url }}
+{% if 'tuna' in mirror_info.pip.index_url or 'aliyun' in mirror_info.pip.index_url %}
+trusted-host = {{ mirror_info.pip.index_url.split('/')[2] }}
+{% endif %}

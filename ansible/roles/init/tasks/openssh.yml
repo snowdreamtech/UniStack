@@ -1,0 +1,40 @@
+---
+# =====================================================================
+# roles/init/tasks/openssh.yml
+#
+# Purpose:
+#   Install and secure the OpenSSH daemon.
+# =====================================================================
+
+- name: "Install OpenSSH packages"
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ init_openssh_packages | default(['openssh-server'], true) }}"
+  become: "{{ become_enabled }}"
+
+- name: "Ensure sshd_config.d directory exists"
+  ansible.builtin.file:
+    path: "/etc/ssh/sshd_config.d"
+    state: directory
+    owner: "root"
+    group: "root"
+    mode: "0755"
+  become: "{{ become_enabled }}"
+
+- name: "Deploy OpenSSH hardening configuration"
+  ansible.builtin.template:
+    src: "99-hardening.conf.j2"
+    dest: "/etc/ssh/sshd_config.d/99-hardening.conf"
+    owner: "root"
+    group: "root"
+    mode: "0600"
+  become: "{{ become_enabled }}"
+  notify: restart_sshd
+
+- name: "Ensure OpenSSH service is enabled and started"
+  ansible.builtin.service:
+    name: "{{ init_sshd_service | default('sshd', true) }}"
+    state: started
+    enabled: true
+  become: "{{ become_enabled }}"

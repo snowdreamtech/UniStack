@@ -1,0 +1,44 @@
+---
+# =====================================================================
+# roles/init/tasks/user.yml
+#
+# Purpose:
+#   Provision the primary deployment/management user account.
+# =====================================================================
+
+- name: "Determine appropriate shell for OS family"
+  ansible.builtin.set_fact:
+    _init_user_shell: "{{ '/bin/ash' if os_family == 'alpine' else '/bin/bash' }}"
+  tags: ["always"]
+
+- name: "Create deployment user"
+  ansible.builtin.user:
+    name: "{{ init_user_name }}"
+    shell: "{{ _init_user_shell }}"
+    state: present
+    create_home: true
+  become: "{{ become_enabled }}"
+
+- name: "Determine sudo group"
+  ansible.builtin.set_fact:
+    _init_sudo_group: "{{ 'wheel' if os_family == 'darwin' else 'root' }}"
+  tags: ["always"]
+
+- name: "Ensure sudoers.d directory exists"
+  ansible.builtin.file:
+    path: "/etc/sudoers.d"
+    state: directory
+    owner: "root"
+    group: "{{ _init_sudo_group }}"
+    mode: "0750"
+  become: "{{ become_enabled }}"
+
+- name: "Grant passwordless sudo privileges to the deployment user"
+  ansible.builtin.copy:
+    dest: "/etc/sudoers.d/{{ init_user_name }}"
+    content: "{{ init_user_name }} ALL=(ALL) NOPASSWD:ALL"
+    owner: "root"
+    group: "{{ _init_sudo_group }}"
+    mode: "0440"
+    validate: "/usr/sbin/visudo -cf %s"
+  become: "{{ become_enabled }}"

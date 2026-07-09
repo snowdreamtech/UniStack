@@ -1,0 +1,15 @@
+---
+# =====================================================================
+# roles/init/vars/debian.yml
+# =====================================================================
+
+# OpenSSH
+init_openssh_packages:
+  - "openssh-server"
+  - "openssh-client"
+init_sshd_service: "ssh"
+init_sshd_use_pam: "yes"
+
+# Fastfetch & Base Utils
+init_fastfetch_packages:
+  - "fastfetch"

@@ -1,0 +1,46 @@
+---
+# =====================================================================
+# roles/init/tasks/main.yml
+#
+# Purpose:
+#   Primary orchestration for base system initialization.
+#   Sequentially configures baseline security and access controls 
+#   including privileged escalation (Sudo), user accounts, 
+#   package sources (Mirror/Repositories), SSH access, and 
+#   interactive experience (Fastfetch).
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Stage 0: Load OS-specific package mappings
+# ---------------------------------------------------------------------
+- name: "Load OS-specific variable mappings"
+  ansible.builtin.include_vars: "{{ os_family }}.yml"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Stage 1: Base utilities & Privilege Escalation (Sudo)
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "sudo.yml"
+
+# ---------------------------------------------------------------------
+# Stage 2: Repositories & Mirrors
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "repositories.yml"
+
+- ansible.builtin.import_tasks: "mirror.yml"
+  when: init_mirror_enabled | default(false, true)
+
+# ---------------------------------------------------------------------
+# Stage 3: User Provisioning
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "user.yml"
+
+# ---------------------------------------------------------------------
+# Stage 4: OpenSSH Security
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "openssh.yml"
+
+# ---------------------------------------------------------------------
+# Stage 5: Interactive MOTD (Fastfetch)
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "fastfetch.yml"

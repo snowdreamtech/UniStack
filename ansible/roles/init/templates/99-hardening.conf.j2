@@ -1,0 +1,197 @@
+# OpenSSH configuration — hardened, version-controlled, and deployed via Ansible
+
+{# ============================================
+   Macros for SSH Configuration Values
+   ============================================ #}
+
+{# 
+  Standard boolean converter
+  Use for simple yes/no options
+#}
+{% macro yesno(value, default='no') -%}
+{{ (value | default(default, true) | bool) | ternary('yes', 'no') }}
+{%- endmacro %}
+
+{# 
+  Smart SSH value handler
+  Handles both boolean and special string values
+  
+  Parameters:
+    value: The value to convert
+    default: Default value if undefined
+    allowed_strings: List of allowed non-boolean string values
+  
+  Examples:
+    {{ ssh_option(var, 'no') }}                                    -> yes/no
+    {{ ssh_option(var, 'no', ['clientspecified']) }}              -> yes/no/clientspecified
+    {{ ssh_option(var, 'no', ['prohibit-password']) }}            -> yes/no/prohibit-password
+#}
+{% macro ssh_option(value, default='no', allowed_strings=[]) -%}
+{%- set val = value | default(default, true) -%}
+{%- if val is string -%}
+  {%- set val_lower = val | lower -%}
+  {%- if val_lower in ['yes', 'no'] -%}
+{{ val_lower }}
+  {%- elif val_lower in (allowed_strings | map('lower') | list) -%}
+{{ val_lower }}
+  {%- else -%}
+{{ (val | bool) | ternary('yes', 'no') }}
+  {%- endif -%}
+{%- else -%}
+{{ (val | bool) | ternary('yes', 'no') }}
+{%- endif -%}
+{%- endmacro %}
+
+{# ============================================
+   Basic Configuration
+   ============================================ #}
+
+Port {{ sshd.port | default(22, true) }}
+AddressFamily {{ sshd.address_family | default('any', true) }}
+
+{% for addr in sshd.listen_address | default(['0.0.0.0', '::'], true) %}
+ListenAddress {{ addr }}
+{% endfor %}
+
+{% for hostkey in sshd.hostkeys | default(['/etc/ssh/ssh_host_rsa_key', '/etc/ssh/ssh_host_ed25519_key','/etc/ssh/ssh_host_ecdsa_key'], true) %}
+HostKey {{ hostkey }}
+{% endfor %}
+
+{# ============================================
+   Authentication Configuration
+   ============================================ #}
+
+LoginGraceTime {{ sshd.login_grace_time | default('30', true) }}
+PermitRootLogin {{ ssh_option(sshd.permit_root_login, 'no', ['prohibit-password', 'forced-commands-only', 'without-password']) }}
+StrictModes {{ yesno(sshd.strict_modes, 'yes') }}
+MaxAuthTries {{ sshd.max_auth_tries | default(3, true) }}
+MaxSessions {{ sshd.max_sessions | default(10, true) }}
+
+PubkeyAuthentication {{ yesno(sshd.public_key_authentication, 'yes') }}
+AuthorizedKeysFile {{ sshd.authorized_keys_file | default('.ssh/authorized_keys', true) }}
+
+PasswordAuthentication {{ yesno(sshd.password_authentication, 'no') }}
+PermitEmptyPasswords {{ yesno(sshd.permit_empty_passwords, 'no') }}
+KbdInteractiveAuthentication {{ yesno(sshd.kbd_interactive_authentication, 'no') }}
+
+UsePAM {{ yesno(sshd.use_pam, 'yes') }}
+
+{# ============================================
+   Forwarding and Tunneling Configuration
+   ============================================ #}
+
+AllowAgentForwarding {{ yesno(sshd.allow_agent_forwarding, 'no') }}
+
+{% if is_dev | default(false, true) | bool %}
+  {% if (is_antigravity_node | default(false, true) | bool) %}
+# Antigravity node configuration for remote development
+AllowTcpForwarding yes
+PermitOpen 127.0.0.1:* localhost:*
+PermitTunnel no
+GatewayPorts clientspecified
+  {%- elif  (is_vscode_node | default(false, true) | bool) -%}
+# VSCode node configuration for remote development
+AllowTcpForwarding yes
+PermitOpen 127.0.0.1:* localhost:*
+PermitTunnel no
+GatewayPorts clientspecified
+  {% else %}
+# Relaxed configuration for development systems
+AllowTcpForwarding {{ ssh_option(sshd.allow_tcp_forwarding, 'yes', ['all', 'local', 'remote']) }}
+PermitOpen {{ sshd.permit_open | default('any', true) }}
+PermitTunnel {{ ssh_option(sshd.permit_tunnel, 'no', ['point-to-point', 'ethernet']) }}
+GatewayPorts {{ ssh_option(sshd.gateway_ports, 'no', ['clientspecified']) }}
+  {% endif %}
+{% else %}
+# Hardened configuration for production systems
+AllowTcpForwarding {{ ssh_option(sshd.allow_tcp_forwarding, 'no', ['all', 'local', 'remote']) }}
+PermitOpen {{ sshd.permit_open | default('none', true) }}
+PermitTunnel {{ ssh_option(sshd.permit_tunnel, 'no', ['point-to-point', 'ethernet']) }}
+GatewayPorts {{ ssh_option(sshd.gateway_ports, 'no', ['clientspecified']) }}
+{% endif %}
+
+{# ============================================
+   X11 and Display Configuration
+   ============================================ #}
+
+X11Forwarding {{ yesno(sshd.x11_forwarding, 'no') }}
+X11DisplayOffset {{ sshd.x11_display_offset | default(10, true) }}
+X11UseLocalhost {{ yesno(sshd.x11_use_localhost, 'yes') }}
+
+{# ============================================
+   Session Configuration
+   ============================================ #}
+
+PermitTTY {{ yesno(sshd.permit_tty, 'yes') }}
+PrintMotd {{ yesno(sshd.print_motd, 'no') }}
+{% if os_family not in ['alpine'] %}
+PrintLastLog {{ yesno(sshd.print_last_log, 'yes') }}
+{% endif %}
+TCPKeepAlive {{ yesno(sshd.tcp_keep_alive, 'yes') }}
+{% if sshd.permit_user_environment is string and sshd.permit_user_environment not in ['yes', 'no'] %}
+PermitUserEnvironment "{{ sshd.permit_user_environment }}"
+{% else %}
+PermitUserEnvironment {{ ssh_option(sshd.permit_user_environment, 'no') }}
+{% endif %}
+{% if (is_slow | default(false, true) | bool) %}
+Compression {{ yesno(sshd.compression, 'yes') }}
+{% else %}
+Compression {{ yesno(sshd.compression, 'no') }}
+{% endif %}
+ClientAliveInterval {{ sshd.client_alive_interval | default(60, true) }}
+ClientAliveCountMax {{ sshd.client_alive_count_max | default(3, true) }}
+UseDNS {{ yesno(sshd.use_dns, 'no') }}
+MaxStartups {{ sshd.max_startups | default('10:30:100', true) }}
+ChrootDirectory {{ sshd.chroot_directory | default('none', true) }}
+VersionAddendum {{ sshd.version_addendum | default('none', true) }}
+
+Banner {{ sshd.banner | default('none', true) }}
+{% if os_family not in ['darwin'] %}
+Subsystem sftp {{ sshd.subsystem_sftp | default('internal-sftp', true) }}
+{% endif %}
+
+{# ============================================
+   Access Control
+   ============================================ #}
+
+{% if sshd.allow_users | default([], true) | length > 0 %}
+AllowUsers {{ sshd.allow_users | join(' ') }}
+{% endif %}
+
+{% if sshd.allow_groups | default([], true) | length > 0 %}
+AllowGroups {{ sshd.allow_groups | join(' ') }}
+{% endif %}
+
+{% if sshd.deny_users | default([], true) | length > 0 %}
+DenyUsers {{ sshd.deny_users | join(' ') }}
+{% endif %}
+
+{% if sshd.deny_groups | default([], true) | length > 0 %}
+DenyGroups {{ sshd.deny_groups | join(' ') }}
+{% endif %}
+
+{# ============================================
+   Match Blocks
+   ============================================ #}
+
+{% if sshd.match_user | default([], true) | length > 0 %}
+Match User {{ sshd.match_user | join(' ') }}
+{{ sshd.match_user_options | indent(4) }}
+{% endif %}
+
+{% if sshd.match_group | default([], true) | length > 0 %}
+Match Group {{ sshd.match_group | join(' ') }}
+{{ sshd.match_group_options | indent(4) }}
+{% endif %}
+
+{% if sshd.match_address | default([], true) | length > 0 %}
+Match Address {{ sshd.match_address | join(',') }}
+{{ sshd.match_address_options | indent(4) }}
+{% endif %}
+
+{% if sshd.match_blocks | default([], true) | length > 0 %}
+{% for block in sshd.match_blocks %}
+Match {{ block.conditions }}
+{{ block.options | indent(4) }}
+{% endfor %}
+{% endif %}

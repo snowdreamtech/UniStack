@@ -1,0 +1,19 @@
+---
+# =====================================================================
+# roles/init/tasks/repositories.yml
+#
+# Purpose:
+#   Configure extra base repositories (e.g. EPEL for RedHat families).
+#   Debian and Alpine are skipped here because their default repos 
+#   are sufficient unless mirror.yml is triggered.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# RedHat: Enable EPEL Repository
+# ---------------------------------------------------------------------
+- name: "Install EPEL repository"
+  ansible.builtin.package:
+    name: "epel-release"
+    state: "present"
+  when: os_family == 'redhat'
+  become: "{{ become_enabled }}"

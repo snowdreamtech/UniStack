@@ -1,0 +1,9 @@
+# =====================================================================
+# roles/mirror/templates/alpine_repositories.j2
+# =====================================================================
+
+{{ mirror_info.alpine.url }}/alpine/v{{ os_version_major }}.{{ os_version_minor }}/main
+{{ mirror_info.alpine.url }}/alpine/v{{ os_version_major }}.{{ os_version_minor }}/community
+@edge {{ mirror_info.alpine.url }}/alpine/edge/main
+@edgecommunity {{ mirror_info.alpine.url }}/alpine/edge/community
+

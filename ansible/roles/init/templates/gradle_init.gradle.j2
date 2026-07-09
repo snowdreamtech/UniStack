@@ -1,0 +1,7 @@
+allprojects {
+    repositories {
+        maven { url '{{ mirror_info.maven.mirror_url }}' }
+        mavenLocal()
+        mavenCentral()
+    }
+}

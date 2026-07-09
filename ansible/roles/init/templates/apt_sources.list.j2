@@ -1,0 +1,16 @@
+# =====================================================================
+# roles/mirror/templates/apt_sources.list.j2
+# =====================================================================
+
+{% if os_distribution == 'debian' %}
+deb {{ mirror_info.apt.debian_url }} {{ os_codename }} main contrib non-free non-free-firmware
+deb {{ mirror_info.apt.debian_url }} {{ os_codename }}-updates main contrib non-free non-free-firmware
+deb {{ mirror_info.apt.debian_url }} {{ os_codename }}-backports main contrib non-free non-free-firmware
+deb {{ mirror_info.apt.debian_security_url }} {{ os_codename }}-security main contrib non-free non-free-firmware
+{% elif os_distribution == 'ubuntu' %}
+deb {{ mirror_info.apt.ubuntu_url }} {{ os_codename }} main restricted universe multiverse
+deb {{ mirror_info.apt.ubuntu_url }} {{ os_codename }}-updates main restricted universe multiverse
+deb {{ mirror_info.apt.ubuntu_url }} {{ os_codename }}-backports main restricted universe multiverse
+deb {{ mirror_info.apt.ubuntu_url }} {{ os_codename }}-security main restricted universe multiverse
+{% endif %}
+

@@ -1,0 +1,17 @@
+# =====================================================================
+# roles/mirror/templates/ubuntu.sources.j2
+# =====================================================================
+
+# Standard Ubuntu Repositories (Main, Updates, Backports)
+Types: deb
+URIs: {{ mirror_info.apt.ubuntu_url }}
+Suites: {{ os_codename }} {{ os_codename }}-updates {{ os_codename }}-backports
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+# Ubuntu Security Updates
+Types: deb
+URIs: {{ mirror_info.apt.ubuntu_url }}
+Suites: {{ os_codename }}-security
+Components: main restricted universe multiverse
+Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg

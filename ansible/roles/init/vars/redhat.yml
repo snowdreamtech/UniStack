@@ -1,0 +1,15 @@
+---
+# =====================================================================
+# roles/init/vars/redhat.yml
+# =====================================================================
+
+# OpenSSH
+init_openssh_packages:
+  - "openssh-server"
+  - "openssh-clients"
+init_sshd_service: "sshd"
+init_sshd_use_pam: "yes"
+
+# Fastfetch & Base Utils
+init_fastfetch_packages:
+  - "fastfetch"

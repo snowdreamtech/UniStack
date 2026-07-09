@@ -1,0 +1,11 @@
+---
+:backtrace: false
+:bulk_threshold: 1000
+:sources:
+{% if mirror_info.ruby is defined and mirror_info.ruby.registry is defined %}
+- {{ mirror_info.ruby.registry }}
+{% else %}
+- https://rubygems.org/
+{% endif %}
+:update_sources: true
+:verbose: true

@@ -1,0 +1,11 @@
+# =====================================================================
+# roles/mirror/templates/cargo_config.j2
+# =====================================================================
+
+{% if mirror_info.cargo.replace_with is not none %}
+[source.crates-io]
+replace-with = "{{ mirror_info.cargo.replace_with }}"
+
+[source.{{ mirror_info.cargo.replace_with }}]
+registry = "{{ mirror_info.cargo.registries[mirror_info.cargo.replace_with] }}"
+{% endif %}

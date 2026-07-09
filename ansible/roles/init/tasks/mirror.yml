@@ -1,0 +1,74 @@
+---
+# =====================================================================
+# roles/init/tasks/mirror.yml
+#
+# Purpose:
+#   Configures domestic (CN) mirror sources for package managers 
+#   to accelerate download speeds.
+#   Triggered only when init_mirror_enabled is true.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Alpine Linux
+# ---------------------------------------------------------------------
+- name: "Configure Alpine mirrors"
+  ansible.builtin.template:
+    src: "alpine_repositories.j2"
+    dest: "/etc/apk/repositories"
+    mode: "0644"
+  when: os_family == 'alpine'
+  become: "{{ become_enabled }}"
+
+- name: "Update Alpine apk cache"
+  ansible.builtin.command: "apk update"
+  changed_when: false
+  when: os_family == 'alpine'
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Debian Family (Debian / Ubuntu)
+# ---------------------------------------------------------------------
+- name: "Configure Debian/Ubuntu mirrors (legacy sources.list)"
+  ansible.builtin.template:
+    src: "{{ 'ubuntu.sources.j2' if os_distribution == 'ubuntu' else 'apt_sources.list.j2' }}"
+    dest: "/etc/apt/sources.list"
+    mode: "0644"
+  when: 
+    - os_family == 'debian'
+    - not (os_version_major | int >= 12 and os_distribution == 'debian')
+    - not (os_version_major | int >= 24 and os_distribution == 'ubuntu')
+  become: "{{ become_enabled }}"
+
+# Note: Modern DEB822 support (e.g. debian.sources) can be added here as a branch if needed.
+
+- name: "Update Debian apt cache"
+  ansible.builtin.apt:
+    update_cache: yes
+  when: os_family == 'debian'
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# RedHat Family (RHEL / Rocky / Alma)
+# ---------------------------------------------------------------------
+- name: "Configure RedHat base mirrors"
+  ansible.builtin.template:
+    src: "yum_repos.d/CentOS-Base.repo.j2"
+    dest: "/etc/yum.repos.d/CentOS-Base.repo"
+    mode: "0644"
+  when: os_family == 'redhat'
+  become: "{{ become_enabled }}"
+
+- name: "Configure RedHat EPEL mirrors"
+  ansible.builtin.template:
+    src: "yum_repos.d/epel.repo.j2"
+    dest: "/etc/yum.repos.d/epel.repo"
+    mode: "0644"
+  when: os_family == 'redhat'
+  become: "{{ become_enabled }}"
+
+- name: "Update RedHat dnf/yum cache"
+  ansible.builtin.command: >-
+    {{ 'dnf makecache' if (os_version_major | int >= 8) else 'yum makecache' }}
+  changed_when: false
+  when: os_family == 'redhat'
+  become: "{{ become_enabled }}"

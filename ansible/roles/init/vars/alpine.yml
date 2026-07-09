@@ -1,0 +1,20 @@
+---
+# =====================================================================
+# roles/init/vars/alpine.yml
+# =====================================================================
+
+# OpenSSH
+init_openssh_packages:
+  - "openssh"
+  - "openssh-server-pam"
+init_sshd_service: "sshd"
+init_sshd_use_pam: "yes"
+
+# Fastfetch & Base Utils
+init_fastfetch_packages:
+  - "cronie"
+  - "linux-pam"
+  - "shadow"
+  - "bash"
+  - "coreutils"
+  - "fastfetch"
