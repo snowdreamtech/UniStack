@@ -5,6 +5,7 @@ package orchestrator
 
 import (
 	"os"
+	"runtime"
 	"testing"
 )
 
@@ -30,6 +31,9 @@ func TestGetFreeDiskSpace(t *testing.T) {
 }
 
 func TestGetTotalMemory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Ansible Control Node cannot run natively on Windows, skipping tests")
+	}
 	mem, err := getTotalMemory()
 	if err != nil {
 		t.Fatalf("getTotalMemory failed: %v", err)

@@ -12,6 +12,9 @@ import (
 )
 
 func TestPrepareEnvironmentAndExecution(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Ansible Control Node cannot run natively on Windows, skipping tests")
+	}
 	ctx := context.Background()
 	tempDir := t.TempDir()
 
@@ -78,6 +81,9 @@ func TestPrepareEnvironmentAndExecution(t *testing.T) {
 }
 
 func TestPrepareEnvironmentFailures(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Ansible Control Node cannot run natively on Windows, skipping tests")
+	}
 	ctx := context.Background()
 	tempDir := t.TempDir()
 

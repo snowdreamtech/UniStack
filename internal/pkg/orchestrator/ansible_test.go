@@ -16,6 +16,9 @@ import (
 )
 
 func TestEnsureAnsibleInstalled(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Ansible Control Node cannot run natively on Windows, skipping tests")
+	}
 	// Scenario 1: System ansible-playbook found
 	tempDirFast := t.TempDir()
 	var ansibleName string

@@ -69,12 +69,12 @@ func createSmartFakePython(t *testing.T, path string) {
 		pyScript = `@echo off
 if "%1"=="-m" if "%2"=="venv" (
 	mkdir "%3\Scripts" 2>nul
-	echo @echo off > "%3\Scripts\pip.exe"
-	echo exit /b 0 >> "%3\Scripts\pip.exe"
-	echo @echo off > "%3\Scripts\ansible-galaxy.exe"
-	echo exit /b 0 >> "%3\Scripts\ansible-galaxy.exe"
-	echo @echo off > "%3\Scripts\ansible-playbook.exe"
-	echo exit /b 0 >> "%3\Scripts\ansible-playbook.exe"
+	echo @echo off > "%3\Scripts\pip.bat"
+	echo exit /b 0 >> "%3\Scripts\pip.bat"
+	echo @echo off > "%3\Scripts\ansible-galaxy.bat"
+	echo exit /b 0 >> "%3\Scripts\ansible-galaxy.bat"
+	echo @echo off > "%3\Scripts\ansible-playbook.bat"
+	echo exit /b 0 >> "%3\Scripts\ansible-playbook.bat"
 )
 exit /b 0
 `

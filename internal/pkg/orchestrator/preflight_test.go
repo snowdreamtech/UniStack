@@ -4,10 +4,14 @@
 package orchestrator
 
 import (
+	"runtime"
 	"testing"
 )
 
 func TestRunPreflightChecks(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Ansible Control Node cannot run natively on Windows, skipping tests")
+	}
 	tempDir := t.TempDir()
 
 	err := RunPreflightChecks(tempDir)

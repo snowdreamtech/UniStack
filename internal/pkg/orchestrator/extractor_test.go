@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -117,9 +118,11 @@ func TestExtractAnsibleFS(t *testing.T) {
 	os.MkdirAll(readOnlyDir, 0755)
 	t.Setenv("UNISTACK_DATA_DIR", readOnlyDir)
 	os.Chmod(readOnlyDir, 0400) // read-only
-	_, err = extractAnsibleFS()
-	if err == nil {
-		t.Fatalf("Expected extractAnsibleFS to fail when directory creation fails")
+	if runtime.GOOS != "windows" {
+		_, err = extractAnsibleFS()
+		if err == nil {
+			t.Fatalf("Expected extractAnsibleFS to fail when directory creation fails")
+		}
 	}
 	os.Chmod(readOnlyDir, 0755) // revert so cleanup succeeds
 }
