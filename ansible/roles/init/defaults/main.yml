@@ -30,3 +30,9 @@ init_user_name: "ansible"
 init_sshd_port: 22
 init_sshd_permit_root_login: "no"
 init_sshd_password_authentication: "yes"
+
+# Map to the sshd dictionary required by 99-hardening.conf.j2
+sshd:
+  port: "{{ init_sshd_port }}"
+  permit_root_login: "{{ init_sshd_permit_root_login }}"
+  password_authentication: "{{ init_sshd_password_authentication }}"

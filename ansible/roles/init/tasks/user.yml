@@ -36,7 +36,7 @@
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
     dest: "/etc/sudoers.d/{{ init_user_name }}"
-    content: "{{ init_user_name }} ALL=(ALL) NOPASSWD:ALL"
+    content: "{{ init_user_name }} ALL=(ALL) NOPASSWD:ALL\n"
     owner: "root"
     group: "{{ _init_sudo_group }}"
     mode: "0440"

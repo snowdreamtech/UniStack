@@ -9,7 +9,7 @@
 
 - name: "Install Python runtime and pip (raw, no Python required)"
   ansible.builtin.raw: |
-    set -euo pipefail
+    set -eu
     export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin:$PATH"
 
     if command -v python3 >/dev/null 2>&1 && python3 -c 'import venv' >/dev/null 2>&1; then

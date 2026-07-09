@@ -9,7 +9,7 @@
 
 - name: "Create Python virtual environment (raw)"
   ansible.builtin.raw: |
-    set -euo pipefail
+    set -eu
     export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin:$PATH"
 
     echo "[UNISTACK_BOOTSTRAP] Determining Python executable..."

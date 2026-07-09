@@ -20,6 +20,10 @@
 - name: "Build essential OS facts"
   ansible.builtin.set_fact:
     os_family: "{{ ansible_facts.os_family | lower }}"
+    os_distribution: "{{ ansible_facts.distribution | lower }}"
+    os_version_major: "{{ ansible_facts.distribution_major_version | string }}"
+    os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if '.' in ansible_facts.distribution_version else '0' }}"
+    os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
     is_container: >-
       {{
         ansible_facts.virtualization_type | default('', true)
