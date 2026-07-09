@@ -1,0 +1,33 @@
+# =====================================================================
+# roles/mirror/templates/yum_repos.d/el-base.repo.j2
+# =====================================================================
+
+{% set base_url = "" %}
+{% if os_distribution == 'rocky' %}
+  {% set base_url = mirror_info.yum.rocky_url %}
+{% elif os_distribution == 'almalinux' %}
+  {% set base_url = mirror_info.yum.alma_url %}
+{% elif os_distribution == 'centos' or os_distribution == 'redhat' %}
+  {% set base_url = mirror_info.yum.centos_url %}
+{% endif %}
+
+[baseos]
+name={{ os_distribution | capitalize }}-$releasever - BaseOS
+baseurl={{ base_url }}/$releasever/BaseOS/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}
+
+[appstream]
+name={{ os_distribution | capitalize }}-$releasever - AppStream
+baseurl={{ base_url }}/$releasever/AppStream/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}
+
+[crb]
+name={{ os_distribution | capitalize }}-$releasever - CRB
+baseurl={{ base_url }}/$releasever/CRB/$basearch/os/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}

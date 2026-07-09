@@ -364,6 +364,8 @@ project/boot/
 ### C / C++ ###
 *.d
 !**/entrypoint.d/
+!**/yum_repos.d/
+!**/sshd_config.d/
 *.o
 *.ko
 *.obj

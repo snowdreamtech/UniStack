@@ -1,0 +1,23 @@
+# =====================================================================
+# roles/init/templates/yum_repos.d/CentOS-Base.repo.j2
+# =====================================================================
+
+[base]
+name=CentOS-$releasever - Base
+baseurl={{ init_mirror_url_centos }}/$releasever/os/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+#released updates 
+[updates]
+name=CentOS-$releasever - Updates
+baseurl={{ init_mirror_url_centos }}/$releasever/updates/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+
+#additional packages that may be useful
+[extras]
+name=CentOS-$releasever - Extras
+baseurl={{ init_mirror_url_centos }}/$releasever/extras/$basearch/
+gpgcheck=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7

@@ -1,0 +1,24 @@
+# =====================================================================
+# roles/mirror/templates/yum_repos.d/oracle.repo.j2
+# =====================================================================
+
+[ol{{ os_version_major }}_baseos_latest]
+name=Oracle Linux {{ os_version_major }} BaseOS Latest ($basearch)
+baseurl={{ mirror_info.yum.oracle_url }}/OL{{ os_version_major }}/baseos/latest/$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+
+[ol{{ os_version_major }}_appstream]
+name=Oracle Linux {{ os_version_major }} AppStream ($basearch)
+baseurl={{ mirror_info.yum.oracle_url }}/OL{{ os_version_major }}/appstream/$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
+
+[ol{{ os_version_major }}_codeready_builder]
+name=Oracle Linux {{ os_version_major }} CodeReady Builder ($basearch)
+baseurl={{ mirror_info.yum.oracle_url }}/OL{{ os_version_major }}/codeready/builder/$basearch/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-oracle
