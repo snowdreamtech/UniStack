@@ -38,3 +38,4 @@
     state: started
     enabled: true
   become: "{{ become_enabled }}"
+  when: "ansible_virtualization_type | default('') != 'docker'"
