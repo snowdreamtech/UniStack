@@ -1,0 +1,163 @@
+---
+# =====================================================================
+# roles/context/tasks/facts_context.yml
+#
+# Purpose:
+#   Derive context variables: Tags, User Identity, and Permissions.
+#   - Initializes node_tags
+#   - Auto-derives boolean flags from tags
+#   - Determines is_root_user and become_enabled
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Tag Map Structure
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - tag_map is defined
+      - tag_map is mapping
+      - tag_map | length > 0
+    fail_msg: "tag_map must be defined as a non-empty dictionary. Current type: {{ tag_map | default('undefined') | type_debug }}"
+    success_msg: "tag_map structure validated successfully ({{ tag_map | length }} tags)"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Node Tags: Normalization and Mapping
+# ---------------------------------------------------------------------
+- name: "Ensure node_tags exists"
+  ansible.builtin.set_fact:
+    node_tags: "{{ node_tags | default([], true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Validation: Node Tags Type Check
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - node_tags is sequence
+      - node_tags is not string
+      - node_tags is not mapping
+    fail_msg: "node_tags must be a list, got: {{ node_tags | type_debug }}. Example: node_tags: [prod, web, docker_host]"
+    success_msg: "node_tags type validated ({{ node_tags | length }} tags)"
+  when: node_tags is defined and node_tags | length > 0
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Tag Initialization & Derivation: Bulk fact generation
+# ---------------------------------------------------------------------
+- name: "Initialize and derive tag variables (Bulk)"
+  ansible.builtin.set_fact: "{{ derived_tags }}"
+  vars:
+    derived_tags: >-
+      {%- set results = {} -%}
+      {%- for tag_name, tag_var in tag_map.items() -%}
+        {%- set _ = results.update({tag_var: tag_name in (node_tags | default([], true))}) -%}
+      {%- endfor -%}
+      {{ results }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Warning: Deprecated Tags Detection
+# ---------------------------------------------------------------------
+- name: "Warn about deprecated tags"
+  ansible.builtin.debug:
+    msg: "WARNING: Tag '{{ deprecated_tag }}' is deprecated. {{ tag_metadata.deprecated[deprecated_tag] }}"
+  loop: "{{ node_tags }}"
+  loop_control:
+    loop_var: deprecated_tag
+  when:
+    - tag_metadata is defined
+    - tag_metadata.deprecated is defined
+    - deprecated_tag in tag_metadata.deprecated
+  tags: ["always"]
+
+- name: "Default to managed node when no control tag is present"
+  ansible.builtin.set_fact:
+    is_managed_node: true
+  when:
+    - not (is_control_node | default(false, true) | bool)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Identity Detection
+# ---------------------------------------------------------------------
+- name: "Build is_root_user"
+  ansible.builtin.set_fact:
+    is_root_user: "{{ (ansible_user_name | default(ansible_env.USER | default('root', true), true)) == 'root' }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Permission Strategy
+# ---------------------------------------------------------------------
+- name: "Build become_enabled"
+  ansible.builtin.set_fact:
+    become_enabled: >-
+      {{
+        (not (is_container | default(false, true)))
+        and (not (is_root_user | default(false, true)))
+      }}
+  tags: ["always"]
+
+- name: "Derive user home directory path"
+  ansible.builtin.set_fact:
+    ansible_user_home: >-
+      {%- set ansible_user = ansible_user_name | default(ansible_env.USER | default('ansible', true), true) -%}
+      {%- set base_path = '/Users' if os_family == 'darwin' else '/home' -%}
+      {%- set root_path = '/var/root' if os_family == 'darwin' else '/root' -%}
+      {{- root_path if is_root_user else base_path ~ '/' ~ ansible_user -}}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Path Discovery
+# ---------------------------------------------------------------------
+- name: "Scan for canonical binary directories (Bulk)"
+  ansible.builtin.shell: |-
+    set -eu
+    for d in {{ paths_to_check | join(' ') }}; do
+      if [ -d "$d" ]; then
+        echo "$d"
+      fi
+    done
+  vars:
+    paths_to_check:
+      # 1. Version Managers
+      - "{{ ansible_user_home }}/.pyenv/bin"
+      - "{{ ansible_user_home }}/.rbenv/bin"
+      - "{{ ansible_user_home }}/.nodenv/bin"
+      - "{{ ansible_user_home }}/.ghcup/bin"
+      # 2. User-level & Modern ecosystems
+      - "{{ ansible_user_home }}/.local/bin"
+      - "{{ ansible_user_home }}/go/bin"
+      - "{{ ansible_user_home }}/.cargo/bin"
+      - "{{ ansible_user_home }}/.bun/bin"
+      - "{{ ansible_user_home }}/.deno/bin"
+      - "{{ ansible_user_home }}/.npm-global/bin"
+      - "{{ ansible_user_home }}/.yarn/bin"
+      - "{{ ansible_user_home }}/.pnpm-bin"
+      - "{{ ansible_user_home }}/.krew/bin"
+      - "{{ ansible_user_home }}/.composer/vendor/bin"
+      - "{{ ansible_user_home }}/.config/composer/vendor/bin"
+      - "{{ ansible_user_home }}/.dotnet/tools"
+      - "{{ ansible_user_home }}/.cabal/bin"
+      # 3. macOS Specific
+      - "/opt/homebrew/bin"
+      - "/opt/homebrew/sbin"
+      - "/opt/local/bin"
+      - "/opt/local/sbin"
+      # 4. Standard Unix / Linux
+      - "/usr/local/bin"
+      - "/usr/local/sbin"
+      - "/usr/local/go/bin"
+      - "/usr/bin"
+      - "/usr/sbin"
+      - "/bin"
+      - "/sbin"
+  register: _os_paths_probe
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+- name: "Build canonical os_paths fact"
+  ansible.builtin.set_fact:
+    os_paths: "{{ _os_paths_probe.stdout_lines | join(':') }}"
+  tags: ["always"]
