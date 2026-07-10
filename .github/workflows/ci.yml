@@ -534,12 +534,15 @@ jobs:
       - name: "📥 Checkout Repository"
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: "🚀 Run Tests in BSD VM"
+      - name: "🚀 Boot BSD VM"
         uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee # v1.3.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
-          run: |
+
+      - name: "📦 Install Prerequisites"
+        shell: cpa.sh {0}
+        run: |
             # Ensure curl and bash are available for UniRTM installer
             if command -v pkg >/dev/null; then
               sudo env ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
@@ -550,17 +553,25 @@ jobs:
               sudo pkgin update
               sudo pkgin -y install curl bash sudo
             fi
-            
-            # Setup UniRTM inside the VM
+
+      - name: "🔧 Setup UniRTM inside VM"
+        shell: cpa.sh {0}
+        run: |
             curl -fsSL https://raw.githubusercontent.com/snowdreamtech/unirtm/main/install.sh | bash
+
+      - name: "▶️ Run Init Playbook"
+        shell: cpa.sh {0}
+        env:
+          UNIRTM_VERIFY_PROVENANCE: "0"
+          GITHUB_TOKEN: "${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}"
+        run: |
             export PATH="$HOME/.unirtm/bin:$PATH"
-            export UNIRTM_VERIFY_PROVENANCE="0"
-            export GITHUB_TOKEN="${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}"
-            
-            # Run Init Playbook
             unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml
-            
-            # Verify Idempotency
+
+      - name: "✅ Verify Idempotency"
+        shell: cpa.sh {0}
+        run: |
+            export PATH="$HOME/.unirtm/bin:$PATH"
             unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
             cat ansible_output.txt
             grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
