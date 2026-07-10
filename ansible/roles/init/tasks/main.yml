@@ -19,7 +19,7 @@
     - "{{ os_family | default('unknown', true) }}.yml"
     - "{{ os_distribution_id | default('unknown', true) }}.yml"
     - "{{ os_distribution | default('unknown', true) }}.yml"
-    - skip: true
+    - "default.yml"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
