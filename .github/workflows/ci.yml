@@ -521,7 +521,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: ['freebsd', 'openbsd', 'netbsd']
+        include:
+          - os: freebsd
+            version: '14.1'
+          - os: openbsd
+            version: '7.6'
+          - os: netbsd
+            version: '10.1'
     permissions:
       contents: read
     steps:
@@ -532,7 +538,7 @@ jobs:
         uses: cross-platform-actions/action@cdc9ee69ef84a5f2e59c9058335d9c57bcb4ac86 # v0.25.0
         with:
           operating_system: ${{ matrix.os }}
-          version: 'latest' # Uses the latest stable release provided by the action
+          version: ${{ matrix.version }}
           run: |
             # Ensure curl and bash are available for UniRTM installer
             if command -v pkg >/dev/null; then
