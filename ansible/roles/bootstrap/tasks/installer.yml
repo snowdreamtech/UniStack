@@ -54,8 +54,6 @@
       PM="homebrew"
     elif command -v port >/dev/null 2>&1; then
       PM="macports"
-    elif command -v swupd >/dev/null 2>&1; then
-      PM="swupd"
     elif command -v eopkg >/dev/null 2>&1; then
       PM="eopkg"
     elif command -v nix-env >/dev/null 2>&1; then
@@ -131,9 +129,6 @@
       macports)
         port selfupdate || true
         port install python311 || port install python310 || port install python3
-        ;;
-      swupd)
-        swupd bundle-add python3-basic
         ;;
       eopkg)
         eopkg install -y python3

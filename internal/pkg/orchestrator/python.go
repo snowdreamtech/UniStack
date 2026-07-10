@@ -44,7 +44,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	packageManagers := []string{
 		"apk", "apt-get", "microdnf", "dnf", "yum", "pacman",
 		"zypper", "xbps-install", "emerge", "pkg", "pkg_add", "brew", "port",
-		"swupd", "eopkg", "nix-env", "opkg", "tdnf", "urpmi", "slackpkg",
+		"eopkg", "nix-env", "opkg", "tdnf", "urpmi", "slackpkg",
 	}
 
 	var detectedPM string
@@ -90,8 +90,6 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 		installCmd = "brew install python3"
 	case "port":
 		installCmd = "port selfupdate || true && port install python311 || port install python310 || port install python3"
-	case "swupd":
-		installCmd = "swupd bundle-add python3-basic"
 	case "eopkg":
 		installCmd = "eopkg install -y python3"
 	case "nix-env":
