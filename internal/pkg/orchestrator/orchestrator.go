@@ -107,9 +107,12 @@ func PrepareEnvironment(ctx context.Context, pipIndexUrl string) (string, string
 		pythonBin = venvPython
 	} else {
 		// Fallback to system Python if native ansible is used
-		pythonBin, _ = exec.LookPath("python3")
-		if pythonBin == "" {
-			pythonBin, _ = exec.LookPath("python")
+		pythonCandidates := []string{"python3", "python", "python3.11", "python3.10", "python3.12", "python3.9"}
+		for _, candidate := range pythonCandidates {
+			if path, err := exec.LookPath(candidate); err == nil {
+				pythonBin = path
+				break
+			}
 		}
 	}
 

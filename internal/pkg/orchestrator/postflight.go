@@ -27,15 +27,19 @@ func RunPostflightChecks(ctx context.Context, venvEnv []string, workDir, pythonB
 	}
 	envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
 
-	// 1. Python Health Check
-	pyCmd := exec.CommandContext(ctx, pythonBin, "-V")
-	pyCmd.Env = envVars
-	pyOutput, err := pyCmd.CombinedOutput()
-	if err != nil {
-		return fmt.Errorf("🚨 FATAL: Python health check failed. The environment is broken or incompatible with this architecture.\nError: %w\nOutput: %s", err, string(pyOutput))
+	// 1. Python Health Check (if Python is found separately)
+	if pythonBin != "" {
+		pyCmd := exec.CommandContext(ctx, pythonBin, "-V")
+		pyCmd.Env = envVars
+		pyOutput, err := pyCmd.CombinedOutput()
+		if err != nil {
+			return fmt.Errorf("🚨 FATAL: Python health check failed. The environment is broken or incompatible with this architecture.\nError: %w\nOutput: %s", err, string(pyOutput))
+		}
+		pyVersion := strings.TrimSpace(string(pyOutput))
+		slog.Debug(fmt.Sprintf("✅ [Postflight] Python interpreter is healthy (%s)\n", pyVersion))
+	} else {
+		slog.Debug("⚠️ [Postflight] Python interpreter not explicitly found, relying on Ansible health check.")
 	}
-	pyVersion := strings.TrimSpace(string(pyOutput))
-	slog.Debug(fmt.Sprintf("✅ [Postflight] Python interpreter is healthy (%s)\n", pyVersion))
 
 	// 2. Ansible Health Check
 	ansibleCmd := exec.CommandContext(ctx, ansibleBin, "--version")
