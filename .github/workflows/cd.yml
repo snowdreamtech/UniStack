@@ -240,6 +240,13 @@ jobs:
           - "fedora:41"
           - "fedora:40"
           - "opensuse/leap:15.6"
+          - "clearlinux:latest"
+          - "gentoo/stage3:latest"
+          - "mageia:latest"
+          - "nixos/nix:latest"
+          - "openwrt/rootfs:latest"
+          - "photon:latest"
+          - "voidlinux/voidlinux:latest"
     permissions:
       contents: read
     steps:
