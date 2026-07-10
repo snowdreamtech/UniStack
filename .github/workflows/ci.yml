@@ -538,6 +538,15 @@ jobs:
       - name: "📥 Checkout Repository"
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
+      - name: "⚙️ Set up Go"
+        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        with:
+          go-version: '1.21'
+
+      - name: "📦 Build UniStack for ${{ matrix.os }}"
+        run: |
+          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=amd64 go build -o unistack main.go
+
       - name: "🚀 Boot BSD VM"
         uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee # v1.3.0
         with:
@@ -558,19 +567,17 @@ jobs:
               sudo pkgin -y install curl bash sudo ansible
             fi
 
-      - name: "▶️ Run Init Playbook"
+      - name: "▶️ Run Init Playbook via UniStack"
         shell: cpa.sh {0}
         run: |
-            cd ansible
-            ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i "localhost," -c local playbooks/init.yml
+            ./unistack apply ansible/playbooks/init.yml
 
-      - name: "✅ Verify Idempotency"
+      - name: "✅ Verify Idempotency via UniStack"
         shell: cpa.sh {0}
         run: |
-            cd ansible
-            ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i "localhost," -c local playbooks/init.yml > ansible_output.txt
-            cat ansible_output.txt
-            grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
+            ./unistack apply ansible/playbooks/init.yml > unistack_output.txt
+            cat unistack_output.txt
+            grep -q 'changed=0.*unreachable=0.*failed=0' unistack_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
   # 3. Security & Standards Audit Stage (Audit)
   audit:
