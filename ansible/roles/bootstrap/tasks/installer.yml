@@ -50,6 +50,8 @@
       PM="freebsd"
     elif command -v pkg_add >/dev/null 2>&1; then
       PM="pkg_add"
+    elif command -v pkgin >/dev/null 2>&1; then
+      PM="pkgin"
     elif command -v brew >/dev/null 2>&1; then
       PM="homebrew"
     elif command -v port >/dev/null 2>&1; then
@@ -124,6 +126,9 @@
         ;;
       pkg_add)
         pkg_add -I python%3 || pkg_add -I python3
+        ;;
+      pkgin)
+        pkgin -y install python311 || pkgin -y install python310 || pkgin -y install python39
         ;;
       homebrew)
         if [ "$(id -u)" = "0" ] && [ -n "${SUDO_USER:-}" ]; then
