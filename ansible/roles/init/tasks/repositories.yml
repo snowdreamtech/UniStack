@@ -18,11 +18,14 @@
   when:
     - os_family == 'redhat'
     - os_version_major | int >= 8
+    - os_distribution not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"
 
 - name: "Install EPEL repository"
   ansible.builtin.package:
     name: "epel-release"
     state: "present"
-  when: os_family == 'redhat'
+  when:
+    - os_family == 'redhat'
+    - os_distribution not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"

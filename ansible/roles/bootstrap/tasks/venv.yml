@@ -13,12 +13,16 @@
     export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin:$PATH"
 
     echo "[UNISTACK_BOOTSTRAP] Determining Python executable..."
-    if command -v python3 >/dev/null 2>&1; then
-      PY=python3
-    elif command -v python >/dev/null 2>&1; then
-      PY=python
-    else
-      echo "[UNISTACK_BOOTSTRAP] ERROR: Python executable not found"
+    PY=""
+    for p in python3 python3.12 python3.13 python3.11 python3.10 python; do
+      if command -v $p >/dev/null 2>&1; then
+        PY=$p
+        break
+      fi
+    done
+
+    if [ -z "$PY" ]; then
+      echo "[UNISTACK_BOOTSTRAP] ERROR: Python runtime not found for venv creation"
       exit 1
     fi
 
