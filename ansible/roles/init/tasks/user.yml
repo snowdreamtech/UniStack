@@ -43,14 +43,17 @@
   environment:
     PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
-- name: "Ensure base passwd and group files exist (NixOS container compatibility)"
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: touch
+- name: "Initialize empty base passwd files (NixOS container compatibility)"
+  ansible.builtin.shell: |
+    if [ ! -s "{{ item.path }}" ]; then
+      echo "{{ item.content }}" > "{{ item.path }}"
+      chmod 644 "{{ item.path }}"
+      [ "{{ item.path }}" = "/etc/shadow" ] && chmod 600 "/etc/shadow"
+    fi
   loop:
-    - /etc/passwd
-    - /etc/group
-    - /etc/shadow
+    - { path: '/etc/passwd', content: 'root:x:0:0:root:/root:/bin/sh' }
+    - { path: '/etc/group', content: 'root:x:0:' }
+    - { path: '/etc/shadow', content: 'root:*:18000:0:99999:7:::' }
   become: "{{ become_enabled }}"
   when: >
     (os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos' or
