@@ -1,0 +1,12 @@
+---
+# =====================================================================
+# roles/init/vars/archlinux.yml
+#
+# Purpose:
+#   OS-specific package and service mappings for Arch Linux family.
+# =====================================================================
+
+init_openssh_packages:
+  - "openssh"
+
+init_sshd_service: "sshd"

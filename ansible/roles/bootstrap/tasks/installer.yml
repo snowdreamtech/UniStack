@@ -97,7 +97,7 @@
         pacman -Sy --noconfirm python python-pip
         ;;
       zypper)
-        zypper --non-interactive install python3 python3-pip
+        zypper --non-interactive install python311 || zypper --non-interactive install python3
         ;;
       xbps)
         xbps-install -Sy python3 python3-pip
