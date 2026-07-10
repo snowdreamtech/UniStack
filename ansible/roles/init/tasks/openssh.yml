@@ -12,6 +12,7 @@
     state: present
   loop: "{{ init_openssh_packages | default(['openssh-server'], true) }}"
   become: "{{ become_enabled }}"
+  when: "os_family != 'darwin'"
 
 - name: "Ensure sshd_config.d directory exists"
   ansible.builtin.file:

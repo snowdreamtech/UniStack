@@ -11,3 +11,4 @@
     name: sudo
     state: present
   become: "{{ become_enabled }}"
+  when: "os_family != 'darwin'"
