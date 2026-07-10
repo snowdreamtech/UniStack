@@ -18,6 +18,7 @@
     state: present
     create_home: true
   become: "{{ become_enabled }}"
+  when: "(os_family | lower) != 'nixos'"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
@@ -32,6 +33,7 @@
     group: "{{ _init_sudo_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
+  when: "(os_family | lower) != 'nixos'"
 
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
@@ -42,3 +44,4 @@
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
   become: "{{ become_enabled }}"
+  when: "(os_family | lower) != 'nixos'"

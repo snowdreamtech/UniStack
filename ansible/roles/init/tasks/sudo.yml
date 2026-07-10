@@ -7,18 +7,18 @@
 # =====================================================================
 
 - name: "Sync portage tree (Gentoo)"
-  ansible.builtin.command: "emerge-webrsync"
+  ansible.builtin.shell: "mkdir -p /var/db/repos/gentoo && emerge-webrsync"
   args:
     creates: "/var/db/repos/gentoo/profiles"
   become: "{{ become_enabled }}"
-  when: "os_family == 'gentoo'"
+  when: "(os_family | lower) == 'gentoo'"
 
-- name: "Install sudo (Photon/tdnf workaround)"
-  ansible.builtin.command: "tdnf install -y sudo"
+- name: "Install sudo (dnf/tdnf/dnf5 workaround)"
+  ansible.builtin.command: "{{ ansible_pkg_mgr }} install -y sudo"
   args:
     creates: "/usr/bin/sudo"
   become: "{{ become_enabled }}"
-  when: "(ansible_pkg_mgr | default('')) == 'tdnf'"
+  when: "(ansible_pkg_mgr | default('')) in ['tdnf', 'dnf', 'dnf5']"
 
 - name: "Install sudo"
   ansible.builtin.package:
@@ -26,7 +26,7 @@
     state: present
   become: "{{ become_enabled }}"
   when: 
-    - "os_family != 'darwin'"
-    - "os_family != 'nixos'"
+    - "(os_family | lower) != 'darwin'"
+    - "(os_family | lower) != 'nixos'"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
-    - "(ansible_pkg_mgr | default('')) != 'tdnf'"
+    - "(ansible_pkg_mgr | default('')) not in ['tdnf', 'dnf', 'dnf5']"
