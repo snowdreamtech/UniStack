@@ -11,6 +11,16 @@
 # ---------------------------------------------------------------------
 # RedHat: Enable EPEL Repository
 # ---------------------------------------------------------------------
+- name: "Install dnf-plugins-core for config-manager"
+  ansible.builtin.package:
+    name: "dnf-plugins-core"
+    state: "present"
+  when:
+    - os_family == 'redhat'
+    - os_version_major | int >= 8
+    - os_distribution not in ['fedora', 'amazon']
+  become: "{{ become_enabled }}"
+
 - name: "Enable CRB/PowerTools repository for EPEL dependencies"
   ansible.builtin.command: "dnf config-manager --set-enabled crb"
   changed_when: false
