@@ -8,4 +8,6 @@
     name: "{{ init_sshd_service | default('sshd', true) }}"
     state: restarted
   become: "{{ become_enabled }}"
-  when: "ansible_virtualization_type | default('') != 'docker'"
+  when:
+    - "not is_container | bool"
+    - "os_family != 'darwin'"
