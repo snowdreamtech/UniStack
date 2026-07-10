@@ -21,14 +21,25 @@
   become: "{{ become_enabled }}"
   when: "ansible_pkg_mgr == 'opkg'"
 
+- name: "Check if nix-env is available"
+  ansible.builtin.shell: "command -v nix-env"
+  register: _nix_env_check
+  ignore_errors: true
+  changed_when: false
+  become: "{{ become_enabled }}"
+  environment:
+    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+
 # nixos/nix container: ansible_pkg_mgr is 'unknown' (not 'nix-env') in this image.
-# Detect via os_distribution_id which comes directly from /etc/os-release ID field.
+# Detect via os_distribution_id which comes directly from /etc/os-release ID field, or fallback to nix-env check.
 - name: "Install shadow utils (NixOS)"
   ansible.builtin.command: "nix-env -iA nixpkgs.shadow"
   args:
     creates: "/root/.nix-profile/bin/useradd"
   become: "{{ become_enabled }}"
-  when: "(os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos'"
+  when: >
+    (os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos' or
+    _nix_env_check.rc == 0
   environment:
     PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 

@@ -17,9 +17,12 @@
   ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ os_family | default('unknown') }}.yml"
-        - "{{ os_distribution_id | default('unknown') }}.yml"
-        - "{{ os_distribution | default('unknown') }}.yml"
+        - "{{ os_family | default('unknown', true) }}.yml"
+        - "{{ os_distribution_id | default('unknown', true) }}.yml"
+        - "{{ os_distribution | default('unknown', true) }}.yml"
+      paths:
+        - "vars"
+        - "../vars"
       skip: true
   tags: ["always"]
 
