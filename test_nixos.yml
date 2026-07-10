@@ -1,9 +1,0 @@
-- hosts: localhost
-  connection: local
-  tasks:
-    - name: Run docker container
-      ansible.builtin.command: docker run --rm nixos/nix:latest sh -c "nix-env -iA nixpkgs.shadow >/dev/null 2>&1 && find /root/.nix-profile -name '*user*'"
-      register: result
-    - name: print result
-      ansible.builtin.debug:
-        var: result.stdout_lines
