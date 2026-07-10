@@ -50,5 +50,5 @@
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) != 'darwin'"
-    - "ansible_pkg_mgr not in ['emerge', 'tdnf', 'dnf', 'dnf5', 'nix-env', 'opkg', 'unknown']"
+    - "ansible_pkg_mgr not in ['emerge', 'tdnf', 'dnf', 'dnf5', 'nix-env', 'unknown']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"

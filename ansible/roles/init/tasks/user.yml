@@ -4,6 +4,7 @@
 #
 # Purpose:
 #   Provision the primary deployment/management user account.
+#   Installs shadow utilities on distros that lack useradd (OpenWrt, NixOS).
 # =====================================================================
 
 - name: "Determine appropriate shell for OS family"
@@ -11,9 +12,24 @@
     _init_user_shell: "{{ '/bin/ash' if os_family == 'alpine' else '/bin/bash' }}"
   tags: ["always"]
 
-# NixOS uses declarative user management (users are defined in configuration.nix).
-# OpenWrt is an embedded system that does not ship useradd/shadow utilities.
-# Skip conventional user provisioning for these systems.
+# OpenWrt ships BusyBox only; shadow-useradd provides the standard useradd binary.
+- name: "Install shadow-useradd (OpenWrt)"
+  ansible.builtin.command: "opkg install shadow-useradd"
+  args:
+    creates: "/usr/sbin/useradd"
+  become: "{{ become_enabled }}"
+  when: "ansible_pkg_mgr == 'opkg'"
+
+# nixos/nix container has no useradd; install shadow from nixpkgs to get it.
+- name: "Install shadow utils (NixOS)"
+  ansible.builtin.command: "nix-env -iA nixpkgs.shadow"
+  args:
+    creates: "/root/.nix-profile/bin/useradd"
+  become: "{{ become_enabled }}"
+  when: "ansible_pkg_mgr == 'nix-env'"
+  environment:
+    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
+
 - name: "Create deployment user"
   ansible.builtin.user:
     name: "{{ init_user_name }}"
@@ -21,7 +37,7 @@
     state: present
     create_home: true
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"
+  when: "(os_family | default('') | lower) != 'darwin'"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
@@ -36,7 +52,7 @@
     group: "{{ _init_sudo_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"
+  when: "(os_family | default('') | lower) != 'darwin'"
 
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
@@ -47,4 +63,4 @@
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"
+  when: "(os_family | default('') | lower) != 'darwin'"
