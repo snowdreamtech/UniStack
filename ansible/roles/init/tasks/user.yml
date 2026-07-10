@@ -43,7 +43,7 @@
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
-    _init_sudo_group: "{{ 'wheel' if os_family == 'darwin' else 'root' }}"
+    _init_sudo_group: "{{ 'wheel' if os_family in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly'] else 'root' }}"
   tags: ["always"]
 
 - name: "Ensure sudoers.d directory exists"
@@ -63,6 +63,6 @@
     owner: "root"
     group: "{{ _init_sudo_group }}"
     mode: "0440"
-    validate: "/usr/sbin/visudo -cf %s"
+    validate: "visudo -cf %s"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"

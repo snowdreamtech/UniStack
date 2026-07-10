@@ -15,8 +15,8 @@ func getFreeDiskSpace(path string) (uint64, error) {
 	if err := unix.Statvfs(path, &stat); err != nil {
 		return 0, err
 	}
-	// F_bavail is the free blocks available to unprivileged user
-	return uint64(stat.F_bavail) * uint64(stat.F_frsize), nil
+	// Bavail is the free blocks available to unprivileged user
+	return uint64(stat.Bavail) * uint64(stat.Frsize), nil
 }
 
 // getTotalMemory returns the total physical memory in bytes

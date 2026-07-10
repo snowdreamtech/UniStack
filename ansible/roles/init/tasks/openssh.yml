@@ -67,7 +67,7 @@
     path: "/etc/ssh/sshd_config.d"
     state: directory
     owner: "root"
-    group: "root"
+    group: "{{ _init_sudo_group }}"
     mode: "0755"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
@@ -77,7 +77,7 @@
     src: "99-hardening.conf.j2"
     dest: "/etc/ssh/sshd_config.d/99-hardening.conf"
     owner: "root"
-    group: "root"
+    group: "{{ _init_sudo_group }}"
     mode: "0600"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
