@@ -41,17 +41,12 @@
   environment:
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
 
-- name: "Determine sudo group"
-  ansible.builtin.set_fact:
-    _init_sudo_group: "{{ 'wheel' if os_family in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly'] else 'root' }}"
-  tags: ["always"]
-
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
     path: "/etc/sudoers.d"
     state: directory
-    owner: "root"
-    group: "{{ _init_sudo_group }}"
+    owner: "{{ unistack_root_user }}"
+    group: "{{ unistack_root_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
@@ -60,8 +55,8 @@
   ansible.builtin.copy:
     dest: "/etc/sudoers.d/{{ init_user_name }}"
     content: "{{ init_user_name }} ALL=(ALL) NOPASSWD:ALL\n"
-    owner: "root"
-    group: "{{ _init_sudo_group }}"
+    owner: "{{ unistack_root_user }}"
+    group: "{{ unistack_root_group }}"
     mode: "0440"
     validate: "visudo -cf %s"
   become: "{{ become_enabled }}"

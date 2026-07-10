@@ -66,8 +66,8 @@
   ansible.builtin.file:
     path: "/etc/ssh/sshd_config.d"
     state: directory
-    owner: "root"
-    group: "{{ _init_sudo_group }}"
+    owner: "{{ unistack_root_user }}"
+    group: "{{ unistack_root_group }}"
     mode: "0755"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
@@ -76,8 +76,8 @@
   ansible.builtin.template:
     src: "99-hardening.conf.j2"
     dest: "/etc/ssh/sshd_config.d/99-hardening.conf"
-    owner: "root"
-    group: "{{ _init_sudo_group }}"
+    owner: "{{ unistack_root_user }}"
+    group: "{{ unistack_root_group }}"
     mode: "0600"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"

@@ -25,3 +25,19 @@
         and (not (is_root_user | default(false, true)))
       }}
   tags: ["always"]
+
+# ---------------------------------------------------------------------
+# System Root Identity
+# ---------------------------------------------------------------------
+- name: "Build system root user and group"
+  ansible.builtin.set_fact:
+    unistack_root_user: "{{ 'Administrator' if (os_family | default('') | lower) == 'windows' else 'root' }}"
+    unistack_root_group: >-
+      {%- if (os_family | default('') | lower) == 'windows' -%}
+        Administrators
+      {%- elif (os_family | default('') | lower) in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly'] -%}
+        wheel
+      {%- else -%}
+        root
+      {%- endif -%}
+  tags: ["always"]
