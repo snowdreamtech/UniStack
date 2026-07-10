@@ -41,7 +41,7 @@
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
   environment:
-    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
+    PATH: "/root/.nix-profile/bin:/root/.nix-profile/sbin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
