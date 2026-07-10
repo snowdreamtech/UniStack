@@ -459,22 +459,24 @@ jobs:
       - name: "🚀 Start Target Docker Container"
         run: docker run -d --name unistack-target ${{ matrix.image }} tail -f /dev/null
 
-      - name: "⚙️ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@3de054956dc845d374ab5a1a0fa5b4d242afa9de # v0.5.0
+      - name: "⚙️ Setup Go"
+        uses: actions/setup-go@v5
         with:
-          unirtm-version: "0.25.3"
-          install: true
-          trust: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
-          UNIRTM_VERIFY_PROVENANCE: "0"
+          go-version-file: 'go.mod'
+
+      - name: "📦 Install Native Ansible & Build UniStack"
+        run: |
+          pipx install ansible ansible-core ansible-lint
+          if [ -f requirements.txt ]; then pipx inject ansible -r requirements.txt; fi
+          if [ -f ansible/requirements.yml ]; then ansible-galaxy install -r ansible/requirements.yml; fi
+          go build -o unistack main.go
 
       - name: "📥 Run Init Playbook"
-        run: unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/init.yml
+        run: ./unistack apply -i "unistack-target," -c docker ansible/playbooks/init.yml
 
       - name: "🔁 Verify Idempotency"
         run: |
-          unirtm exec -- ansible-playbook -i "unistack-target," -c docker ansible/playbooks/init.yml > ansible_output.txt
+          ./unistack apply -i "unistack-target," -c docker ansible/playbooks/init.yml > ansible_output.txt
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
@@ -495,22 +497,24 @@ jobs:
     steps:
       - name: "📥 Checkout Repository"
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      - name: "⚙️ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@3de054956dc845d374ab5a1a0fa5b4d242afa9de # v0.5.0
+      - name: "⚙️ Setup Go"
+        uses: actions/setup-go@v5
         with:
-          unirtm-version: "0.25.3"
-          install: true
-          trust: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
-          UNIRTM_VERIFY_PROVENANCE: "0"
+          go-version-file: 'go.mod'
+
+      - name: "📦 Install Native Ansible & Build UniStack"
+        run: |
+          brew install ansible ansible-lint
+          if [ -f requirements.txt ]; then pip3 install --break-system-packages -r requirements.txt || true; fi
+          if [ -f ansible/requirements.yml ]; then ansible-galaxy install -r ansible/requirements.yml; fi
+          go build -o unistack main.go
 
       - name: "📥 Run Init Playbook"
-        run: unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml
+        run: ./unistack apply -i "localhost," -c local ansible/playbooks/init.yml
 
       - name: "🔁 Verify Idempotency"
         run: |
-          unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
+          ./unistack apply -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
