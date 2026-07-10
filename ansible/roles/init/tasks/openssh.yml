@@ -35,7 +35,7 @@
   when: "os_family != 'darwin'"
   notify: restart_sshd
 
-- name: "Ensure OpenSSH service is enabled and started"
+- name: "Ensure OpenSSH service is enabled and started (Native)"
   ansible.builtin.service:
     name: "{{ init_sshd_service | default('sshd', true) }}"
     state: started
@@ -43,4 +43,13 @@
   become: "{{ become_enabled }}"
   when:
     - "not is_container | bool"
+    - "os_family != 'darwin'"
+
+- name: "Ensure OpenSSH service is enabled and started (Container)"
+  ansible.builtin.command: "/usr/sbin/sshd"
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled }}"
+  when:
+    - "is_container | bool"
     - "os_family != 'darwin'"

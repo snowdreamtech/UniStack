@@ -3,11 +3,32 @@
 # roles/init/handlers/main.yml
 # =====================================================================
 
-- name: restart_sshd
+- name: "Restart sshd safely (Native)"
   ansible.builtin.service:
     name: "{{ init_sshd_service | default('sshd', true) }}"
     state: restarted
   become: "{{ become_enabled }}"
+  listen: "restart_sshd"
   when:
     - "not is_container | bool"
+    - "os_family != 'darwin'"
+
+- name: "Restart sshd safely (Container)"
+  ansible.builtin.shell: |
+    if command -v pkill >/dev/null 2>&1; then
+      pkill -HUP sshd
+    elif command -v pidof >/dev/null 2>&1; then
+      kill -HUP $(pidof sshd)
+    elif [ -f /var/run/sshd.pid ]; then
+      kill -HUP $(cat /var/run/sshd.pid)
+    else
+      echo "No method to reload sshd" >&2
+      exit 1
+    fi
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled }}"
+  listen: "restart_sshd"
+  when:
+    - "is_container | bool"
     - "os_family != 'darwin'"
