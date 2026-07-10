@@ -12,10 +12,10 @@
     _init_user_shell: "{{ '/bin/ash' if os_family in ['alpine', 'openwrt'] else '/bin/bash' }}"
   tags: ["always"]
 
-# OpenWrt ships BusyBox only; shadow-useradd provides the standard useradd binary.
+# OpenWrt ships BusyBox only; shadow-* provides the standard user tools.
 # The 'creates' guard ensures idempotency.
-- name: "Install shadow-useradd (OpenWrt)"
-  ansible.builtin.shell: "mkdir -p /var/lock && opkg update && opkg install shadow-useradd"
+- name: "Install shadow user tools (OpenWrt)"
+  ansible.builtin.shell: "mkdir -p /var/lock && opkg update && opkg install shadow-useradd shadow-groupadd shadow-usermod"
   args:
     creates: "/usr/sbin/useradd"
   become: "{{ become_enabled }}"
