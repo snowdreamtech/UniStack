@@ -444,7 +444,6 @@ jobs:
           - "archlinux:latest"
           - "fedora:41"
           - "opensuse/leap:15.6"
-          - "clearlinux:latest"
           - "gentoo/stage3:latest"
           - "mageia:9"
           - "nixos/nix:latest"

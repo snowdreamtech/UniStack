@@ -6,9 +6,27 @@
 #   Installs the sudo package if it is not present.
 # =====================================================================
 
+- name: "Sync portage tree (Gentoo)"
+  ansible.builtin.command: "emerge-webrsync"
+  args:
+    creates: "/var/db/repos/gentoo/profiles"
+  become: "{{ become_enabled }}"
+  when: "os_family == 'gentoo'"
+
+- name: "Install sudo (Photon/tdnf workaround)"
+  ansible.builtin.command: "tdnf install -y sudo"
+  args:
+    creates: "/usr/bin/sudo"
+  become: "{{ become_enabled }}"
+  when: "(ansible_pkg_mgr | default('')) == 'tdnf'"
+
 - name: "Install sudo"
   ansible.builtin.package:
     name: sudo
     state: present
   become: "{{ become_enabled }}"
-  when: "os_family != 'darwin'"
+  when: 
+    - "os_family != 'darwin'"
+    - "os_family != 'nixos'"
+    - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
+    - "(ansible_pkg_mgr | default('')) != 'tdnf'"

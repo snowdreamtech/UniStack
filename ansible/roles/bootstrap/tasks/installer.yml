@@ -108,7 +108,7 @@
         zypper --non-interactive install python311 || zypper --non-interactive install python3
         ;;
       xbps)
-        xbps-install -Sy python3 python3-pip
+        SSL_NO_VERIFY_PEER=true xbps-install -Sy python3 python3-pip
         ;;
       emerge)
         emerge -q dev-lang/python dev-python/pip || emerge -q dev-lang/python
@@ -137,6 +137,7 @@
         nix-env -iA nixpkgs.python3
         ;;
       opkg)
+        mkdir -p /var/lock
         opkg update && opkg install python3
         ;;
       tdnf)
