@@ -11,6 +11,9 @@
     _init_user_shell: "{{ '/bin/ash' if os_family == 'alpine' else '/bin/bash' }}"
   tags: ["always"]
 
+# NixOS uses declarative user management (users are defined in configuration.nix).
+# OpenWrt is an embedded system that does not ship useradd/shadow utilities.
+# Skip conventional user provisioning for these systems.
 - name: "Create deployment user"
   ansible.builtin.user:
     name: "{{ init_user_name }}"
@@ -18,7 +21,7 @@
     state: present
     create_home: true
   become: "{{ become_enabled }}"
-  when: "(os_family | lower) != 'nixos'"
+  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
@@ -33,7 +36,7 @@
     group: "{{ _init_sudo_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
-  when: "(os_family | lower) != 'nixos'"
+  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"
 
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
@@ -44,4 +47,4 @@
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
   become: "{{ become_enabled }}"
-  when: "(os_family | lower) != 'nixos'"
+  when: "ansible_pkg_mgr not in ['nix-env', 'opkg']"

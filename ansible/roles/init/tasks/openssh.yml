@@ -7,11 +7,16 @@
 # =====================================================================
 
 - name: "Install OpenSSH packages (dnf/tdnf/dnf5 workaround)"
-  ansible.builtin.command: "{{ ansible_pkg_mgr }} install -y {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}"
+  ansible.builtin.shell: |
+    if command -v tdnf > /dev/null 2>&1; then
+      tdnf install -y {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}
+    elif command -v dnf > /dev/null 2>&1; then
+      dnf install -y {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}
+    fi
   become: "{{ become_enabled }}"
-  when: 
-    - "(os_family | lower) != 'darwin'"
-    - "(ansible_pkg_mgr | default('')) in ['tdnf', 'dnf', 'dnf5']"
+  when:
+    - "(os_family | default('') | lower) != 'darwin'"
+    - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5']"
   changed_when: false
 
 - name: "Install OpenSSH packages"
@@ -20,9 +25,9 @@
     state: present
   loop: "{{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) }}"
   become: "{{ become_enabled }}"
-  when: 
-    - "(os_family | lower) != 'darwin'"
-    - "(ansible_pkg_mgr | default('')) not in ['tdnf', 'dnf', 'dnf5']"
+  when:
+    - "(os_family | default('') | lower) != 'darwin'"
+    - "ansible_pkg_mgr not in ['tdnf', 'dnf', 'dnf5']"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
