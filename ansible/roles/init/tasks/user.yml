@@ -12,7 +12,7 @@
     _init_user_shell: >-
       {%- if os_family == 'alpine' or os_family == 'openwrt' or os_family == 'nixos' -%}
         /bin/sh
-      {%- elif os_family == 'freebsd' or os_family == 'openbsd' -%}
+      {%- elif os_family == 'freebsd' or os_family == 'openbsd' or os_family == 'netbsd' -%}
         /bin/sh
       {%- elif os_family == 'darwin' -%}
         /bin/zsh
