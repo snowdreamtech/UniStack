@@ -10,7 +10,37 @@
   ansible.builtin.package:
     name: "{{ item }}"
     state: present
-  loop: "{{ init_openssh_packages | default(['openssh-server'], true) }}"
+  loop: "{{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) }}"
+  become: "{{ become_enabled }}"
+  when: "os_family != 'darwin'"
+
+- name: "Generate SSH host keys (Critical for Containers)"
+  ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
+  args:
+    creates: "{{ item.path }}"
+  loop:
+    - { type: "rsa", path: "/etc/ssh/ssh_host_rsa_key" }
+    - { type: "ecdsa", path: "/etc/ssh/ssh_host_ecdsa_key" }
+    - { type: "ed25519", path: "/etc/ssh/ssh_host_ed25519_key" }
+  become: "{{ become_enabled }}"
+  changed_when: false
+  when: "os_family != 'darwin'"
+
+- name: "Load controller public keys"
+  ansible.builtin.set_fact:
+    controller_public_keys:
+      - "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub', errors='ignore') }}"
+      - "{{ lookup('ansible.builtin.file', '~/.ssh/id_rsa.pub', errors='ignore') }}"
+      - "{{ lookup('ansible.builtin.file', '~/.ssh/id_ecdsa.pub', errors='ignore') }}"
+  when: "os_family != 'darwin'"
+
+- name: "Add controller keys to authorized_keys"
+  ansible.builtin.authorized_key:
+    user: "{{ init_user_name }}"
+    key: "{{ item }}"
+    state: "present"
+    exclusive: false
+  loop: "{{ controller_public_keys | reject('equalto', '') | list }}"
   become: "{{ become_enabled }}"
   when: "os_family != 'darwin'"
 
