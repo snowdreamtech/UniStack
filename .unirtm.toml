@@ -63,6 +63,7 @@ node = '26.3.0'
 'npm:sort-package-json' = "4.0.0"
 'npm:stylelint' = "17.12.0"
 'pipx:ansible-core' = "2.21.1"
+'pipx:ansible-lint' = "26.6.0"
 'pipx:clang-format' = "22.1.5"
 'pipx:pip-audit' = "2.10.0"
 'pipx:pre-commit' = '4.6.0'
