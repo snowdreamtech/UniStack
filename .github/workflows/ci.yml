@@ -446,10 +446,10 @@ jobs:
           - "opensuse/leap:15.6"
           - "clearlinux:latest"
           - "gentoo/stage3:latest"
-          - "mageia:latest"
+          - "mageia:9"
           - "nixos/nix:latest"
-          - "openwrt/rootfs:latest"
-          - "photon:latest"
+          - "openwrt/rootfs:x86-64-23.05.5"
+          - "photon:5.0"
           - "voidlinux/voidlinux:latest"
     permissions:
       contents: read
