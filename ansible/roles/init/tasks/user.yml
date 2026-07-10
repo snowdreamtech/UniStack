@@ -54,11 +54,15 @@
 
 - name: "Initialize empty base passwd files (NixOS container compatibility)"
   ansible.builtin.shell: |
-    if [ ! -s "{{ item.path }}" ]; then
+    if [ -L "{{ item.path }}" ]; then
+      cp "{{ item.path }}" "{{ item.path }}.tmp"
+      rm -f "{{ item.path }}"
+      mv "{{ item.path }}.tmp" "{{ item.path }}"
+    elif [ ! -s "{{ item.path }}" ]; then
       echo "{{ item.content }}" > "{{ item.path }}"
-      chmod 644 "{{ item.path }}"
-      [ "{{ item.path }}" = "/etc/shadow" ] && chmod 600 "/etc/shadow"
     fi
+    chmod 644 "{{ item.path }}" || true
+    [ "{{ item.path }}" = "/etc/shadow" ] && chmod 600 "/etc/shadow" || true
   loop:
     - { path: '/etc/passwd', content: 'root:x:0:0:root:/root:/bin/sh' }
     - { path: '/etc/group', content: 'root:x:0:' }
