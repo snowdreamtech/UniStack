@@ -18,6 +18,7 @@
   with_first_found:
     - files:
         - "{{ os_family | default('unknown') }}.yml"
+        - "{{ os_distribution_id | default('unknown') }}.yml"
         - "{{ os_distribution | default('unknown') }}.yml"
       skip: true
   tags: ["always"]

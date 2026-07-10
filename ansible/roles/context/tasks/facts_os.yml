@@ -14,6 +14,22 @@
   ansible.builtin.setup:
   tags: ["always"]
 
+- name: "Read /etc/os-release"
+  ansible.builtin.slurp:
+    src: "/etc/os-release"
+  register: os_release_file
+  ignore_errors: true
+  tags: ["always"]
+
+- name: "Parse OS Release ID"
+  ansible.builtin.set_fact:
+    _os_release_id: >-
+      {{
+        (os_release_file.content | b64decode | regex_search('^ID="?([^"\n]+)"?', '\\1', multiline=True) | first | lower)
+        if not os_release_file.failed and os_release_file.content is defined else ''
+      }}
+  tags: ["always"]
+
 # ---------------------------------------------------------------------
 # OS Basics: Only what downstream tasks truly need
 # ---------------------------------------------------------------------
@@ -21,6 +37,7 @@
   ansible.builtin.set_fact:
     os_family: "{{ ansible_facts.os_family | lower }}"
     os_distribution: "{{ ansible_facts.distribution | lower }}"
+    os_distribution_id: "{{ _os_release_id | default('', true) }}"
     os_version_major: "{{ ansible_facts.distribution_major_version | string }}"
     os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if '.' in ansible_facts.distribution_version else '0' }}"
     os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
