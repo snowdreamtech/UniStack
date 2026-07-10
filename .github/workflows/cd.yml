@@ -339,35 +339,26 @@ jobs:
       - name: "📦 Install Prerequisites"
         shell: cpa.sh {0}
         run: |
-            # Ensure curl and bash are available for UniRTM installer
+            # Ensure curl, bash, sudo and Ansible are available natively
             if command -v pkg >/dev/null; then
               sudo env ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
-              sudo pkg install -y curl bash
+              sudo pkg install -y curl bash sudo ansible
             elif command -v pkg_add >/dev/null; then
-              sudo pkg_add curl bash
+              sudo pkg_add curl bash sudo ansible
             elif command -v pkgin >/dev/null; then
-              sudo pkgin -y install curl bash
+              sudo pkgin update
+              sudo pkgin -y install curl bash sudo ansible
             fi
-
-      - name: "🔧 Setup UniRTM inside VM"
-        shell: cpa.sh {0}
-        run: |
-            curl -fsSL https://raw.githubusercontent.com/snowdreamtech/unirtm/main/install.sh | bash
 
       - name: "▶️ Run Init Playbook"
         shell: cpa.sh {0}
-        env:
-          UNIRTM_VERIFY_PROVENANCE: "0"
-          GITHUB_TOKEN: "${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}"
         run: |
-            export PATH="$HOME/.unirtm/bin:$PATH"
-            unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml
+            ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml
 
       - name: "✅ Verify Idempotency"
         shell: cpa.sh {0}
         run: |
-            export PATH="$HOME/.unirtm/bin:$PATH"
-            unirtm exec -- ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
+            ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
             cat ansible_output.txt
             grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
