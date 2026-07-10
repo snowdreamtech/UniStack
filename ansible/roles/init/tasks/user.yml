@@ -9,7 +9,7 @@
 
 - name: "Determine appropriate shell for OS family"
   ansible.builtin.set_fact:
-    _init_user_shell: "{{ '/bin/ash' if os_family == 'alpine' else '/bin/bash' }}"
+    _init_user_shell: "{{ '/bin/ash' if os_family in ['alpine', 'openwrt'] else '/bin/bash' }}"
   tags: ["always"]
 
 # OpenWrt ships BusyBox only; shadow-useradd provides the standard useradd binary.
@@ -17,7 +17,7 @@
 - name: "Install shadow-useradd (OpenWrt)"
   ansible.builtin.command: "opkg install shadow-useradd"
   args:
-    creates: "/usr/bin/useradd"
+    creates: "/usr/sbin/useradd"
   become: "{{ become_enabled }}"
   when: "ansible_pkg_mgr == 'opkg'"
 
@@ -40,6 +40,8 @@
     create_home: true
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
+  environment:
+    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:{{ ansible_env.PATH | default('/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin') }}"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
