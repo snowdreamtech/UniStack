@@ -26,7 +26,7 @@
     _os_release_id: >-
       {%- if 'content' in os_release_file -%}
         {%- set decoded = os_release_file.content | b64decode -%}
-        {%- set match = decoded | regex_search('(?m)^ID="?([^"\n]+)"?', '\\1') -%}
+        {%- set match = decoded | regex_search('(?m)^ID=["\x27]?([^"\x27\n]+)["\x27]?', '\\1') -%}
         {%- if match and match | length > 0 -%}
           {{ match[0] | lower }}
         {%- else -%}
@@ -50,11 +50,11 @@
 # ---------------------------------------------------------------------
 - name: "Build essential OS facts"
   ansible.builtin.set_fact:
-    os_family: "{{ 'nixos' if _nix_store_dir.stat.exists else ansible_facts.os_family | lower }}"
-    os_distribution: "{{ 'nixos' if _nix_store_dir.stat.exists else ansible_facts.distribution | lower }}"
+    os_family: "{{ 'nixos' if _nix_store_dir.stat.exists else (ansible_facts.os_family | default('', true) | lower) }}"
+    os_distribution: "{{ 'nixos' if _nix_store_dir.stat.exists else (ansible_facts.distribution | default('', true) | lower) }}"
     os_distribution_id: "{{ 'nixos' if _nix_store_dir.stat.exists else _os_release_id | default('', true) }}"
-    os_version_major: "{{ ansible_facts.distribution_major_version | string }}"
-    os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if '.' in ansible_facts.distribution_version else '0' }}"
+    os_version_major: "{{ ansible_facts.distribution_major_version | default('0', true) | string }}"
+    os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if ('distribution_version' in ansible_facts and '.' in ansible_facts.distribution_version) else '0' }}"
     os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
     is_container: >-
       {{

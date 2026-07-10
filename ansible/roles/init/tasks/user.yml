@@ -9,8 +9,17 @@
 
 - name: "Determine appropriate shell for OS family"
   ansible.builtin.set_fact:
-    _init_user_shell: "{{ '/bin/ash' if os_family in ['alpine', 'openwrt'] else '/bin/bash' }}"
-  tags: ["always"]
+    user_shell: >-
+      {%- if os_family == 'alpine' or os_family == 'openwrt' or os_family == 'nixos' -%}
+        /bin/sh
+      {%- elif os_family == 'freebsd' or os_family == 'openbsd' -%}
+        /bin/sh
+      {%- elif os_family == 'darwin' -%}
+        /bin/zsh
+      {%- else -%}
+        /bin/bash
+      {%- endif -%}
+  when: user_shell is not defined or user_shell == '/bin/bash'
 
 # OpenWrt ships BusyBox only; shadow-* provides the standard user tools.
 # The 'creates' guard ensures idempotency.
