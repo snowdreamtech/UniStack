@@ -357,12 +357,14 @@ jobs:
       - name: "▶️ Run Init Playbook"
         shell: cpa.sh {0}
         run: |
-            ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml
+            cd ansible
+            ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i "localhost," -c local playbooks/init.yml
 
       - name: "✅ Verify Idempotency"
         shell: cpa.sh {0}
         run: |
-            ANSIBLE_CONFIG=ansible/ansible.cfg ansible-playbook -i "localhost," -c local ansible/playbooks/init.yml > ansible_output.txt
+            cd ansible
+            ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i "localhost," -c local playbooks/init.yml > ansible_output.txt
             cat ansible_output.txt
             grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
