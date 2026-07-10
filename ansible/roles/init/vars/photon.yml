@@ -1,0 +1,9 @@
+---
+# =====================================================================
+# roles/init/vars/photon.yml
+# =====================================================================
+
+# OpenSSH
+init_openssh_packages:
+  - "openssh-server"
+init_sshd_service: "sshd"

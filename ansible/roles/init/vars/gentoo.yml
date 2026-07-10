@@ -1,0 +1,9 @@
+---
+# =====================================================================
+# roles/init/vars/gentoo.yml
+# =====================================================================
+
+# OpenSSH
+init_openssh_packages:
+  - "net-misc/openssh"
+init_sshd_service: "sshd"
