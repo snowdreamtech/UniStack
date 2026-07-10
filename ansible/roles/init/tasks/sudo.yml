@@ -16,12 +16,12 @@
   args:
     creates: "/var/db/repos/gentoo/profiles"
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr == 'emerge'"
+  when: "ansible_pkg_mgr == 'portage'"
 
-- name: "Install sudo (Gentoo/emerge)"
+- name: "Install sudo (Gentoo/portage)"
   ansible.builtin.command: "emerge -q --noreplace app-admin/sudo"
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr == 'emerge'"
+  when: "ansible_pkg_mgr == 'portage'"
   changed_when: false
 
 # Photon OS / Fedora / RHEL: Ansible's package module requires Python
@@ -50,5 +50,5 @@
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) != 'darwin'"
-    - "ansible_pkg_mgr not in ['emerge', 'tdnf', 'dnf', 'dnf5', 'nix-env', 'unknown']"
+    - "ansible_pkg_mgr not in ['portage', 'tdnf', 'dnf', 'dnf5', 'nix-env', 'unknown']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
