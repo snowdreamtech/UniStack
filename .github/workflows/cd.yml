@@ -262,6 +262,7 @@ jobs:
 
       - name: "📦 Install Native Ansible & Build UniStack"
         run: |
+          echo "dummy_password" > ~/.vault_pass
           pipx install ansible ansible-core ansible-lint
           if [ -f requirements.txt ]; then pipx inject ansible -r requirements.txt; fi
           if [ -f ansible/requirements.yml ]; then ansible-galaxy install -r ansible/requirements.yml; fi
@@ -300,6 +301,7 @@ jobs:
 
       - name: "📦 Install Native Ansible & Build UniStack"
         run: |
+          echo "dummy_password" > ~/.vault_pass
           brew install ansible ansible-lint
           if [ -f requirements.txt ]; then pip3 install --break-system-packages -r requirements.txt || true; fi
           if [ -f ansible/requirements.yml ]; then ansible-galaxy install -r ansible/requirements.yml; fi
@@ -343,10 +345,11 @@ jobs:
       - name: "📦 Install Prerequisites"
         shell: cpa.sh {0}
         run: |
+            echo "dummy_password" > ~/.vault_pass
             # Ensure curl, bash, sudo and Ansible are available natively
             if command -v pkg >/dev/null; then
               sudo env ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
-              sudo pkg install -y curl bash sudo ansible
+              sudo pkg install -y curl bash sudo py311-ansible || sudo pkg install -y curl bash sudo ansible
             elif command -v pkg_add >/dev/null; then
               sudo pkg_add curl bash sudo ansible
             elif command -v pkgin >/dev/null; then
