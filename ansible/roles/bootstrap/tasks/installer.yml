@@ -111,8 +111,9 @@
         mkdir -p /etc/xbps.d
         cp /usr/share/xbps.d/*-repository-*.conf /etc/xbps.d/ 2>/dev/null || true
         sed -i 's|alpha.de.repo.voidlinux.org|repo-default.voidlinux.org|g' /etc/xbps.d/*-repository-*.conf 2>/dev/null || true
-        # xbps must be updated first before installing any packages
-        xbps-install -yu xbps
+        # Sync repository index first, then upgrade xbps itself (required when image is outdated)
+        xbps-install -S
+        xbps-install -u xbps || true
         xbps-install -y python3 python3-pip
         ;;
       emerge)

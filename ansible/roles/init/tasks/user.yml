@@ -13,20 +13,22 @@
   tags: ["always"]
 
 # OpenWrt ships BusyBox only; shadow-useradd provides the standard useradd binary.
+# The 'creates' guard ensures idempotency.
 - name: "Install shadow-useradd (OpenWrt)"
   ansible.builtin.command: "opkg install shadow-useradd"
   args:
-    creates: "/usr/sbin/useradd"
+    creates: "/usr/bin/useradd"
   become: "{{ become_enabled }}"
   when: "ansible_pkg_mgr == 'opkg'"
 
-# nixos/nix container has no useradd; install shadow from nixpkgs to get it.
+# nixos/nix container: ansible_pkg_mgr is 'unknown' (not 'nix-env') in this image.
+# Detect via os_distribution which comes directly from /etc/os-release ID field.
 - name: "Install shadow utils (NixOS)"
   ansible.builtin.command: "nix-env -iA nixpkgs.shadow"
   args:
     creates: "/root/.nix-profile/bin/useradd"
   become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr == 'nix-env'"
+  when: "(os_distribution | default('') | lower) == 'nixos'"
   environment:
     PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
