@@ -331,19 +331,19 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: "🚀 Run Tests in BSD VM"
-        uses: cross-platform-actions/action@cdc9ee69ef84a5f2e59c9058335d9c57bcb4ac86 # v0.25.0
+        uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee # v1.3.0
         with:
           operating_system: ${{ matrix.os }}
           version: ${{ matrix.version }}
           run: |
             # Ensure curl and bash are available for UniRTM installer
             if command -v pkg >/dev/null; then
-              ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
-              pkg install -y curl bash
+              sudo env ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
+              sudo pkg install -y curl bash
             elif command -v pkg_add >/dev/null; then
-              pkg_add curl bash
+              sudo pkg_add curl bash
             elif command -v pkgin >/dev/null; then
-              pkgin -y install curl bash
+              sudo pkgin -y install curl bash
             fi
             
             # Setup UniRTM inside the VM
