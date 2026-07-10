@@ -24,10 +24,17 @@
 - name: "Parse OS Release ID"
   ansible.builtin.set_fact:
     _os_release_id: >-
-      {{
-        (os_release_file.content | b64decode | regex_search('^ID="?([^"\n]+)"?', '\\1', multiline=True) | first | lower)
-        if not os_release_file.failed and os_release_file.content is defined else ''
-      }}
+      {%- if 'content' in os_release_file -%}
+        {%- set decoded = os_release_file.content | b64decode -%}
+        {%- set match = decoded | regex_search('(?m)^ID="?([^"\n]+)"?', '\\1') -%}
+        {%- if match and match | length > 0 -%}
+          {{ match[0] | lower }}
+        {%- else -%}
+          {{ '' }}
+        {%- endif -%}
+      {%- else -%}
+        {{ '' }}
+      {%- endif -%}
   tags: ["always"]
 
 # ---------------------------------------------------------------------
