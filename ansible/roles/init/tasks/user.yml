@@ -43,6 +43,20 @@
   environment:
     PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
 
+- name: "Ensure base passwd and group files exist (NixOS container compatibility)"
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: touch
+  loop:
+    - /etc/passwd
+    - /etc/group
+    - /etc/shadow
+  become: "{{ become_enabled }}"
+  when: >
+    (os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos' or
+    _nix_env_check.rc == 0
+  changed_when: false
+
 - name: "Create deployment user"
   ansible.builtin.user:
     name: "{{ init_user_name }}"
