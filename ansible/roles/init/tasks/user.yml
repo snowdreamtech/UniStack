@@ -30,49 +30,6 @@
   become: "{{ become_enabled }}"
   when: "ansible_pkg_mgr == 'opkg'"
 
-- name: "Check if nix-env is available"
-  ansible.builtin.shell: "command -v nix-env"
-  register: _nix_env_check
-  ignore_errors: true
-  changed_when: false
-  become: "{{ become_enabled }}"
-  environment:
-    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
-
-# nixos/nix container: ansible_pkg_mgr is 'unknown' (not 'nix-env') in this image.
-# Detect via os_distribution_id which comes directly from /etc/os-release ID field, or fallback to nix-env check.
-- name: "Install shadow utils (NixOS)"
-  ansible.builtin.command: "nix-env -iA nixpkgs.shadow"
-  args:
-    creates: "/root/.nix-profile/bin/useradd"
-  become: "{{ become_enabled }}"
-  when: >
-    (os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos' or
-    _nix_env_check.rc == 0
-  environment:
-    PATH: "/root/.nix-profile/bin:/nix/var/nix/profiles/default/bin:/usr/bin:/bin"
-
-- name: "Initialize empty base passwd files (NixOS container compatibility)"
-  ansible.builtin.shell: |
-    if [ -L "{{ item.path }}" ]; then
-      cp "{{ item.path }}" "{{ item.path }}.tmp"
-      rm -f "{{ item.path }}"
-      mv "{{ item.path }}.tmp" "{{ item.path }}"
-    elif [ ! -s "{{ item.path }}" ]; then
-      echo "{{ item.content }}" > "{{ item.path }}"
-    fi
-    chmod 644 "{{ item.path }}" || true
-    [ "{{ item.path }}" = "/etc/shadow" ] && chmod 600 "/etc/shadow" || true
-  loop:
-    - { path: '/etc/passwd', content: 'root:x:0:0:root:/root:/bin/sh' }
-    - { path: '/etc/group', content: 'root:x:0:' }
-    - { path: '/etc/shadow', content: 'root:*:18000:0:99999:7:::' }
-  become: "{{ become_enabled }}"
-  when: >
-    (os_distribution_id | default(os_distribution | default('')) | lower) == 'nixos' or
-    _nix_env_check.rc == 0
-  changed_when: false
-
 - name: "Create deployment user"
   ansible.builtin.user:
     name: "{{ init_user_name }}"
@@ -80,9 +37,9 @@
     state: present
     create_home: true
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
   environment:
-    PATH: "/root/.nix-profile/bin:/root/.nix-profile/sbin:/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
+    PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
 
 - name: "Determine sudo group"
   ansible.builtin.set_fact:
@@ -97,7 +54,7 @@
     group: "{{ _init_sudo_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
@@ -108,4 +65,4 @@
     mode: "0440"
     validate: "/usr/sbin/visudo -cf %s"
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"

@@ -15,7 +15,7 @@
     fi
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) != 'darwin'"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
     - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5']"
   changed_when: false
 
@@ -26,8 +26,9 @@
   loop: "{{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) }}"
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) != 'darwin'"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
     - "ansible_pkg_mgr not in ['tdnf', 'dnf', 'dnf5']"
+    - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
@@ -39,7 +40,7 @@
     - { type: "ed25519", path: "/etc/ssh/ssh_host_ed25519_key" }
   become: "{{ become_enabled }}"
   changed_when: false
-  when: "os_family != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Load controller public keys"
   ansible.builtin.set_fact:
@@ -47,7 +48,7 @@
       - "{{ lookup('ansible.builtin.file', '~/.ssh/id_ed25519.pub', errors='ignore') }}"
       - "{{ lookup('ansible.builtin.file', '~/.ssh/id_rsa.pub', errors='ignore') }}"
       - "{{ lookup('ansible.builtin.file', '~/.ssh/id_ecdsa.pub', errors='ignore') }}"
-  when: "os_family != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Add controller keys to authorized_keys"
   ansible.builtin.authorized_key:
@@ -57,7 +58,7 @@
     exclusive: false
   loop: "{{ controller_public_keys | reject('equalto', '') | list }}"
   become: "{{ become_enabled }}"
-  when: "os_family != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Ensure sshd_config.d directory exists"
   ansible.builtin.file:
@@ -67,7 +68,7 @@
     group: "root"
     mode: "0755"
   become: "{{ become_enabled }}"
-  when: "os_family != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Deploy OpenSSH hardening configuration"
   ansible.builtin.template:
@@ -77,7 +78,7 @@
     group: "root"
     mode: "0600"
   become: "{{ become_enabled }}"
-  when: "os_family != 'darwin'"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
   notify: restart_sshd
 
 - name: "Ensure OpenSSH service is enabled and started (Native)"
@@ -88,7 +89,7 @@
   become: "{{ become_enabled }}"
   when:
     - "not is_container | bool"
-    - "os_family != 'darwin'"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
 - name: "Ensure OpenSSH service is enabled and started (Container)"
   ansible.builtin.command: "/usr/sbin/sshd"
@@ -97,4 +98,4 @@
   become: "{{ become_enabled }}"
   when:
     - "is_container | bool"
-    - "os_family != 'darwin'"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
