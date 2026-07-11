@@ -69,7 +69,7 @@
     fi
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
-  changed_when: true
+  changed_when: false
 
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
