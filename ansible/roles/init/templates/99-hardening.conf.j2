@@ -74,7 +74,9 @@ PasswordAuthentication {{ yesno(sshd.password_authentication, init_sshd_password
 PermitEmptyPasswords {{ yesno(sshd.permit_empty_passwords, 'no') }}
 KbdInteractiveAuthentication {{ yesno(sshd.kbd_interactive_authentication, init_sshd_password_authentication | default('no', true)) }}
 
+{% if (os_family | default('') | lower) != 'openbsd' %}
 UsePAM {{ yesno(sshd.use_pam, 'yes') }}
+{% endif %}
 
 {# ============================================
    Forwarding and Tunneling Configuration
@@ -140,7 +142,9 @@ Compression {{ yesno(sshd.compression, 'no') }}
 {% endif %}
 ClientAliveInterval {{ sshd.client_alive_interval | default(60, true) }}
 ClientAliveCountMax {{ sshd.client_alive_count_max | default(3, true) }}
+{% if (os_family | default('') | lower) != 'openbsd' %}
 UseDNS {{ yesno(sshd.use_dns, 'no') }}
+{% endif %}
 MaxStartups {{ sshd.max_startups | default('10:30:100', true) }}
 ChrootDirectory {{ sshd.chroot_directory | default('none', true) }}
 VersionAddendum {{ sshd.version_addendum | default('none', true) }}
