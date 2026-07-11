@@ -4,6 +4,5 @@
 # =====================================================================
 
 # OpenSSH
-init_openssh_packages:
-  - "openssh"
+init_openssh_packages: []
 init_sshd_service: "sshd"

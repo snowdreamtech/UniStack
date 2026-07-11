@@ -17,7 +17,7 @@
     fi
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
     - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5', 'urpmi']"
     - "init_openssh_packages | length > 0"
   changed_when: false
@@ -29,7 +29,7 @@
   loop: "{{ init_openssh_packages }}"
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
     - "ansible_pkg_mgr not in ['tdnf', 'dnf', 'dnf5', 'urpmi']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
 
