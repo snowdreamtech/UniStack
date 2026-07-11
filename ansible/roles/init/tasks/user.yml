@@ -51,27 +51,25 @@
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
-- name: "Find all files in deployment user .ssh directory"
-  ansible.builtin.find:
-    paths: "{{ _init_user_info.home }}/.ssh"
-    file_type: file
-    hidden: true
-    recurse: true
-  register: _ssh_files
-  become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
-
 - name: "Enforce secure permissions (0600) on all SSH files"
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    state: file
-    owner: "{{ init_user_name }}"
-    mode: "0600"
-  loop: "{{ _ssh_files.files | default([]) }}"
+  ansible.builtin.shell: |
+    set -e
+    SSH_DIR="{{ _init_user_info.home }}/.ssh"
+    if [ -d "$SSH_DIR" ]; then
+      # Convert symlinked authorized_keys to a regular file if it exists
+      if [ -L "$SSH_DIR/authorized_keys" ]; then
+        cp "$SSH_DIR/authorized_keys" "$SSH_DIR/authorized_keys.tmp"
+        rm "$SSH_DIR/authorized_keys"
+        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
+      fi
+      # Enforce 0600 on all files in .ssh
+      find "$SSH_DIR" -type f -exec chmod 0600 {} +
+      # Ensure correct ownership
+      chown -R {{ init_user_name }}:{{ _init_user_info.group | default(init_user_name) }} "$SSH_DIR"
+    fi
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
-  loop_control:
-    label: "{{ item.path | basename }}"
+  changed_when: true
 
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:

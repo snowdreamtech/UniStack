@@ -68,7 +68,9 @@ MaxAuthTries {{ sshd.max_auth_tries | default(6, true) }}
 MaxSessions {{ sshd.max_sessions | default(10, true) }}
 
 PubkeyAuthentication {{ yesno(sshd.public_key_authentication, 'yes') }}
-AuthorizedKeysFile {{ sshd.authorized_keys_file | default('.ssh/authorized_keys', true) }}
+{% if sshd.authorized_keys_file is defined %}
+AuthorizedKeysFile {{ sshd.authorized_keys_file }}
+{% endif %}
 
 PasswordAuthentication {{ yesno(sshd.password_authentication, init_sshd_password_authentication | default('no', true)) }}
 PermitEmptyPasswords {{ yesno(sshd.permit_empty_passwords, 'no') }}
