@@ -41,6 +41,25 @@
   environment:
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
 
+- name: "Ensure deployment user .ssh directory has correct permissions"
+  ansible.builtin.file:
+    path: "~{{ init_user_name }}/.ssh"
+    state: directory
+    owner: "{{ init_user_name }}"
+    mode: "0700"
+  become: "{{ become_enabled }}"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+
+- name: "Ensure authorized_keys has correct permissions if it exists"
+  ansible.builtin.file:
+    path: "~{{ init_user_name }}/.ssh/authorized_keys"
+    state: file
+    owner: "{{ init_user_name }}"
+    mode: "0600"
+  become: "{{ become_enabled }}"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  failed_when: false
+
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
     path: "/etc/sudoers.d"
