@@ -46,7 +46,7 @@
    Basic Configuration
    ============================================ #}
 
-Port {{ sshd.port | default(22, true) }}
+Port {{ sshd.port | default(init_sshd_port | default(22, true), true) }}
 AddressFamily {{ sshd.address_family | default('any', true) }}
 
 {% for addr in sshd.listen_address | default(['0.0.0.0', '::'], true) %}
@@ -62,7 +62,7 @@ HostKey {{ hostkey }}
    ============================================ #}
 
 LoginGraceTime {{ sshd.login_grace_time | default('30', true) }}
-PermitRootLogin {{ ssh_option(sshd.permit_root_login, 'no', ['prohibit-password', 'forced-commands-only', 'without-password']) }}
+PermitRootLogin {{ ssh_option(sshd.permit_root_login, init_sshd_permit_root_login | default('no', true), ['prohibit-password', 'forced-commands-only', 'without-password']) }}
 StrictModes {{ yesno(sshd.strict_modes, 'yes') }}
 MaxAuthTries {{ sshd.max_auth_tries | default(3, true) }}
 MaxSessions {{ sshd.max_sessions | default(10, true) }}
@@ -70,9 +70,9 @@ MaxSessions {{ sshd.max_sessions | default(10, true) }}
 PubkeyAuthentication {{ yesno(sshd.public_key_authentication, 'yes') }}
 AuthorizedKeysFile {{ sshd.authorized_keys_file | default('.ssh/authorized_keys', true) }}
 
-PasswordAuthentication {{ yesno(sshd.password_authentication, 'no') }}
+PasswordAuthentication {{ yesno(sshd.password_authentication, init_sshd_password_authentication | default('no', true)) }}
 PermitEmptyPasswords {{ yesno(sshd.permit_empty_passwords, 'no') }}
-KbdInteractiveAuthentication {{ yesno(sshd.kbd_interactive_authentication, 'no') }}
+KbdInteractiveAuthentication {{ yesno(sshd.kbd_interactive_authentication, init_sshd_password_authentication | default('no', true)) }}
 
 UsePAM {{ yesno(sshd.use_pam, 'yes') }}
 
