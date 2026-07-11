@@ -9,23 +9,24 @@
 - name: "Install OpenSSH packages (dnf/tdnf/dnf5/urpmi workaround)"
   ansible.builtin.shell: |
     if command -v urpmi > /dev/null 2>&1; then
-      urpmi --auto {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}
+      urpmi --auto {{ init_openssh_packages | join(' ') }}
     elif command -v tdnf > /dev/null 2>&1; then
-      tdnf install -y {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}
+      tdnf install -y {{ init_openssh_packages | join(' ') }}
     elif command -v dnf > /dev/null 2>&1; then
-      dnf install -y {{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) | join(' ') }}
+      dnf install -y {{ init_openssh_packages | join(' ') }}
     fi
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
     - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5', 'urpmi']"
+    - "init_openssh_packages | length > 0"
   changed_when: false
 
 - name: "Install OpenSSH packages"
   ansible.builtin.package:
     name: "{{ item }}"
     state: present
-  loop: "{{ init_openssh_packages | default(['openssh-server', 'openssh-clients'], true) }}"
+  loop: "{{ init_openssh_packages }}"
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
