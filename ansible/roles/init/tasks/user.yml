@@ -36,6 +36,7 @@
     shell: "{{ _init_user_shell }}"
     state: present
     create_home: true
+  register: _init_user_info
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
   environment:
@@ -43,7 +44,7 @@
 
 - name: "Ensure deployment user .ssh directory has correct permissions"
   ansible.builtin.file:
-    path: "~{{ init_user_name }}/.ssh"
+    path: "{{ _init_user_info.home }}/.ssh"
     state: directory
     owner: "{{ init_user_name }}"
     mode: "0700"
@@ -52,7 +53,7 @@
 
 - name: "Find all files in deployment user .ssh directory"
   ansible.builtin.find:
-    paths: "~{{ init_user_name }}/.ssh"
+    paths: "{{ _init_user_info.home }}/.ssh"
     file_type: file
     hidden: true
     recurse: true
