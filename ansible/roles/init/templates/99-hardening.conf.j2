@@ -64,7 +64,7 @@ HostKey {{ hostkey }}
 LoginGraceTime {{ sshd.login_grace_time | default('30', true) }}
 PermitRootLogin {{ ssh_option(sshd.permit_root_login, init_sshd_permit_root_login | default('no', true), ['prohibit-password', 'forced-commands-only', 'without-password']) }}
 StrictModes {{ yesno(sshd.strict_modes, 'yes') }}
-MaxAuthTries {{ sshd.max_auth_tries | default(3, true) }}
+MaxAuthTries {{ sshd.max_auth_tries | default(6, true) }}
 MaxSessions {{ sshd.max_sessions | default(10, true) }}
 
 PubkeyAuthentication {{ yesno(sshd.public_key_authentication, 'yes') }}
