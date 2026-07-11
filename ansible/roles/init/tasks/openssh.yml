@@ -17,7 +17,7 @@
     fi
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
     - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5', 'urpmi']"
     - "init_openssh_packages | length > 0"
   changed_when: false
@@ -29,7 +29,7 @@
   loop: "{{ init_openssh_packages }}"
   become: "{{ become_enabled }}"
   when:
-    - "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
     - "ansible_pkg_mgr not in ['tdnf', 'dnf', 'dnf5', 'urpmi']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
 
@@ -72,6 +72,17 @@
     mode: "0755"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+
+- name: "Ensure sshd_config includes sshd_config.d directory"
+  ansible.builtin.lineinfile:
+    path: "/etc/ssh/sshd_config"
+    line: "Include /etc/ssh/sshd_config.d/*.conf"
+    insertbefore: BOF
+    state: present
+    validate: "/usr/sbin/sshd -t -f %s"
+  become: "{{ become_enabled }}"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  notify: restart_sshd
 
 - name: "Deploy OpenSSH hardening configuration"
   ansible.builtin.template:

@@ -3,6 +3,7 @@
 # roles/init/vars/darwin.yml
 # =====================================================================
 
-# OpenSSH (Skipped on Darwin natively, defined for completeness)
-init_openssh_packages: []
+# OpenSSH
+init_openssh_packages:
+  - "openssh"
 init_sshd_service: "com.openssh.sshd"
