@@ -50,15 +50,27 @@
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
-- name: "Ensure authorized_keys has correct permissions if it exists"
+- name: "Find all files in deployment user .ssh directory"
+  ansible.builtin.find:
+    paths: "~{{ init_user_name }}/.ssh"
+    file_type: file
+    hidden: yes
+    recurse: yes
+  register: _ssh_files
+  become: "{{ become_enabled }}"
+  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+
+- name: "Enforce secure permissions (0600) on all SSH files"
   ansible.builtin.file:
-    path: "~{{ init_user_name }}/.ssh/authorized_keys"
+    path: "{{ item.path }}"
     state: file
     owner: "{{ init_user_name }}"
     mode: "0600"
+  loop: "{{ _ssh_files.files | default([]) }}"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
-  failed_when: false
+  loop_control:
+    label: "{{ item.path | basename }}"
 
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
