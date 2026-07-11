@@ -54,8 +54,8 @@
   ansible.builtin.find:
     paths: "~{{ init_user_name }}/.ssh"
     file_type: file
-    hidden: yes
-    recurse: yes
+    hidden: true
+    recurse: true
   register: _ssh_files
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
