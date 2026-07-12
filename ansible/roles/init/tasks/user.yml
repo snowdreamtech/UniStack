@@ -93,7 +93,7 @@
       fi
     fi
   become: "{{ become_enabled }}"
-  when: 
+  when:
     - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd']"
   changed_when: false
   ignore_errors: true
@@ -118,7 +118,7 @@
       fi
     fi
   become: "{{ become_enabled }}"
-  when: 
+  when:
     - "(os_family | default('') | lower) == 'freebsd'"
   changed_when: false
   ignore_errors: true
