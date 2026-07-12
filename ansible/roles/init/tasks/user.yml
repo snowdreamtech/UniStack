@@ -51,47 +51,77 @@
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
 
-- name: "Enforce secure permissions (0600) on all SSH files"
+- name: "Enforce secure permissions (0600) on deployment user SSH files"
   ansible.builtin.shell: |
     set -e
-    for SSH_DIR in "{{ _init_user_info.home }}/.ssh" "/home/runner/.ssh" "/usr/home/runner/.ssh"; do
-      if [ -d "$SSH_DIR" ]; then
-        # Determine the correct owner based on the directory path
-        if [ "$SSH_DIR" = "{{ _init_user_info.home }}/.ssh" ]; then
-          TARGET_USER="{{ init_user_name }}"
-          TARGET_GROUP="{{ _init_user_info.group | default(init_user_name) }}"
-        else
-          # For CI runner paths, the user should be 'runner'
-          if id -u runner >/dev/null 2>&1; then
-            TARGET_USER="runner"
-            # Get the primary group of the runner user
-            TARGET_GROUP=$(id -gn runner 2>/dev/null || echo "runner")
-          else
-            # If runner user doesn't exist, skip this directory
-            continue
-          fi
-        fi
-
-        # Convert symlinked authorized_keys to a regular file if it exists
-        if [ -L "$SSH_DIR/authorized_keys" ]; then
-          cp "$SSH_DIR/authorized_keys" "$SSH_DIR/authorized_keys.tmp"
-          rm "$SSH_DIR/authorized_keys"
-          mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
-        fi
-        
-        # Enforce 0700 on the .ssh directory itself
-        chmod 0700 "$SSH_DIR"
-        
-        # Enforce 0600 on all files in .ssh
-        find "$SSH_DIR" -type f -exec chmod 0600 {} +
-        
-        # Ensure correct ownership for StrictModes
-        chown -R "${TARGET_USER}:${TARGET_GROUP}" "$SSH_DIR"
+    SSH_DIR="{{ _init_user_info.home }}/.ssh"
+    if [ -d "$SSH_DIR" ]; then
+      # Convert symlinked authorized_keys to a regular file if it exists
+      if [ -L "$SSH_DIR/authorized_keys" ]; then
+        cat "$SSH_DIR/authorized_keys" > "$SSH_DIR/authorized_keys.tmp"
+        rm -f "$SSH_DIR/authorized_keys"
+        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
       fi
-    done
+      # Enforce 0700 on the .ssh directory itself
+      chmod 0700 "$SSH_DIR"
+      # Enforce 0600 on all files in .ssh
+      find "$SSH_DIR" -type f -exec chmod 0600 {} +
+      # Ensure correct ownership
+      chown -R {{ init_user_name }}:{{ _init_user_info.group | default(init_user_name) }} "$SSH_DIR"
+    fi
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
   changed_when: false
+
+- name: "Fix CI runner SSH permissions (Linux and other BSDs)"
+  ansible.builtin.shell: |
+    set -e
+    SSH_DIR="/home/runner/.ssh"
+    if [ -d "$SSH_DIR" ] && id -u runner >/dev/null 2>&1; then
+      if [ -L "$SSH_DIR/authorized_keys" ]; then
+        cat "$SSH_DIR/authorized_keys" > "$SSH_DIR/authorized_keys.tmp"
+        rm -f "$SSH_DIR/authorized_keys"
+        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
+      fi
+      chmod 0700 "$SSH_DIR"
+      find "$SSH_DIR" -type f -exec chmod 0600 {} +
+      TARGET_GROUP=$(id -gn runner 2>/dev/null || true)
+      if [ -n "$TARGET_GROUP" ]; then
+        chown -R "runner:${TARGET_GROUP}" "$SSH_DIR"
+      else
+        chown -R runner "$SSH_DIR"
+      fi
+    fi
+  become: "{{ become_enabled }}"
+  when: 
+    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd']"
+  changed_when: false
+  ignore_errors: true
+
+- name: "Fix CI runner SSH permissions (FreeBSD)"
+  ansible.builtin.shell: |
+    set -e
+    SSH_DIR="/usr/home/runner/.ssh"
+    if [ -d "$SSH_DIR" ] && id -u runner >/dev/null 2>&1; then
+      if [ -L "$SSH_DIR/authorized_keys" ]; then
+        cat "$SSH_DIR/authorized_keys" > "$SSH_DIR/authorized_keys.tmp"
+        rm -f "$SSH_DIR/authorized_keys"
+        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
+      fi
+      chmod 0700 "$SSH_DIR"
+      find "$SSH_DIR" -type f -exec chmod 0600 {} +
+      TARGET_GROUP=$(id -gn runner 2>/dev/null || true)
+      if [ -n "$TARGET_GROUP" ]; then
+        chown -R "runner:${TARGET_GROUP}" "$SSH_DIR"
+      else
+        chown -R runner "$SSH_DIR"
+      fi
+    fi
+  become: "{{ become_enabled }}"
+  when: 
+    - "(os_family | default('') | lower) == 'freebsd'"
+  changed_when: false
+  ignore_errors: true
 
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
