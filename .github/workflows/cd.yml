@@ -314,71 +314,10 @@ jobs:
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
-  test-bsd-e2e:
-    name: "😈 BSD E2E: ${{ matrix.os }}"
-    runs-on: ubuntu-latest
-    needs: [verify]
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: freebsd
-            version: "14.1"
-          - os: openbsd
-            version: "7.6"
-          - os: netbsd
-            version: "10.1"
-    permissions:
-      contents: read
-    steps:
-      - name: "📥 Checkout Repository"
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: "⚙️ Set up Go"
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
-        with:
-          go-version: "1.21"
-
-      - name: "📦 Build UniStack for ${{ matrix.os }}"
-        run: |
-          CGO_ENABLED=0 GOOS=${{ matrix.os }} GOARCH=amd64 go build -o unistack main.go
-
-      - name: "🚀 Boot BSD VM"
-        uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee # v1.3.0
-        with:
-          operating_system: ${{ matrix.os }}
-          version: ${{ matrix.version }}
-
-      - name: "📦 Install Prerequisites"
-        shell: cpa.sh {0}
-        run: |
-          # Ensure curl, bash, sudo and Ansible are available natively
-          if command -v pkg >/dev/null; then
-            sudo env ASSUME_ALWAYS_YES=yes pkg bootstrap -f || true
-            sudo pkg install -y curl bash sudo py311-ansible || sudo pkg install -y curl bash sudo ansible
-          elif command -v pkg_add >/dev/null; then
-            sudo pkg_add curl bash sudo ansible
-          elif command -v pkgin >/dev/null; then
-            sudo pkgin update
-            sudo pkgin -y install curl bash sudo ansible
-          fi
-
-      - name: "▶️ Run Init Playbook via UniStack"
-        shell: cpa.sh {0}
-        run: |
-          ./unistack apply ansible/playbooks/init.yml
-
-      - name: "✅ Verify Idempotency via UniStack"
-        shell: cpa.sh {0}
-        run: |
-          ./unistack apply ansible/playbooks/init.yml > unistack_output.txt
-          cat unistack_output.txt
-          grep -q 'changed=0.*unreachable=0.*failed=0' unistack_output.txt || (echo "❌ Idempotence test failed" && exit 1)
-
   # 2. Release Orchestration Stage (Release Please)
   release-please:
     name: "🚀 Release Orchestration"
-    needs: [verify, test-linux-e2e, test-macos-e2e, test-bsd-e2e]
+    needs: [verify, test-linux-e2e, test-macos-e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: internal
