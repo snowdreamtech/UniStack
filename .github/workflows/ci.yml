@@ -567,14 +567,32 @@ jobs:
             sudo pkgin -y install curl bash sudo ansible
           fi
 
-      - name: "▶️ Run Init Playbook via UniStack"
+      - name: "▶️ Run Init Playbook and Verify Idempotency"
         shell: cpa.sh {0}
         run: |
+          echo "=== 🔍 SSH state BEFORE playbook ==="
+          ls -la ~/.ssh/ || true
+          cat /etc/ssh/sshd_config | grep -v '^#' | grep -v '^$' || true
+          echo "=== Home dir permissions ==="
+          ls -la /home/ /usr/home/ 2>/dev/null || true
+          ls -ld ~runner/ 2>/dev/null || true
+          echo ""
+
+          echo "=== ▶️ Running Init Playbook ==="
           ./unistack apply ansible/playbooks/init.yml
 
-      - name: "✅ Verify Idempotency via UniStack"
-        shell: cpa.sh {0}
-        run: |
+          echo ""
+          echo "=== 🔍 SSH state AFTER playbook ==="
+          ls -la ~/.ssh/ || true
+          echo "--- Effective sshd config ---"
+          sudo sshd -T 2>/dev/null | head -80 || true
+          echo "--- Home dir permissions ---"
+          ls -ld ~runner/ 2>/dev/null || true
+          echo "--- Auth logs ---"
+          sudo tail -30 /var/log/auth.log 2>/dev/null || sudo tail -30 /var/log/messages 2>/dev/null | grep -i ssh || true
+          echo ""
+
+          echo "=== 🔁 Verifying Idempotency ==="
           ./unistack apply ansible/playbooks/init.yml > unistack_output.txt
           cat unistack_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' unistack_output.txt || (echo "❌ Idempotence test failed" && exit 1)

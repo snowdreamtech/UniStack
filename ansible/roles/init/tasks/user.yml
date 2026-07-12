@@ -73,56 +73,6 @@
   when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
   changed_when: false
 
-- name: "Fix CI runner SSH permissions (Linux and other BSDs)"
-  ansible.builtin.shell: |
-    set -e
-    SSH_DIR="/home/runner/.ssh"
-    if [ -d "$SSH_DIR" ] && id -u runner >/dev/null 2>&1; then
-      if [ -L "$SSH_DIR/authorized_keys" ]; then
-        cat "$SSH_DIR/authorized_keys" > "$SSH_DIR/authorized_keys.tmp"
-        rm -f "$SSH_DIR/authorized_keys"
-        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
-      fi
-      chmod 0700 "$SSH_DIR"
-      find "$SSH_DIR" -type f -exec chmod 0600 {} +
-      TARGET_GROUP=$(id -gn runner 2>/dev/null || true)
-      if [ -n "$TARGET_GROUP" ]; then
-        chown -R "runner:${TARGET_GROUP}" "$SSH_DIR"
-      else
-        chown -R runner "$SSH_DIR"
-      fi
-    fi
-  become: "{{ become_enabled }}"
-  when:
-    - "(os_family | default('') | lower) not in ['darwin', 'nixos', 'freebsd']"
-  changed_when: false
-  ignore_errors: true
-
-- name: "Fix CI runner SSH permissions (FreeBSD)"
-  ansible.builtin.shell: |
-    set -e
-    SSH_DIR="/usr/home/runner/.ssh"
-    if [ -d "$SSH_DIR" ] && id -u runner >/dev/null 2>&1; then
-      if [ -L "$SSH_DIR/authorized_keys" ]; then
-        cat "$SSH_DIR/authorized_keys" > "$SSH_DIR/authorized_keys.tmp"
-        rm -f "$SSH_DIR/authorized_keys"
-        mv "$SSH_DIR/authorized_keys.tmp" "$SSH_DIR/authorized_keys"
-      fi
-      chmod 0700 "$SSH_DIR"
-      find "$SSH_DIR" -type f -exec chmod 0600 {} +
-      TARGET_GROUP=$(id -gn runner 2>/dev/null || true)
-      if [ -n "$TARGET_GROUP" ]; then
-        chown -R "runner:${TARGET_GROUP}" "$SSH_DIR"
-      else
-        chown -R runner "$SSH_DIR"
-      fi
-    fi
-  become: "{{ become_enabled }}"
-  when:
-    - "(os_family | default('') | lower) == 'freebsd'"
-  changed_when: false
-  ignore_errors: true
-
 - name: "Ensure sudoers.d directory exists"
   ansible.builtin.file:
     path: "/etc/sudoers.d"
