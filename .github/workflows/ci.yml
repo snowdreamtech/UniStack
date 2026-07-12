@@ -588,6 +588,8 @@ jobs:
           sudo sshd -T 2>/dev/null | head -80 || true
           echo "--- Home dir permissions ---"
           ls -ld ~runner/ 2>/dev/null || true
+          echo "--- Ansible user SSH permissions ---"
+          sudo ls -la /home/ansible/.ssh/ 2>/dev/null || sudo ls -la /usr/home/ansible/.ssh/ 2>/dev/null || true
           echo "--- Auth logs ---"
           sudo tail -30 /var/log/auth.log 2>/dev/null || sudo tail -30 /var/log/messages 2>/dev/null | grep -i ssh || true
           echo ""

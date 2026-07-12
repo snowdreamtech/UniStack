@@ -11,7 +11,30 @@
   listen: "restart_sshd"
   when:
     - "not is_container | bool"
-    - "os_family != 'darwin'"
+
+- name: "Wait for SSH port to be ready after restart"
+  ansible.builtin.wait_for:
+    host: "{{ inventory_hostname }}"
+    port: 22
+    delay: 0
+    timeout: 30
+    state: started
+  listen: "restart_sshd"
+  become: false
+  changed_when: false
+  when:
+    - "not is_container | bool"
+
+- name: "Verify SSH daemon is accepting connections (Diagnostic)"
+  ansible.builtin.command: "sshd -T"
+  become: "{{ become_enabled }}"
+  listen: "restart_sshd"
+  changed_when: false
+  register: _sshd_config_test
+  failed_when: false
+  when:
+    - "not is_container | bool"
+  # This is for diagnostic purposes only; failures here don't block the playbook
 
 - name: "Restart sshd safely (Container)"
   ansible.builtin.shell: |
@@ -31,4 +54,3 @@
   listen: "restart_sshd"
   when:
     - "is_container | bool"
-    - "os_family != 'darwin'"
