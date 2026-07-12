@@ -5,5 +5,5 @@
 
 # OpenSSH
 init_openssh_packages:
-  - "openssh-portable"
+  - "openssh"
 init_sshd_service: "sshd"
