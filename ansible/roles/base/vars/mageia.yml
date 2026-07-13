@@ -1,0 +1,99 @@
+---
+# =====================================================================
+# roles/base/vars/mageia.yml
+#
+# Purpose:
+#   Mageia-specific package list for the base role.
+#   Mageia is a community-driven Linux distribution based on the
+#   former Mandriva Linux. It uses urpmi package manager.
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - sudo
+  - procps
+  - psmisc
+  - tzdata
+  - libcap
+  - ca-certificates
+  - inotify-tools
+  - strace
+  - man-db
+  - man-pages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip
+  - xz
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+
+  # -------------------------------------------------------------------
+  # Productivity CLI
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  - bash-completion
+  - shellcheck
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+  - yq
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+  - tig
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu
+  - sysstat
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gnupg2
+  - pinentry-tty
+  - pinentry-curses
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - aria2
+  - rsync
+  - nmap
+  - mtr
+  - socat
+  - bind-utils
+  - iputils
+  - net-tools
+  - lsof
+  - ipcalc
+
+base_dev_packages: []
+
