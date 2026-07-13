@@ -26,14 +26,16 @@
 # Stage 0: Load OS-specific package mappings
 # Uses the same include_vars pattern as the init role.
 # Replaces Uniloader's native/os_loader with direct include_vars.
+# Must look in vars/ subdirectory to avoid loading tasks files
+# (e.g., tasks/nixos.yml should not be loaded here)
 # ---------------------------------------------------------------------
 - name: "Load OS-specific variable mappings"
   ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
-    - "{{ os_family | default('unknown', true) }}.yml"
-    - "{{ os_distribution_id | default('unknown', true) }}.yml"
-    - "{{ os_distribution | default('unknown', true) }}.yml"
-    - "default.yml"
+    - "vars/{{ os_family | default('unknown', true) }}.yml"
+    - "vars/{{ os_distribution_id | default('unknown', true) }}.yml"
+    - "vars/{{ os_distribution | default('unknown', true) }}.yml"
+    - "vars/default.yml"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
