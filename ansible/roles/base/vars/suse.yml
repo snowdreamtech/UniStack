@@ -1,0 +1,104 @@
+---
+# =====================================================================
+# roles/base/vars/suse.yml
+#
+# Purpose:
+#   openSUSE/SLE-specific package list for the base role.
+#   Handles openSUSE-specific package naming and availability.
+#
+# Notes:
+#   - openSUSE uses 'timezone' instead of 'tzdata' (FIX for tzdata issue)
+#   - Some packages have different names from Debian/RedHat
+#   - vim-enhanced might not exist; use 'vim'
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - sudo
+  - procps
+  - psmisc # provides pstree
+  - timezone  # ← openSUSE uses 'timezone' NOT 'tzdata'
+  - libcap
+  - ca-certificates
+  - inotify-tools
+  - strace
+  - man
+  - man-pages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip
+  - xz
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+  - moreutils
+  - pv
+
+  # -------------------------------------------------------------------
+  # Productivity CLI
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  - bash-completion
+  - ShellCheck
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+  - yq
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+  - tig
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu
+  - sysstat
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gpg2
+  - pinentry
+  - pinentry-curses
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - rsync
+  - nmap
+  - mtr
+  - socat
+  - bind-utils  # provides dig, host, nslookup
+  - iputils
+  - net-tools
+  - lsof
+  - ipcalc
+
+base_dev_packages: []
+
