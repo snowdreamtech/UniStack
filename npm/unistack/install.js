@@ -54,6 +54,22 @@ function getPlatformPackageSuffix() {
     if (arch === "ia32") return "windows-ia32";
   }
 
+  if (platform === "freebsd") {
+    if (arch === "x64") return "freebsd-x64";
+    if (arch === "arm64") return "freebsd-arm64";
+    if (arch === "ia32") return "freebsd-ia32";
+    if (arch === "arm") return "freebsd-arm";
+  }
+
+  if (platform === "openbsd") {
+    if (arch === "x64") return "openbsd-x64";
+    if (arch === "arm64") return "openbsd-arm64";
+  }
+
+  if (platform === "netbsd") {
+    if (arch === "x64") return "netbsd-x64";
+  }
+
   throw new Error(
     `Unsupported platform: ${platform}-${arch}\n` +
       "Please open an issue at https://github.com/snowdreamtech/unistack/issues"

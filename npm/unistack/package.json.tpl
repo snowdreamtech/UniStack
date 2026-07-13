@@ -44,7 +44,14 @@
     "@snowdreamtech/unistack-linux-s390x": "{{VERSION}}",
     "@snowdreamtech/unistack-windows-x64": "{{VERSION}}",
     "@snowdreamtech/unistack-windows-arm64": "{{VERSION}}",
-    "@snowdreamtech/unistack-windows-ia32": "{{VERSION}}"
+    "@snowdreamtech/unistack-windows-ia32": "{{VERSION}}",
+    "@snowdreamtech/unistack-freebsd-x64": "{{VERSION}}",
+    "@snowdreamtech/unistack-freebsd-arm64": "{{VERSION}}",
+    "@snowdreamtech/unistack-freebsd-ia32": "{{VERSION}}",
+    "@snowdreamtech/unistack-freebsd-arm": "{{VERSION}}",
+    "@snowdreamtech/unistack-openbsd-x64": "{{VERSION}}",
+    "@snowdreamtech/unistack-openbsd-arm64": "{{VERSION}}",
+    "@snowdreamtech/unistack-netbsd-x64": "{{VERSION}}"
   },
   "engines": {
     "node": ">=18"

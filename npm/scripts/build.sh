@@ -81,6 +81,13 @@ unistack-linux-s390x|unistack_linux_s390x|unistack
 unistack-windows-x64|unistack_windows_amd64_v1|unistack.exe
 unistack-windows-arm64|unistack_windows_arm64_v8.0|unistack.exe
 unistack-windows-ia32|unistack_windows_386_sse2|unistack.exe
+unistack-freebsd-x64|unistack_freebsd_amd64_v1|unistack
+unistack-freebsd-arm64|unistack_freebsd_arm64_v8.0|unistack
+unistack-freebsd-ia32|unistack_freebsd_386_sse2|unistack
+unistack-freebsd-arm|unistack_freebsd_arm_7|unistack
+unistack-openbsd-x64|unistack_openbsd_amd64_v1|unistack
+unistack-openbsd-arm64|unistack_openbsd_arm64_v8.0|unistack
+unistack-netbsd-x64|unistack_netbsd_amd64_v1|unistack
 "
 
 # ---------------------------------------------------------------------------
