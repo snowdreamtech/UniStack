@@ -52,7 +52,7 @@ base_packages:
   - fzf
   - tmux
   - bash-completion
-  - ShellCheck
+  - shellcheck
 
   # -------------------------------------------------------------------
   # Data Processing (JSON/YAML)
