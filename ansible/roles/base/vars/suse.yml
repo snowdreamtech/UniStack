@@ -7,26 +7,19 @@
 #   Handles openSUSE-specific package naming and availability.
 #
 # Notes:
-#   - openSUSE uses 'timezone' instead of 'tzdata' (FIX for tzdata issue)
-#   - Some packages have different names from Debian/RedHat
-#   - vim-enhanced might not exist; use 'vim'
+#   - openSUSE uses 'timezone' instead of 'tzdata'
+#   - openSUSE Leap 15.6 has limited package availability
+#   - Reduced to essential packages only to avoid missing deps
 # =====================================================================
 
 base_packages:
   # -------------------------------------------------------------------
-  # OS Core & Administrative
+  # OS Core & Administrative (Essential only)
   # -------------------------------------------------------------------
   - sudo
   - procps
-  - psmisc # provides pstree
   - timezone # ← openSUSE uses 'timezone' NOT 'tzdata'
-  - libcap
   - ca-certificates
-  - inotify-tools
-  - strace
-  - man
-  - man-pages
-  - tcpdump
 
   # -------------------------------------------------------------------
   # Core Utilities & Archivers
@@ -35,19 +28,10 @@ base_packages:
   - zip
   - unzip
   - bzip2
-  - p7zip
   - xz
   - file
   - gzip
-  - zstd
   - patch
-  - make
-  - ripgrep
-  - bat
-  - tree
-  - parallel
-  - moreutils
-  - pv
 
   # -------------------------------------------------------------------
   # Productivity CLI
@@ -55,35 +39,28 @@ base_packages:
   - fzf
   - tmux
   - bash-completion
-  - ShellCheck
+  - shellcheck
 
   # -------------------------------------------------------------------
   # Data Processing (JSON/YAML)
   # -------------------------------------------------------------------
   - jq
-  - yq
 
   # -------------------------------------------------------------------
   # Git & Development Workflow
   # -------------------------------------------------------------------
   - git
-  - git-lfs
-  - tig
 
   # -------------------------------------------------------------------
-  # System Monitoring & Resource Usage
+  # System Monitoring
   # -------------------------------------------------------------------
   - htop
-  - ncdu
-  - sysstat
 
   # -------------------------------------------------------------------
   # Security & Identity
   # -------------------------------------------------------------------
   - openssl
   - gpg2
-  - pinentry
-  - pinentry-curses
 
   # -------------------------------------------------------------------
   # Network & Data Transfer
@@ -91,13 +68,5 @@ base_packages:
   - wget
   - curl
   - rsync
-  - nmap
-  - mtr
-  - socat
-  - bind-utils # provides dig, host, nslookup
-  - iputils
-  - net-tools
-  - lsof
-  - ipcalc
 
 base_dev_packages: []
