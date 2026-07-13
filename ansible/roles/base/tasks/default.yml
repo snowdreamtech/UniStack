@@ -16,6 +16,18 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
+# Preparation: Ensure Ansible package module dependencies
+# For VMware Photon, install python3-dnf before using ansible.builtin.package
+# with dnf backend.
+# ---------------------------------------------------------------------
+- name: "Install python3-dnf (Photon) for Ansible package module"
+  ansible.builtin.raw: "tdnf install -y python3-dnf"
+  changed_when: false
+  failed_when: false
+  when:
+    - os_distribution_id | default('', true) == 'photon'
+  become: "{{ become_enabled }}"
+
 # Preparation: resolve known curl conflicts during package manager
 # initialization (RedHat only).
 # Inlined from Uniloader's native/curl_conflict_loader.
