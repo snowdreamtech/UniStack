@@ -1,0 +1,98 @@
+---
+# =====================================================================
+# roles/base/vars/void.yml
+#
+# Purpose:
+#   Void Linux-specific package list for the base role.
+#   Void uses xbps package manager with different package naming.
+#
+# Notes:
+#   - procps: split into separate packages in Void
+#   - Void uses different names for some GNU tools
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - sudo
+  - procps-ng      # Void uses procps-ng instead of procps
+  - psmisc         # provides pstree
+  - tzdata
+  - libcap
+  - ca-certificates
+  - inotify-tools
+  - strace
+  - man
+  - man-pages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip
+  - xz
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+
+  # -------------------------------------------------------------------
+  # Productivity CLI
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  - bash-completion
+  - ShellCheck
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gnupg2
+  - pinentry
+  - pinentry-curses
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - rsync
+  - nmap
+  - mtr
+  - socat
+  - bind-utils    # provides dig, host, nslookup
+  - iputils
+  - net-tools
+  - lsof
+  - ipcalc
+
+base_dev_packages: []
+
