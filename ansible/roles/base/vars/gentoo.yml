@@ -1,0 +1,103 @@
+---
+# =====================================================================
+# roles/base/vars/gentoo.yml
+#
+# Purpose:
+#   Gentoo-specific package list for the base role.
+#   Gentoo uses portage package manager with fully-qualified package names
+#   in the format category/package (e.g., app-arch/bzip2).
+#
+# Notes:
+#   - All packages must use fully-qualified names (category/package)
+#   - Some packages may have ambiguous short names
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - app-admin/sudo
+  - sys-process/procps
+  - sys-apps/psmisc
+  - sys-libs/timezone-data
+  - sys-libs/libcap
+  - app-misc/ca-certificates
+  - sys-apps/inotify-tools
+  - dev-debug/strace
+  - sys-apps/man-db
+  - sys-apps/man-pages
+  - net-analyzer/tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - app-editors/vim
+  - app-arch/zip
+  - app-arch/unzip
+  - app-arch/bzip2
+  - app-arch/p7zip
+  - app-arch/xz-utils
+  - sys-apps/file
+  - app-arch/gzip
+  - app-arch/zstd
+  - sys-devel/patch
+  - sys-devel/make
+  - sys-apps/ripgrep
+  - sys-apps/bat
+  - app-misc/tree
+  - sys-apps/parallel
+
+  # -------------------------------------------------------------------
+  # Productivity CLI
+  # -------------------------------------------------------------------
+  - app-shells/fzf
+  - app-misc/tmux
+  - app-shells/bash-completion
+  - dev-util/shellcheck
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - app-misc/jq
+  - app-misc/yq
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - dev-vcs/git
+  - dev-vcs/git-lfs
+  - dev-vcs/tig
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - sys-process/htop
+  - sys-disk/ncdu
+  - app-admin/sysstat
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - dev-libs/openssl
+  - app-crypt/gnupg
+  - app-crypt/pinentry
+  - sys-apps/ca-certificates
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - net-misc/wget
+  - net-misc/curl
+  - net-misc/aria2
+  - net-misc/rsync
+  - net-analyzer/nmap
+  - net-analyzer/mtr
+  - net-misc/socat
+  - net-dns/bind-tools
+  - net-misc/iputils
+  - net-misc/net-tools
+  - sys-process/lsof
+  - net-misc/ipcalc
+
+base_dev_packages: []
+
