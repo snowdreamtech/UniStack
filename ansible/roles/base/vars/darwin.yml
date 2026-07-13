@@ -16,7 +16,7 @@
 _darwin_pkg_gnupg: "{{ 'gnupg2' if (os_pkg_mgr | default('', true) == 'macports') else 'gnupg' }}"
 _darwin_pkg_sed: "{{ 'gsed' if (os_pkg_mgr | default('', true) == 'macports') else 'gnu-sed' }}"
 _darwin_pkg_ca: "{{ 'curl-ca-bundle' if (os_pkg_mgr | default('', true) == 'macports') else 'ca-certificates' }}"
-_darwin_pkg_patch: "gpatch"  # Both Homebrew and MacPorts use gpatch
+_darwin_pkg_patch: "gpatch" # Both Homebrew and MacPorts use gpatch
 _darwin_pkg_make: "{{ 'gmake' if (os_pkg_mgr | default('', true) == 'macports') else 'make' }}"
 
 base_packages:

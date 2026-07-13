@@ -16,8 +16,8 @@ base_packages:
   # OS Core & Administrative
   # -------------------------------------------------------------------
   - sudo
-  - procps-ng      # Void uses procps-ng instead of procps
-  - psmisc         # provides pstree
+  - procps-ng # Void uses procps-ng instead of procps
+  - psmisc # provides pstree
   - tzdata
   - libcap
   - ca-certificates
@@ -88,11 +88,10 @@ base_packages:
   - nmap
   - mtr
   - socat
-  - bind-utils    # provides dig, host, nslookup
+  - bind-utils # provides dig, host, nslookup
   - iputils
   - net-tools
   - lsof
   - ipcalc
 
 base_dev_packages: []
-

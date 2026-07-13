@@ -19,7 +19,7 @@ base_packages:
   - sudo
   - procps
   - psmisc # provides pstree
-  - timezone  # ← openSUSE uses 'timezone' NOT 'tzdata'
+  - timezone # ← openSUSE uses 'timezone' NOT 'tzdata'
   - libcap
   - ca-certificates
   - inotify-tools
@@ -94,11 +94,10 @@ base_packages:
   - nmap
   - mtr
   - socat
-  - bind-utils  # provides dig, host, nslookup
+  - bind-utils # provides dig, host, nslookup
   - iputils
   - net-tools
   - lsof
   - ipcalc
 
 base_dev_packages: []
-

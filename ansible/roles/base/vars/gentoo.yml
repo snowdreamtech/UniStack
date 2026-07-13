@@ -100,4 +100,3 @@ base_packages:
   - net-misc/ipcalc
 
 base_dev_packages: []
-

@@ -42,4 +42,3 @@
     GIT_SIGNING: "{{ git_signing | default(false, true) }}"
   become: "{{ become_enabled }}"
   changed_when: false
-
