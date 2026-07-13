@@ -1,0 +1,41 @@
+---
+# =====================================================================
+# roles/base/vars/openwrt.yml
+#
+# Purpose:
+#   OpenWrt-specific package list for the base role.
+#   OpenWrt uses opkg package manager with minimal package set.
+#   Focuses on essential utilities rather than full GNU toolchains.
+#
+# Notes:
+#   - procps: not available in OpenWrt (system is minimal)
+#   - Many packages are compiled differently for embedded systems
+#   - Package availability varies by target/variant
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # Core Utilities (Minimal set for embedded systems)
+  # -------------------------------------------------------------------
+  - vim-full
+  - zip
+  - unzip
+  - xz-utils
+  - file
+  - gzip
+  - coreutils
+  - diffutils
+  - patch
+  - make
+  - grep
+  - sed
+  - gawk
+  - git
+  - openssh-client
+  - openssh-sftp-server
+  - wget
+  - curl
+  - ca-bundle
+
+base_dev_packages: []
+
