@@ -39,3 +39,14 @@
     - os_family == 'redhat'
     - os_distribution not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# VMware Photon: Install python3-dnf for Ansible dnf module support
+# ---------------------------------------------------------------------
+- name: "Install python3-dnf (Photon)"
+  ansible.builtin.raw: "tdnf install -y python3-dnf"
+  changed_when: false
+  failed_when: false
+  when:
+    - os_distribution_id | default('', true) == 'photon'
+  become: "{{ become_enabled }}"
