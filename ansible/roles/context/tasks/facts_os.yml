@@ -14,11 +14,19 @@
   ansible.builtin.setup:
   tags: ["always"]
 
+# NixOS and some minimal containers may not have /etc/os-release
+- name: "Check if /etc/os-release exists"
+  ansible.builtin.stat:
+    path: "/etc/os-release"
+  register: os_release_stat
+  changed_when: false
+  tags: ["always"]
+
 - name: "Read /etc/os-release"
   ansible.builtin.slurp:
     src: "/etc/os-release"
   register: os_release_file
-  ignore_errors: true
+  when: os_release_stat.stat.exists
   tags: ["always"]
 
 - name: "Parse OS Release ID"
