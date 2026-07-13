@@ -17,11 +17,18 @@
 
 # ---------------------------------------------------------------------
 # Preparation: Ensure Ansible package module dependencies
-# For VMware Photon, install python3-dnf before using ansible.builtin.package
-# with dnf backend.
+# For VMware Photon, install python3-dnf into the system AND venv
+# before using ansible.builtin.package with dnf backend.
+# The venv is created with --system-site-packages, but we need to
+# ensure dnf module is accessible to Ansible's Python interpreter.
 # ---------------------------------------------------------------------
 - name: "Install python3-dnf (Photon) for Ansible package module"
-  ansible.builtin.raw: "tdnf install -y python3-dnf"
+  ansible.builtin.raw: |
+    set -eu
+    # Install to system first
+    tdnf install -y python3-dnf || true
+    # Also try to install in current Python environment
+    {{ ansible_python_interpreter | default('/usr/bin/python3') }} -m pip install dnf || true
   changed_when: false
   failed_when: false
   when:
