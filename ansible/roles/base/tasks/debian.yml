@@ -1,0 +1,55 @@
+---
+# =====================================================================
+# roles/base/tasks/debian.yml
+#
+# Purpose:
+#   Debian/Ubuntu-specific baseline configuration tasks.
+#   Includes default base setup and Debian-specific binary normalization
+#   (fd-find -> fd symlink, batcat -> bat symlink).
+#
+# =====================================================================
+
+- ansible.builtin.include_tasks: default.yml
+
+# ---------------------------------------------------------------------
+# Execution: Symlink Logic
+# ---------------------------------------------------------------------
+
+# WHY: On Debian/Ubuntu, the package installs a binary named 'fdfind' to
+# avoid namespace conflicts. We symlink it to 'fd' for user convenience
+# and cross-platform consistency.
+- name: "fd (Debian): Resolve fdfind binary path {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.command: "which fdfind"
+  register: _fd_binary_path
+  changed_when: false
+  failed_when: false
+
+- name: "fd (Debian): Create fd symlink {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.file:
+    src: "{{ _fd_binary_path.stdout }}"
+    dest: "/usr/local/bin/fd"
+    state: link
+    force: true
+  become: "{{ become_enabled }}"
+  when:
+    - _fd_binary_path.rc == 0
+    - _fd_binary_path.stdout | length > 0
+
+# WHY: On Debian/Ubuntu, the package installs a binary named 'batcat' to
+# avoid namespace conflicts. We symlink it to 'bat' for user convenience.
+- name: "bat (Debian): Resolve batcat binary path {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.command: "which batcat"
+  register: _bat_binary_path
+  changed_when: false
+  failed_when: false
+
+- name: "bat (Debian): Create bat symlink {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.file:
+    src: "{{ _bat_binary_path.stdout }}"
+    dest: "/usr/local/bin/bat"
+    state: link
+    force: true
+  become: "{{ become_enabled }}"
+  when:
+    - _bat_binary_path.rc == 0
+    - _bat_binary_path.stdout | length > 0

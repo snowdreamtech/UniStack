@@ -1,0 +1,50 @@
+set number            " 行首显示行号
+set hlsearch          " 搜索时高亮匹配字符串
+set autoindent        " 自动缩排
+set showmode          " 左下角显示模式状态
+syntax on             " 开启语法检查
+set nocompatible      " 不使用兼容模式
+set textwidth=80      " 超过 80 字符自动换行；0 表示不自动换行
+set noswapfile        " 不要交换文件，减少冲突
+set nobackup          " 不要备份文件，减少冲突
+set nowritebackup     " 不要写入备份文件
+set history=1000      " 命令历史长度
+set tabstop=4         " Tab 显示为 4 个空格
+set shiftwidth=2      " 自动缩进空格数
+set showcmd           " 显示命令
+set showmatch         " 显示匹配括号
+set ignorecase        " 搜索忽略大小写
+set smartcase         " 搜索词包含大写时大小写敏感
+set incsearch         " 输入搜索命令时实时显示匹配
+set nolist            " 不显示不可见字符
+
+if has('mouse')
+  set mouse-=a        " 禁用鼠标，避免复制粘贴冲突
+endif
+
+set wrap              " 自动折行
+set linebreak         " 在单词边界折行
+set wrapmargin=2      " 折行时距离右边缘 2 字符
+set scrolloff=5       " 垂直滚动时光标上下保留 5 行
+set sidescrolloff=15  " 水平滚动时光标左右保留 15 字符
+set laststatus=2      " 显示状态栏
+set ruler             " 状态栏显示光标位置
+set expandtab         " 用空格代替 Tab
+set softtabstop=4     " Tab 转为 4 个空格
+set cursorline        " 高亮当前行
+set cursorcolumn      " 高亮当前列
+
+set fileencodings=ucs-bom,utf-8,gbk,gb2312,cp936,gb18030,big5,latin-1  " 解决乱码
+set encoding=utf-8        " 编辑器内部编码
+set termencoding=utf-8    " 终端编码
+set fileencoding=utf-8    " 文件保存编码
+
+set autochdir         " 自动切换工作目录
+set visualbell        " 出错时视觉提示
+set autoread          " 文件外部修改时自动读取
+set autowrite         " 执行外部命令时自动保存
+
+set wildmenu          " 命令模式 Tab 自动补全
+set wildmode=longest:list,full
+
+hi Normal ctermfg=NONE ctermbg=NONE   " 背景透明

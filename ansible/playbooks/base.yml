@@ -1,0 +1,20 @@
+---
+- name: Native Base Playbook
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Bootstrap remote hosts (Install Python if missing)
+      ansible.builtin.include_role:
+        name: bootstrap
+
+    - name: Load infrastructure context
+      ansible.builtin.include_role:
+        name: context
+
+    - name: Load base OS initialization
+      ansible.builtin.include_role:
+        name: init
+
+    - name: Load base system configuration
+      ansible.builtin.include_role:
+        name: base

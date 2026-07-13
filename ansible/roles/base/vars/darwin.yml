@@ -1,0 +1,100 @@
+---
+# =====================================================================
+# roles/base/vars/darwin.yml
+#
+# Purpose:
+#   Baseline package definitions for macOS (Darwin).
+#   Leverages Homebrew or MacPorts to provide lightweight CLI utilities,
+#   ensuring feature parity with Linux-based distributions.
+#   Note: Rust-based tools are excluded to keep dependencies minimal
+#   and avoid large compiler suite installations during bootstrap.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Normalization: Map package names based on the active package manager.
+# ---------------------------------------------------------------------
+_darwin_pkg_gnupg: "{{ 'gnupg2' if (os_pkg_mgr | default('', true) == 'macports') else 'gnupg' }}"
+_darwin_pkg_sed: "{{ 'gsed' if (os_pkg_mgr | default('', true) == 'macports') else 'gnu-sed' }}"
+_darwin_pkg_ca: "{{ 'curl-ca-bundle' if (os_pkg_mgr | default('', true) == 'macports') else 'ca-certificates' }}"
+_darwin_pkg_patch: "{{ 'gpatch' if (os_pkg_mgr | default('', true) == 'macports') else 'patch' }}"
+_darwin_pkg_make: "{{ 'gmake' if (os_pkg_mgr | default('', true) == 'macports') else 'make' }}"
+
+base_packages:
+  # -------------------------------------------------------------------
+  # Core Utilities (Standard GNU Replacements & Archivers)
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip
+  - xz
+  - file
+  - gzip
+  - zstd
+  - coreutils
+  - findutils
+  - diffutils
+  - "{{ _darwin_pkg_patch }}"
+  - "{{ _darwin_pkg_make }}"
+  - "{{ _darwin_pkg_sed }}"
+  - grep
+  - gawk
+  - fd
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+
+  # -------------------------------------------------------------------
+  # Essential Productivity CLI (Lightweight/Go/C based)
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux # C
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq # C
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop # C
+  # - ncdu        # Zig (v2)
+  - pstree # C
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - "{{ _darwin_pkg_gnupg }}"
+  - "{{ _darwin_pkg_ca }}"
+  - pinentry-tty
+  - pinentry-curses
+  - pinentry-mac
+
+  # WHY: mas is installed via dedicated tasks/mas.yml with version compatibility
+  # - mas         # Swift/Script - Mac App Store CLI
+  - trash # Swift/Script
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - aria2 # C++
+  - rsync
+  # - nmap
+  - ipcalc
+  - mtr
+  - iperf3
+  - tcpdump
+  - socat
+
+base_dev_packages: []

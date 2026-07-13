@@ -1,0 +1,62 @@
+---
+# =====================================================================
+# roles/base/defaults/main.yml
+#
+# Purpose:
+#   Default variables for the base role.
+#   Defines the core set of packages and system configurations
+#   applied to every managed node.
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Base Packages: Essential utilities required for system administration,
+# networking, and basic automation tasks.
+# This minimal list is overridden by OS-specific vars files.
+# ---------------------------------------------------------------------
+base_packages:
+  - "sudo"
+  - "procps"
+  - "vim"
+  - "zip"
+  - "unzip"
+  - "bzip2"
+  - "xz-utils"
+  - "file"
+  - "gzip"
+  - "jq"
+  - "tzdata"
+  - "openssl"
+  - "gnupg"
+  - "sysstat"
+  - "wget"
+  - "curl"
+  - "git"
+  - "lsof"
+  - "ca-certificates"
+
+# ---------------------------------------------------------------------
+# Development Packages: Optional set of packages for development nodes.
+# ---------------------------------------------------------------------
+base_dev_packages: []
+
+# ---------------------------------------------------------------------
+# Git Configuration: Global identity and behavior settings.
+# Override these in your playbook or inventory to customize.
+# ---------------------------------------------------------------------
+# git_user_name: ""
+# git_user_email: ""
+# git_editor: "vim"
+# git_signing_key: ""
+# git_signing: false
+
+# ---------------------------------------------------------------------
+# GitHub Proxy: Prefix for GitHub URLs (for China network acceleration).
+# Set to "" to disable proxy.
+# ---------------------------------------------------------------------
+# github_proxy: ""
+
+# ---------------------------------------------------------------------
+# Homebrew: Force install on unsupported macOS versions (10.15-13).
+# ---------------------------------------------------------------------
+# homebrew_force_install: false

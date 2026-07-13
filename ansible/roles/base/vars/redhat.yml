@@ -1,0 +1,109 @@
+---
+# =====================================================================
+# roles/base/vars/redhat.yml
+#
+# Purpose:
+#   RedHat/CentOS/Fedora/AlmaLinux/Rocky-specific package list for the base role.
+#   Many packages require EPEL repository to be enabled.
+#   Provides a comprehensive set of CLI utilities aligned with
+#   Debian and Alpine distributions.
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - lsb-release
+  - sudo
+  - procps-ng
+  - psmisc # provides pstree
+  - tzdata
+  - libcap
+  - ca-certificates
+  - inotify-tools # EPEL
+  - strace
+  - man-db
+  - man-pages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - vim-enhanced
+  - zip
+  - unzip
+  - bzip2
+  - p7zip # EPEL
+  - xz
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - fd-find # EPEL
+  - ripgrep # EPEL
+  - bat # EPEL
+  - tree
+  - parallel # EPEL
+  - moreutils # EPEL
+  - pv # EPEL
+
+  # -------------------------------------------------------------------
+  # Productivity CLI (Non-Rust, Lightweight)
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  - bash-completion
+  # - direnv       # EPEL
+  - shellcheck # EPEL
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+  - yq # EPEL
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+  - tig # EPEL
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu # EPEL
+  - sysstat
+  - stress-ng # EPEL
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gnupg2
+  - pinentry-tty
+  - pinentry-curses
+  - age # EPEL
+  # - sops         # EPEL
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  # - httpie       # EPEL
+  - aria2 # EPEL
+  - rsync
+  - nmap-ncat
+  - mtr
+  - iperf3 # EPEL
+  - socat
+  - bind-utils # provides dig, host, nslookup
+  - iputils
+  - net-tools
+  - lsof
+  - ipcalc
+
+base_dev_packages: []

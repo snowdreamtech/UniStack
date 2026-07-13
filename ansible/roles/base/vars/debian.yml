@@ -1,0 +1,109 @@
+---
+# =====================================================================
+# roles/base/vars/debian.yml
+#
+# Purpose:
+#   Debian/Ubuntu-specific package list for the base role.
+#   Provides a comprehensive set of CLI utilities including
+#   Debian-specific naming conventions (fd-find, batcat, mtr-tiny).
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - lsb-release
+  - sudo
+  - procps
+  - psmisc # provides pstree
+  - tzdata
+  - libcap2-bin
+  - apt-transport-https
+  - ca-certificates
+  - inotify-tools
+  - strace
+  - man-db
+  - manpages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip-full # p7zip in darwin
+  - xz-utils
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - fd-find # provides fdfind
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+  - moreutils # sponge, vidir, chronic
+  - pv # Pipe Viewer
+
+  # -------------------------------------------------------------------
+  # Productivity CLI (Non-Rust, Lightweight)
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  # - direnv
+  - shellcheck
+  - bash-completion
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+  - yq # Note: Might require community/backports on some versions
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+  - tig
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu
+  - sysstat
+  - stress-ng
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gnupg
+  - pinentry-tty
+  - pinentry-curses
+  - age
+  # - sops
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - httpie # Python based, standard in Debian
+  - aria2 # C++
+  - rsync
+  - nmap
+  - mtr-tiny
+  - iperf3
+  - socat
+  - dnsutils # provides dig, host, nslookup
+  - iputils-ping
+  - net-tools
+  - lsof
+  - ipcalc
+
+base_dev_packages: []

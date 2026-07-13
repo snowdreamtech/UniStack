@@ -1,0 +1,113 @@
+---
+# =====================================================================
+# roles/base/vars/alpine.yml
+#
+# Purpose:
+#   Alpine Linux-specific package list for the base role.
+#   Provides a comprehensive set of CLI utilities ensuring feature
+#   parity with Debian/RedHat-based distributions.
+# =====================================================================
+
+base_packages:
+  # -------------------------------------------------------------------
+  # OS Core & Administrative
+  # -------------------------------------------------------------------
+  - lsb-release
+  - sudo
+  - procps-ng
+  - psmisc # provides pstree
+  - tzdata
+  - libcap
+  - ca-certificates
+  - musl-locales
+  - musl-locales-lang
+  - busybox-suid
+  - inotify-tools
+  - strace
+  - man-db
+  - man-pages
+  - tcpdump
+
+  # -------------------------------------------------------------------
+  # Core Utilities & Archivers (GNU/Full versions preferred over BusyBox)
+  # -------------------------------------------------------------------
+  - vim
+  - zip
+  - unzip
+  - bzip2
+  - p7zip
+  - xz
+  - file
+  - gzip
+  - zstd
+  - patch
+  - make
+  - fd
+  - ripgrep
+  - bat
+  - tree
+  - parallel
+  - moreutils
+  - pv
+
+  # -------------------------------------------------------------------
+  # Productivity CLI (Non-Rust, Lightweight)
+  # -------------------------------------------------------------------
+  - fzf
+  - tmux
+  # - direnv
+  - shellcheck
+  - bash-completion
+
+  # -------------------------------------------------------------------
+  # Data Processing (JSON/YAML)
+  # -------------------------------------------------------------------
+  - jq
+  - yq
+  - gron
+
+  # -------------------------------------------------------------------
+  # Git & Development Workflow
+  # -------------------------------------------------------------------
+  - git
+  - git-lfs
+  - tig
+
+  # -------------------------------------------------------------------
+  # System Monitoring & Resource Usage
+  # -------------------------------------------------------------------
+  - htop
+  - ncdu
+  - sysstat
+  - stress-ng
+
+  # -------------------------------------------------------------------
+  # Security & Identity
+  # -------------------------------------------------------------------
+  - openssl
+  - gnupg
+  - pinentry
+  - pinentry-tty
+  - age
+  # - sops
+
+  # -------------------------------------------------------------------
+  # Network & Data Transfer
+  # -------------------------------------------------------------------
+  - wget
+  - curl
+  - httpie
+  - aria2
+  - rsync
+  - nmap
+  - mtr
+  - iperf3
+  - socat
+  - bind-tools # provides dig, host, nslookup
+  - iputils
+  - net-tools
+  - lsof
+  - netcat-openbsd
+  - ipcalc
+
+base_dev_packages: []
