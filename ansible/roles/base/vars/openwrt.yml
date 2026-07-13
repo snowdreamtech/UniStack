@@ -4,37 +4,28 @@
 #
 # Purpose:
 #   OpenWrt-specific package list for the base role.
-#   OpenWrt uses opkg package manager with minimal package set.
-#   Focuses on essential utilities rather than full GNU toolchains.
+#   OpenWrt uses opkg package manager with HIGHLY limited package set.
+#   This is an embedded system image - most standard Linux packages unavailable.
+#   Focuses on absolute essentials only.
 #
 # Notes:
-#   - procps: not available in OpenWrt (system is minimal)
-#   - Many packages are compiled differently for embedded systems
-#   - Package availability varies by target/variant
+#   - OpenWrt is an embedded Linux distribution with minimal packages
+#   - Most compression utilities, archive tools, and dev tools unavailable
+#   - Only includes packages guaranteed to exist in base OpenWrt image
+#   - Many packages like zip, vim-full, xz-utils, make, etc not available
 # =====================================================================
 
 base_packages:
   # -------------------------------------------------------------------
-  # Core Utilities (Minimal set for embedded systems)
+  # Core Utilities (Only what's in base OpenWrt)
   # -------------------------------------------------------------------
-  - vim-full
-  - zip
-  - unzip
-  - xz-utils
-  - file
-  - gzip
-  - coreutils
-  - diffutils
-  - patch
-  - make
   - grep
   - sed
-  - gawk
+  - coreutils
+  - ca-bundle
   - git
-  - openssh-client
-  - openssh-sftp-server
   - wget
   - curl
-  - ca-bundle
+  - openssh-client
 
 base_dev_packages: []
