@@ -68,6 +68,16 @@ builds:
     ignore:
       - goos: windows
         goarch: arm
+      # modernc.org/libc (dependency of modernc.org/sqlite) does not support
+      # the following OS/arch combinations — no build-constrained Go files exist.
+      - goos: openbsd
+        goarch: arm
+      - goos: openbsd
+        goarch: riscv64
+      - goos: netbsd
+        goarch: "386"
+      - goos: netbsd
+        goarch: arm64
     mod_timestamp: "{{ .CommitTimestamp }}"
 
 archives:
