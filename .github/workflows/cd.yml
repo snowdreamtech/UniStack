@@ -241,8 +241,6 @@ jobs:
           - "fedora:40"
           - "opensuse/leap:15.6"
           - "gentoo/stage3:latest"
-          - "mageia:9"
-          - "nixos/nix:latest"
           - "openwrt/rootfs:x86-64-23.05.5"
           - "photon:5.0"
           - "voidlinux/voidlinux:latest"

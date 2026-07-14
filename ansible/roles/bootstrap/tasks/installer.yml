@@ -58,14 +58,10 @@
       PM="macports"
     elif command -v eopkg >/dev/null 2>&1; then
       PM="eopkg"
-    elif command -v nix-env >/dev/null 2>&1; then
-      PM="nix-env"
     elif command -v opkg >/dev/null 2>&1; then
       PM="opkg"
     elif command -v tdnf >/dev/null 2>&1; then
       PM="tdnf"
-    elif command -v urpmi >/dev/null 2>&1; then
-      PM="urpmi"
     elif command -v slackpkg >/dev/null 2>&1; then
       PM="slackpkg"
     else
@@ -144,18 +140,12 @@
       eopkg)
         eopkg install -y python3
         ;;
-      nix-env)
-        nix-env -iA nixpkgs.python3
-        ;;
       opkg)
         mkdir -p /var/lock
         opkg update && opkg install python3 python3-venv
         ;;
       tdnf)
         tdnf install -y python3
-        ;;
-      urpmi)
-        urpmi --auto python3
         ;;
       slackpkg)
         slackpkg update && slackpkg install python3

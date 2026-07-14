@@ -10,7 +10,7 @@
 - name: "Determine appropriate shell for OS family"
   ansible.builtin.set_fact:
     _init_user_shell: >-
-      {%- if os_family == 'alpine' or os_family == 'openwrt' or os_family == 'nixos' -%}
+      {%- if os_family == 'alpine' or os_family == 'openwrt' -%}
         /bin/sh
       {%- elif os_family == 'freebsd' or os_family == 'openbsd' or os_family == 'netbsd' -%}
         /bin/sh
@@ -38,7 +38,7 @@
     create_home: true
   register: _init_user_info
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  when: "(os_family | default('') | lower) != 'darwin'"
   environment:
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"
 
@@ -49,7 +49,7 @@
     owner: "{{ init_user_name }}"
     mode: "0700"
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  when: "(os_family | default('') | lower) != 'darwin'"
 
 - name: "Enforce secure permissions (0600) on deployment user SSH files"
   ansible.builtin.shell: |
@@ -70,7 +70,7 @@
       chown -R {{ init_user_name }}:{{ _init_user_info.group | default(init_user_name) }} "$SSH_DIR"
     fi
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  when: "(os_family | default('') | lower) != 'darwin'"
   changed_when: false
 
 - name: "Ensure sudoers.d directory exists"
@@ -81,7 +81,7 @@
     group: "{{ unistack_root_group }}"
     mode: "0750"
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  when: "(os_family | default('') | lower) != 'darwin'"
 
 - name: "Grant passwordless sudo privileges to the deployment user"
   ansible.builtin.copy:
@@ -92,4 +92,4 @@
     mode: "0440"
     validate: "visudo -cf %s"
   become: "{{ become_enabled }}"
-  when: "(os_family | default('') | lower) not in ['darwin', 'nixos']"
+  when: "(os_family | default('') | lower) != 'darwin'"

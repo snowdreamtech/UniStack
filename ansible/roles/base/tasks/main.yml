@@ -27,7 +27,7 @@
 # Uses the same include_vars pattern as the init role.
 # Replaces Uniloader's native/os_loader with direct include_vars.
 # Must look in vars/ subdirectory to avoid loading tasks files
-# (e.g., tasks/nixos.yml should not be loaded here)
+# (e.g., tasks/darwin.yml should not be loaded here)
 # ---------------------------------------------------------------------
 - name: "Load OS-specific variable mappings"
   ansible.builtin.include_vars: "{{ item }}"
