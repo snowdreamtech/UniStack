@@ -1,0 +1,12 @@
+# =====================================================================
+# roles/native/tasks/package_loader/kylin.yml
+#
+# Purpose:
+#   Kylin (麒麟) specific package management.
+#   Routes to the appropriate backbone loader based on version.
+# =====================================================================
+
+# WHY: Kylin V10 is openEuler based, while V4 is Ubuntu based. 
+# We detect the backbone and route accordingly.
+- name: "Package (Kylin): Routing to backbone"
+  ansible.builtin.include_tasks: "{{ (os_family == 'redhat') | ternary('redhat.yml', 'debian.yml') }}"

@@ -1,0 +1,99 @@
+# =====================================================================
+# roles/native/tasks/service_loader/bsd.yml
+#
+# Purpose:
+#   BSD-style service management.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/bsd"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/bsd"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# WHY: Reset functional variables to prevent pollution.
+- name: "Service (BSD): Reset loader variables"
+  ansible.builtin.set_fact:
+    _bsd_svc_check: null
+    _bsd_init_check: null
+    _bsd_result: null
+  tags: ["always"]
+
+# WHY: BSD systems rely on the 'service' utility for managing rc.d scripts.
+- name: "Service (BSD): Verify service binary"
+  ansible.builtin.command: "which service"
+  register: _bsd_svc_check
+  failed_when: false
+  changed_when: false
+  become: false
+  tags: ["always"]
+
+# WHY: Check for rc.d script in common BSD locations.
+- name: "Service (BSD): Verify service script"
+  ansible.builtin.stat:
+    path: "{{ loader_item }}"
+  register: _bsd_init_check_results
+  loop:
+    - "/etc/rc.d/{{ service_name }}"
+    - "/usr/local/etc/rc.d/{{ service_name }}"
+  loop_control:
+    loop_var: loader_item
+  tags: ["always"]
+
+- name: "Service (BSD): Concatenate init check state"
+  ansible.builtin.set_fact:
+    _bsd_init_exists: "{{ _bsd_init_check_results.results[0].stat.exists or _bsd_init_check_results.results[1].stat.exists }}"
+  tags: ["always"]
+
+- name: "Service (BSD): Fault if service missing"
+  ansible.builtin.fail:
+    msg: "BSD environment detected but 'service' binary was not found."
+  when: _bsd_svc_check.rc | default(1) != 0
+  tags: ["always"]
+
+- name: "Service (BSD): Fault if script missing"
+  ansible.builtin.fail:
+    msg: "BSD service script for '{{ service_name }}' not found in /etc/rc.d/ or /usr/local/etc/rc.d/. Cannot start/restart."
+  when:
+    - not _bsd_init_exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'restarted']
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: use specialized module for BSD rc.d services.
+- name: "Service (BSD): Execute state change"
+  community.general.bsd_service:
+    name: "{{ service_name }}"
+    state: "{{ service_state | default('started', true) }}"
+    enabled: "{{ service_enabled | default(true, true) | bool }}"
+  register: _bsd_result
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when: _bsd_init_exists | default(false)
+  vars:
+    fingerprint: "service_bsd_exec_{{ service_name }}"
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Use include_role for log_loader to ensure cross-task consistency and traceability.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_BSD"
+    msg: "Name: {{ service_name }} | State: {{ service_state | default('started', true) }} | Enabled: {{ service_enabled | default(true, true) }}"

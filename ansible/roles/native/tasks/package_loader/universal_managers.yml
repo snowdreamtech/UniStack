@@ -1,0 +1,138 @@
+# noqa
+# roles/native/tasks/package_loader/universal_managers.yml
+#
+# Purpose:
+#   Modular dispatcher for core mainstream package managers.
+#   - Detects presence of Platinum 35 managers.
+#   - Dispatches only requested managers to their respective task files.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Collective Environment Detection
+# ---------------------------------------------------------------------
+
+- name: "Package (Universal): Detect all available managers"
+  ansible.builtin.command: "command -v {{ item }} >/dev/null 2>&1"
+  loop: ["snap", "flatpak", "nix", "guix", "yay", "pip3", "pipx", "conda", "go", "npm", "yarn", "pnpm", "cargo", "deno", "composer", "dart", "nimble", "dotnet", "bun", "cs", "sdk", "gem"]
+  register: _universal_mgr_collect
+  failed_when: false
+  changed_when: false
+  tags: ["always"]
+
+- name: "Package (Universal): Map installation facts"
+  ansible.builtin.set_fact:
+    is_snap_installed: "{{ (ansible_system == 'Linux') and (_universal_mgr_collect.results[0].rc == 0) }}"
+    is_flatpak_installed: "{{ (ansible_system == 'Linux') and (_universal_mgr_collect.results[1].rc == 0) }}"
+    is_nix_installed: "{{ _universal_mgr_collect.results[2].rc == 0 }}"
+    is_guix_installed: "{{ (ansible_system == 'Linux') and (_universal_mgr_collect.results[3].rc == 0) }}"
+    is_aur_installed: "{{ (ansible_os_family == 'Archlinux') and (_universal_mgr_collect.results[4].rc == 0) }}"
+    is_pip_installed: "{{ _universal_mgr_collect.results[5].rc == 0 }}"
+    is_pipx_installed: "{{ _universal_mgr_collect.results[6].rc == 0 }}"
+    is_conda_installed: "{{ _universal_mgr_collect.results[7].rc == 0 }}"
+    is_go_installed: "{{ _universal_mgr_collect.results[8].rc == 0 }}"
+    is_npm_installed: "{{ _universal_mgr_collect.results[9].rc == 0 }}"
+    is_yarn_installed: "{{ _universal_mgr_collect.results[10].rc == 0 }}"
+    is_pnpm_installed: "{{ _universal_mgr_collect.results[11].rc == 0 }}"
+    is_cargo_installed: "{{ _universal_mgr_collect.results[12].rc == 0 }}"
+    is_deno_installed: "{{ _universal_mgr_collect.results[13].rc == 0 }}"
+    is_composer_installed: "{{ _universal_mgr_collect.results[14].rc == 0 }}"
+    is_dart_installed: "{{ _universal_mgr_collect.results[15].rc == 0 }}"
+    is_nim_installed: "{{ _universal_mgr_collect.results[16].rc == 0 }}"
+    is_dotnet_installed: "{{ _universal_mgr_collect.results[17].rc == 0 }}"
+    is_bun_installed: "{{ _universal_mgr_collect.results[18].rc == 0 }}"
+    is_cs_installed: "{{ _universal_mgr_collect.results[19].rc == 0 }}"
+    is_sdk_installed: "{{ _universal_mgr_collect.results[20].rc == 0 }}"
+    is_gem_installed: "{{ _universal_mgr_collect.results[21].rc == 0 }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 2. Dispatchers: Call modular task files
+# ---------------------------------------------------------------------
+
+- name: "Package (Universal): Inclusion of Snap manager"
+  ansible.builtin.include_tasks: "mgmt_snap.yml"
+  when: pkg_snap_list | length > 0
+
+- name: "Package (Universal): Inclusion of Flatpak manager"
+  ansible.builtin.include_tasks: "mgmt_flatpak.yml"
+  when: pkg_flatpak_list | length > 0
+
+- name: "Package (Universal): Inclusion of Nix manager"
+  ansible.builtin.include_tasks: "mgmt_nix.yml"
+  when: pkg_nix_list | length > 0
+
+- name: "Package (Universal): Inclusion of Guix manager"
+  ansible.builtin.include_tasks: "mgmt_guix.yml"
+  when: pkg_guix_list | length > 0
+
+- name: "Package (Universal): Inclusion of AUR helper"
+  ansible.builtin.include_tasks: "mgmt_aur.yml"
+  when: pkg_aur_list | length > 0
+
+- name: "Package (Universal): Inclusion of PIP manager"
+  ansible.builtin.include_tasks: "mgmt_pip.yml"
+  when: pkg_pip_list | length > 0
+
+- name: "Package (Universal): Inclusion of Pipx manager"
+  ansible.builtin.include_tasks: "mgmt_pipx.yml"
+  when: pkg_pipx_list | length > 0
+
+- name: "Package (Universal): Inclusion of Conda manager"
+  ansible.builtin.include_tasks: "mgmt_conda.yml"
+  when: pkg_conda_list | length > 0
+
+- name: "Package (Universal): Inclusion of Go manager"
+  ansible.builtin.include_tasks: "mgmt_go.yml"
+  when: pkg_go_list | length > 0
+
+- name: "Package (Universal): Inclusion of NPM manager"
+  ansible.builtin.include_tasks: "mgmt_npm.yml"
+  when: pkg_npm_list | length > 0
+
+- name: "Package (Universal): Inclusion of Yarn manager"
+  ansible.builtin.include_tasks: "mgmt_yarn.yml"
+  when: pkg_yarn_list | length > 0
+
+- name: "Package (Universal): Inclusion of PNPM manager"
+  ansible.builtin.include_tasks: "mgmt_pnpm.yml"
+  when: pkg_pnpm_list | length > 0
+
+- name: "Package (Universal): Inclusion of Cargo manager"
+  ansible.builtin.include_tasks: "mgmt_cargo.yml"
+  when: pkg_cargo_list | length > 0
+
+- name: "Package (Universal): Inclusion of Deno manager"
+  ansible.builtin.include_tasks: "mgmt_deno.yml"
+  when: pkg_deno_list | length > 0
+
+- name: "Package (Universal): Inclusion of Composer manager"
+  ansible.builtin.include_tasks: "mgmt_composer.yml"
+  when: pkg_composer_list | length > 0
+
+- name: "Package (Universal): Inclusion of Dart/Pub manager"
+  ansible.builtin.include_tasks: "mgmt_dart.yml"
+  when: pkg_dart_list | length > 0
+
+- name: "Package (Universal): Inclusion of Nimble manager"
+  ansible.builtin.include_tasks: "mgmt_nim.yml"
+  when: pkg_nim_list | length > 0
+
+- name: "Package (Universal): Inclusion of .NET manager"
+  ansible.builtin.include_tasks: "mgmt_dotnet.yml"
+  when: pkg_dotnet_list | length > 0
+
+- name: "Package (Universal): Inclusion of Bun manager"
+  ansible.builtin.include_tasks: "mgmt_bun.yml"
+  when: pkg_bun_list | length > 0
+
+- name: "Package (Universal): Inclusion of Coursier manager"
+  ansible.builtin.include_tasks: "mgmt_coursier.yml"
+  when: pkg_cs_list | length > 0
+
+- name: "Package (Universal): Inclusion of SDKMAN manager"
+  ansible.builtin.include_tasks: "mgmt_sdkman.yml"
+  when: pkg_sdk_list | length > 0
+
+- name: "Package (Universal): Inclusion of Gem manager"
+  ansible.builtin.include_tasks: "mgmt_gem.yml"
+  when: pkg_gem_list | length > 0

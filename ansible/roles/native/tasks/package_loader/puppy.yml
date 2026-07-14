@@ -1,0 +1,31 @@
+# =====================================================================
+# roles/native/tasks/package_loader/puppy.yml
+#
+# Purpose:
+#   Puppy Linux specific package management.
+#   Uses its unique approach to handle PET packages.
+# =====================================================================
+
+# WHY: Puppy Linux is a legendary lightweight distro. 
+# We use the shell to call its native package helper.
+- name: "Package (Puppy): execution"
+  ansible.builtin.shell: "pkg add {{ pkg_item }}"
+  loop: "{{ pkg_repo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  become: "{{ become_enabled }}"
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_puppy_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Puppy): Mark petget cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'petget': true}) }}"
+  when: (pkg_repo_list | length) > 0
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

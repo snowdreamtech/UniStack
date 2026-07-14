@@ -1,0 +1,46 @@
+# =====================================================================
+# roles/native/tasks/package_loader/slackware.yml
+#
+# Purpose:
+#   Slackware specific package management.
+#   Implements a classic approach to package installation.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Execution: Classic Slackware Branch
+# ---------------------------------------------------------------------
+
+# WHY: Slackware is the oldest surviving Linux distribution. 
+# We use the community-maintained slackpkg module if available.
+- name: "Package (Slackware): slackpkg execution"
+  community.general.slackpkg:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.slackpkg | default(false, true)))
+      }}
+  loop: "{{ pkg_repo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result
+  become: "{{ become_enabled }}"
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_slack_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Slackware): Mark slackpkg cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'slackpkg': true}) }}"
+  when:
+    - package_result is defined
+    - not package_result.skipped | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

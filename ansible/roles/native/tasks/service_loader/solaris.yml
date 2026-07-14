@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/service_loader/solaris.yml
+#
+# Purpose:
+#   Solaris-specific service loader entry.
+#   Proxies requests to the SMF implementation.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/solaris"
+#     vars:
+#       service_name: "network/ssh"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/solaris"
+#     vars:
+#       service_name: "network/ssh"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: Solaris exclusively uses the Service Management Facility (SMF).
+# We delegate to the specialized smf loader.
+- ansible.builtin.include_tasks: "smf.yml"

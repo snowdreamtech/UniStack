@@ -1,0 +1,80 @@
+# =====================================================================
+# roles/native/tasks/service_loader/procd.yml
+#
+# Purpose:
+#   Procd-specific service management (OpenWrt).
+#   Handles the specialized init system used in embedded Linux environments.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/procd"
+#     vars:
+#       service_name: "network"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/procd"
+#     vars:
+#       service_name: "network"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Detection ---
+# ---------------------------------------------------------------------
+
+# WHY: Reset functional variables to prevent pollution.
+- name: "Service (Procd): Reset loader variables"
+  ansible.builtin.set_fact:
+    _procd_init_check: null
+    _procd_exec_result: null
+  tags: ["always"]
+
+# WHY: OpenWrt services are managed via scripts in /etc/init.d/.
+- name: "Service (Procd): Verify service script"
+  ansible.builtin.stat:
+    path: "/etc/init.d/{{ service_name }}"
+  register: _procd_init_check
+  tags: ["always"]
+
+- name: "Service (Procd): Fault if script missing"
+  ansible.builtin.fail:
+    msg: "Service script '/etc/init.d/{{ service_name }}' not found. Cannot start/restart."
+  when:
+    - not _procd_init_check.stat.exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'restarted']
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: We use shell for procd as it involves calling the init script with specific actions.
+- name: "Service (Procd): Execute shell control"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    PATH={{ os_paths | default('/sbin:/usr/sbin:/bin:/usr/bin') }}
+    /etc/init.d/{{ service_name }} {{ 'enable' if (service_enabled | default(true, true) | bool) else 'disable' }}
+    /etc/init.d/{{ service_name }} {{ service_state | default('started', true) | replace('started', 'start') | replace('stopped', 'stop') }}
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  register: _procd_exec_result
+  changed_when: true
+  when: _procd_init_check.stat.exists | default(false)
+  vars:
+    fingerprint: "service_procd_exec_{{ service_name }}"
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Use include_role for log_loader to ensure cross-task consistency and traceability.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_PROCD"
+    msg: "Name: {{ service_name }} | State: {{ service_state | default('started', true) }} | Enabled: {{ service_enabled | default(true, true) }}"

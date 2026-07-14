@@ -1,0 +1,78 @@
+# =====================================================================
+# roles/native/tasks/service_loader/sysvinit.yml
+#
+# Purpose:
+#   Legacy SysVinit service management.
+#   Ensures compatibility with traditional Linux distributions.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/sysvinit"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/sysvinit"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Detection ---
+# ---------------------------------------------------------------------
+
+# WHY: Reset functional variables to prevent pollution.
+- name: "Service (SysVinit): Reset loader variables"
+  ansible.builtin.set_fact:
+    _sysvinit_script_check: null
+    _sysvinit_result: null
+  tags: ["always"]
+
+# WHY: SysVinit services are traditional shell scripts in /etc/init.d/.
+- name: "Service (SysVinit): Verify init script"
+  ansible.builtin.stat:
+    path: "/etc/init.d/{{ service_name }}"
+  register: _sysvinit_script_check
+  tags: ["always"]
+
+- name: "Service (SysVinit): Fault if script missing"
+  ansible.builtin.fail:
+    msg: "SysVinit script '/etc/init.d/{{ service_name }}' not found. Cannot start/restart."
+  when:
+    - not _sysvinit_script_check.stat.exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'restarted']
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: use standardized sysvinit module for cross-distro compatibility.
+- name: "Service (SysVinit): Execute state change"
+  ansible.builtin.sysvinit:
+    name: "{{ service_name }}"
+    state: "{{ service_state | default('started', true) }}"
+    enabled: "{{ service_enabled | default(true, true) | bool }}"
+  register: _sysvinit_result
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when: _sysvinit_script_check.stat.exists | default(false)
+  vars:
+    fingerprint: "service_sysvinit_exec_{{ service_name }}"
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Use include_role for log_loader to ensure cross-task consistency and traceability.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_SYSVINIT"
+    msg: "Name: {{ service_name }} | State: {{ service_state | default('started', true) }} | Enabled: {{ service_enabled | default(true, true) }}"

@@ -1,0 +1,53 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_aur.yml
+# =====================================================================
+
+# 1. Lifecycle: Auto-install or Assert
+- name: "Package (AUR): Auto-install yay if requested"
+  block:
+    - name: "Package (AUR): Install base-devel and git"
+      community.general.pacman:
+        name: ["base-devel", "git"]
+        state: "present"
+      become: true
+    - name: "Package (AUR): Clone and build yay"
+      ansible.builtin.shell: |
+        PATH={{ os_paths }}
+        set -euo pipefail
+        git clone https://aur.archlinux.org/yay-bin.git /tmp/yay-bin
+        cd /tmp/yay-bin && makepkg -si --noconfirm
+        rm -rf /tmp/yay-bin
+      become: false
+  when:
+    - not is_aur_installed | bool
+    - package_auto_install_managers | default(false, true) | bool
+  register: _aur_install_result
+
+- name: "Package (AUR): Verify AUR presence"
+  ansible.builtin.assert:
+    that: "is_aur_installed | bool or (_aur_install_result is defined and not _aur_install_result.failed | default(false))"
+    fail_msg: "AUR helper (yay) is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
+
+# 2. Execution
+- name: "Package (AUR): AUR execution"
+  community.general.pacman:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+    executable: yay
+    extra_args: "--builddir /var/cache/yay"
+  loop: "{{ pkg_aur_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_aur
+  become: false
+  vars:
+    fingerprint: "package_aur_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (AUR): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'aur': true}) }}"
+  when:
+    - package_result_aur is defined
+    - not package_result_aur.skipped | default(false)
+  tags: ["always"]

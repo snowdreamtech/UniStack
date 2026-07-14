@@ -1,0 +1,30 @@
+# =====================================================================
+# roles/native/tasks/package_loader/tinycore.yml
+#
+# Purpose:
+#   Tiny Core Linux specific package management.
+#   Uses tce-load to manage extensions in memory.
+# =====================================================================
+
+# WHY: Tiny Core is a minimal system that loads extensions into RAM.
+- name: "Package (TinyCore): tce-load execution"
+  ansible.builtin.shell: "tce-load -wi {{ pkg_item }}"
+  loop: "{{ pkg_repo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  become: false
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_tinycore_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (TinyCore): Mark tce-load cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'tce_load': true}) }}"
+  when: (pkg_repo_list | length) > 0
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

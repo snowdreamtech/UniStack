@@ -1,0 +1,145 @@
+# =====================================================================
+# roles/native/tasks/service_loader/darwin.yml
+#
+# Purpose:
+#   macOS (Darwin) Service Master Loader.
+#   Routes to Homebrew, MacPorts, or Launchd fallback.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/darwin"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/darwin"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Detection ---
+# ---------------------------------------------------------------------
+
+# WHY: Reset functional variables to prevent pollution between iterations.
+- name: "Service (macOS): Reset loader variables"
+  ansible.builtin.set_fact:
+    _service_mgr_target: null
+    _service_check_brew: null
+    _service_check_port: null
+  tags: ["always"]
+
+# WHY: Detect if the service is installed via Homebrew.
+- name: "Service (macOS): Detect Homebrew formula"
+  ansible.builtin.command: "brew list --formula {{ service_name }}"
+  register: _service_check_brew
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ os_paths | default('/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin') }}"
+
+# WHY: Detect if the service is installed via MacPorts.
+- name: "Service (macOS): Detect MacPorts port"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    PATH={{ os_paths | default('/opt/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin') }}
+    port -q installed {{ service_name }} | grep -q {{ service_name }}
+  register: _service_check_port
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ os_paths | default('/opt/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin') }}"
+
+# ---------------------------------------------------------------------
+# --- Decision ---
+# ---------------------------------------------------------------------
+
+# WHY: Choose the appropriate service manager based on detection results.
+- name: "Service (macOS): Determine Service Manager"
+  ansible.builtin.set_fact:
+    _service_mgr_target: >-
+      {{
+        'macports' if (
+          (_service_check_port.rc == 0) and
+          (os_pkg_mgr | default('unknown') == 'macports' or _service_check_brew.rc != 0)
+        ) else (
+          'homebrew' if (_service_check_brew.rc == 0) else 'launchd'
+        )
+      }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# 1. Homebrew Execution
+- name: "Service (macOS): Execute Homebrew control"
+  community.general.homebrew_services:
+    name: "{{ service_name }}"
+    state: "{{ 'present' if (service_state | default('started', true) == 'started') else ('absent' if (service_state | default('started', true) == 'stopped') else 'restarted') }}"
+  become: "{{ become_enabled }}"
+  when: _service_mgr_target == 'homebrew'
+  vars:
+    fingerprint: "service_exec_brew_{{ service_name }}"
+
+# 2. MacPorts Execution
+- name: "Service (macOS): Execute MacPorts control"
+  ansible.builtin.shell: |
+    set -euo pipefail
+    PATH={{ os_paths | default('/opt/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin') }}
+
+    ACTION="{{ service_state | default('started', true) }}"
+    PORT="{{ service_name }}"
+
+    # Map Ansible states to MacPorts actions
+    if [ "$ACTION" = "started" ]; then
+      CMD="load"
+    elif [ "$ACTION" = "stopped" ]; then
+      CMD="unload"
+    elif [ "$ACTION" = "restarted" ]; then
+      # MacPorts does not support restart for most ports; implement as unload + load
+      port unload "$PORT" >/dev/null 2>&1 || true
+      CMD="load"
+    else
+      echo "Unknown service_state: $ACTION" >&2
+      exit 1
+    fi
+
+    # Execute the final command
+    port "$CMD" "$PORT"
+  register: _port_result
+  failed_when: >
+    (_port_result.rc != 0) and
+    ('already loaded' not in _port_result.stderr) and
+    ('not loaded' not in _port_result.stderr) and
+    ('Could not find service' not in _port_result.stderr)
+  changed_when: true
+  become: "{{ become_enabled }}"
+  when: _service_mgr_target == 'macports'
+  environment:
+    PATH: "{{ os_paths | default('/opt/local/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin') }}"
+  vars:
+    fingerprint: "service_exec_port_{{ service_name }}"
+
+# 3. Native Launchd Execution (Fallback)
+- ansible.builtin.include_tasks: "launchd.yml"
+  when: _service_mgr_target == 'launchd'
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Log the outcome for auditable decision tracking.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_DARWIN"
+    msg: "Name: {{ service_name }} | Manager: {{ _service_mgr_target }}"
+  when: _service_mgr_target != 'launchd'

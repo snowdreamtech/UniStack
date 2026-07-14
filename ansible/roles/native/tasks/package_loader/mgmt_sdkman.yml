@@ -1,0 +1,26 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_sdkman.yml
+# =====================================================================
+
+# 1. Lifecycle: Assert
+- name: "Package (SDKMAN): Verify sdk presence"
+  ansible.builtin.assert:
+    that: "is_sdkman_installed | bool"
+    fail_msg: "SDKMAN is required. Please install SDKMAN first."
+
+# 2. Execution
+- name: "Package (SDKMAN): SDK installation via sdkman"
+  ansible.builtin.shell: "PATH={{ os_paths }} bash -c 'source ~/.sdkman/bin/sdkman-init.sh && sdk install {{ pkg_item }}'"
+  loop: "{{ pkg_sdk_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_sdkman
+  become: false
+  vars:
+    fingerprint: "package_sdkman_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (SDKMAN): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'sdkman': true}) }}"
+  tags: ["always"]

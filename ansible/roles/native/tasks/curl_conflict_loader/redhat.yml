@@ -1,0 +1,45 @@
+# =====================================================================
+# roles/native/tasks/curl_conflict_loader/redhat.yml
+#
+# Purpose:
+#   Resolve core package conflicts on Enterprise Linux 9 (EL9).
+#   Specifically handles the 'curl-minimal' vs 'curl' overlap by 
+#   swapping the minimal variant for the full version using DNF.
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Gather currently installed package facts to identify 
+# existing variants.
+# ---------------------------------------------------------------------
+- name: "Ensure package facts are collected"
+  ansible.builtin.package_facts:
+    manager: "auto"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Detection: Determine if curl-minimal is present and needs swapping.
+# ---------------------------------------------------------------------
+- name: "Derive curl conflict state flags"
+  ansible.builtin.set_fact:
+    curl_minimal_installed: "{{ 'curl-minimal' in (ansible_facts.packages | default({}, true)) }}"
+    curl_full_installed: "{{ 'curl' in (ansible_facts.packages | default({}, true)) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Perform the package swap using DNF. 
+# Only triggers on EL9 systems where curl-minimal exists without curl.
+# ---------------------------------------------------------------------
+- name: "Swap curl-minimal to curl when needed"
+  ansible.builtin.command: "dnf swap curl-minimal curl -y"
+  register: curl_swap
+  # WHY: We check if the swap was actually completed to determine change status.
+  changed_when: "'Complete!' in (curl_swap.stdout | default('', true))"
+  failed_when: false
+  when:
+    - os_family == "redhat"
+    - os_version_major | int == 9
+    - ansible_facts.package_mgr | default('', true) == 'dnf'
+    - curl_minimal_installed | default(false, true)
+    - not (curl_full_installed | default(false, true))
+  become: "{{ become_enabled }}"

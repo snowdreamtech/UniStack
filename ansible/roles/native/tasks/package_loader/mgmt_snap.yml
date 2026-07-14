@@ -1,0 +1,41 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_snap.yml
+# =====================================================================
+
+# 1. Lifecycle: Auto-install or Assert
+- name: "Package (Snap): Auto-install Snapd if requested"
+  ansible.builtin.package:
+    name: "snapd"
+    state: "present"
+  become: true
+  when:
+    - not is_snap_installed | bool
+    - package_auto_install_managers | default(false, true) | bool
+  register: _snap_install_result
+
+- name: "Package (Snap): Verify Snap presence"
+  ansible.builtin.assert:
+    that: "is_snap_installed | bool or (_snap_install_result is defined and not _snap_install_result.failed | default(false))"
+    fail_msg: "Snap is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
+
+# 2. Execution
+- name: "Package (Snap): Snap execution"
+  community.general.snap:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+  loop: "{{ pkg_snap_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_snap
+  become: true
+  vars:
+    fingerprint: "package_snap_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (Snap): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'snap': true}) }}"
+  when:
+    - package_result_snap is defined
+    - not package_result_snap.skipped | default(false)
+  tags: ["always"]

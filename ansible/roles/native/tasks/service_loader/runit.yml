@@ -1,0 +1,90 @@
+# =====================================================================
+# roles/native/tasks/service_loader/runit.yml
+#
+# Purpose:
+#   Runit-specific service management.
+#   Used by Void Linux and specialized container environments.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/runit"
+#     vars:
+#       service_name: "sshd"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/runit"
+#     vars:
+#       service_name: "sshd"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# WHY: Reset functional variables to prevent pollution.
+- name: "Service (Runit): Reset loader variables"
+  ansible.builtin.set_fact:
+    _runit_check: null
+    _runit_svc_check: null
+    _runit_result: null
+  tags: ["always"]
+
+# WHY: Runit operations depend on the 'sv' command.
+- name: "Service (Runit): Verify sv binary"
+  ansible.builtin.command: "which sv"
+  register: _runit_check
+  failed_when: false
+  changed_when: false
+  become: false
+  tags: ["always"]
+
+# WHY: Check if the service directory exists in /etc/sv/
+- name: "Service (Runit): Verify service directory"
+  ansible.builtin.stat:
+    path: "/etc/sv/{{ service_name }}"
+  register: _runit_svc_check
+  tags: ["always"]
+
+- name: "Service (Runit): Fault if sv missing"
+  ansible.builtin.fail:
+    msg: "System reports 'runit' but 'sv' binary was not found."
+  when: _runit_check.rc | default(1) != 0
+  tags: ["always"]
+
+- name: "Service (Runit): Fault if directory missing"
+  ansible.builtin.fail:
+    msg: "Runit service directory '/etc/sv/{{ service_name }}' not found. Cannot start/restart."
+  when:
+    - not _runit_svc_check.stat.exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'restarted']
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: use specialized module for Runit management.
+- name: "Service (Runit): Execute state change"
+  community.general.runit:
+    name: "{{ service_name }}"
+    state: "{{ service_state | default('started', true) }}"
+    enabled: "{{ service_enabled | default(true, true) | bool }}"
+  register: _runit_result
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when: _runit_svc_check.stat.exists | default(false)
+  vars:
+    fingerprint: "service_runit_exec_{{ service_name }}"
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Use include_role for log_loader to ensure cross-task consistency and traceability.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_RUNIT"
+    msg: "Name: {{ service_name }} | State: {{ service_state | default('started', true) }} | Enabled: {{ service_enabled | default(true, true) }}"

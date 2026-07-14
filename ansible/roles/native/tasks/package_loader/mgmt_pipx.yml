@@ -1,0 +1,58 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_pipx.yml
+#
+# Purpose:
+#   Pipx package manager integration.
+#   Install and run Python applications in isolated environments.
+#
+# Author: Native AI Team
+#
+# Requirements:
+#   - Python 3.6+ must be pre-installed
+#   - Pipx isolates each application in its own virtual environment
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list: ["pipx:black", "pipx:flake8"]
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list:
+#         - "pipx:black"          # Python code formatter
+#         - "pipx:ansible"        # Ansible in isolated env
+#         - "pipx:poetry"         # Python dependency manager
+#       package_state: "present"
+# =====================================================================
+
+# 1. Lifecycle: Assert (Pipx should be installed via system package manager)
+- name: "Package (Pipx): Verify Pipx presence"
+  ansible.builtin.assert:
+    that: "is_pipx_installed | bool"
+    fail_msg: "Pipx is required but not installed. Please install pipx via your system package manager."
+
+# 2. Execution
+- name: "Package (Pipx): Install Python applications"
+  ansible.builtin.shell: |
+    PATH={{ os_paths }}
+    pipx install {{ item }}
+  loop: "{{ pkg_pipx_list }}"
+  register: _pipx_res
+  become: false # Pipx installs to user home
+  changed_when: "'is already installed' not in _pipx_res.stdout and 'not installed' not in _pipx_res.stderr"
+  vars:
+    fingerprint: "package_pipx_exec_{{ item }}"
+
+# 3. Cache Marking
+- name: "Package (Pipx): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'pipx': true}) }}"
+  when:
+    - _pipx_res is defined
+    - not _pipx_res.skipped | default(false)
+  tags: ["always"]

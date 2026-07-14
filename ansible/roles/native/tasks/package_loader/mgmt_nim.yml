@@ -1,0 +1,20 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_nim.yml
+#
+# Purpose:
+#   Modular task for Nimble (Nim) package management.
+#   - Focuses on "Strong Binary" installation/uninstallation.
+# =====================================================================
+
+- name: "Package (Nimble): Assert environment presence"
+  ansible.builtin.assert:
+    that: is_nim_installed
+    fail_msg: "Nimble (nim) is required for this action but was not found."
+
+- name: "Package (Nimble): Install requested packages"
+  ansible.builtin.shell: "PATH={{ os_paths }} nimble install -y {{ item }}"
+  loop: "{{ pkg_nim_list }}"
+  register: _nim_install_res
+  changed_when: "'is already installed' not in _nim_install_res.stdout"
+  when: pkg_nim_list | length > 0
+  become: false  # Usually installs to ~/.nimble/bin

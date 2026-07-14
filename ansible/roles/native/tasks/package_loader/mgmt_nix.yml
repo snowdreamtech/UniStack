@@ -1,0 +1,39 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_nix.yml
+# =====================================================================
+
+# 1. Lifecycle: Auto-install or Assert
+- name: "Package (Nix): Auto-install Nix if requested"
+  ansible.builtin.shell: "PATH={{ os_paths }} curl -L https://nixos.org/nix/install | sh"
+  become: false
+  when:
+    - not is_nix_installed | bool
+    - package_auto_install_managers | default(false, true) | bool
+  register: _nix_install_result
+
+- name: "Package (Nix): Verify Nix presence"
+  ansible.builtin.assert:
+    that: "is_nix_installed | bool or (_nix_install_result is defined and not _nix_install_result.failed | default(false))"
+    fail_msg: "Nix is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
+
+# 2. Execution
+- name: "Package (Nix): Nix execution"
+  community.general.nix:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+  loop: "{{ pkg_nix_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_nix
+  become: false
+  vars:
+    fingerprint: "package_nix_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (Nix): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'nix': true}) }}"
+  when:
+    - package_result_nix is defined
+    - not package_result_nix.skipped | default(false)
+  tags: ["always"]

@@ -1,0 +1,45 @@
+# =====================================================================
+# roles/native/tasks/package_loader/default.yml
+#
+# Purpose:
+#   Generic multi-platform package manager fallback.
+#   Uses the universal 'package' module and global source builder.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Execution: Binary Branch (Repo + File + URL)
+# ---------------------------------------------------------------------
+
+# WHY: We use the standardized 'package' module which works across 
+# most modern Linux distributions (SVR4, etc.).
+- name: "Package (Generic): Unified execution"
+  ansible.builtin.package:
+    name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"
+    state: "{{ (package_state == 'purged') | ternary('absent', package_state | default('present', true)) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.package | default(false, true)))
+      }}
+  register: package_result
+  become: "{{ become_enabled }}"
+
+  when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
+  vars:
+    fingerprint: "package_exec_generic_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Generic): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'package': true}) }}"
+  when:
+    - package_result is defined
+    - not package_result.skipped | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0
+

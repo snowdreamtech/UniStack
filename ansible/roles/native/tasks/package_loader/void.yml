@@ -1,0 +1,40 @@
+# =====================================================================
+# roles/native/tasks/package_loader/void.yml
+#
+# Purpose:
+#   Void Linux specific package management.
+#   Identifies use of XBPS as the distribution's native engine.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Execution: Native Binary Branch
+# ---------------------------------------------------------------------
+- name: "Package (Void): XBPS execution"
+  community.general.xbps:
+    name: "{{ pkg_repo_list }}"
+    state: "{{ package_state | default('present', true) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.xbps | default(false, true)))
+      }}
+  register: package_result
+  become: "{{ become_enabled }}"
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_void_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Void): Mark xbps cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'xbps': true}) }}"
+  when:
+    - package_result is defined
+    - not package_result.skipped | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

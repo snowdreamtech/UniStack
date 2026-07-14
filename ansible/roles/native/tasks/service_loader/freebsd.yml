@@ -1,0 +1,31 @@
+# =====================================================================
+# roles/native/tasks/service_loader/freebsd.yml
+#
+# Purpose:
+#   FreeBSD-specific service loader entry.
+#   Proxies requests to the BSD implementation.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/freebsd"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/freebsd"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: FreeBSD uses the standard BSD rc.d / service framework.
+- ansible.builtin.include_tasks: "bsd.yml"

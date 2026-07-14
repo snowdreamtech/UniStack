@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/service_loader/alpine.yml
+#
+# Purpose:
+#   Alpine Linux Service Loader.
+#   Entry point for OpenRC-based service management on Alpine.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/alpine"
+#     vars:
+#       service_name: "sshd"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/alpine"
+#     vars:
+#       service_name: "sshd"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: Alpine Linux exclusively uses OpenRC. 
+# We include the specialized OpenRC handler from the same directory.
+- ansible.builtin.include_tasks: "openrc.yml"

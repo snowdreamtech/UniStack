@@ -1,0 +1,56 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_go.yml
+#
+# Purpose:
+#   Go package manager integration.
+#   Installs Go modules and binaries via 'go install'.
+#
+# Author: Native AI Team
+#
+# Requirements:
+#   - Go runtime must be pre-installed on the system
+#   - Packages install to $GOPATH/bin (user-local)
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list: ["go:github.com/golang/example/hello"]
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list:
+#         - "go:github.com/golangci/golangci-lint/cmd/golangci-lint"
+#         - "go:golang.org/x/tools/cmd/goimports"
+#       package_state: "present"
+# =====================================================================
+
+# 1. Lifecycle: Assert (Auto-install Go is too heavy/impactful for a pkg loader, we assert only)
+- name: "Package (Go): Verify Go presence"
+  ansible.builtin.assert:
+    that: "is_go_installed | bool"
+    fail_msg: "Go runtime is required for 'go install'. Please install Go first."
+
+# 2. Execution
+- name: "Package (Go): Go binary installation"
+  ansible.builtin.shell: "PATH={{ os_paths }} go install {{ pkg_item }}@latest"
+  loop: "{{ pkg_go_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_go
+  become: false # Go usually installs to $GOPATH/bin which belongs to user
+  vars:
+    fingerprint: "package_go_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (Go): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'go': true}) }}"
+  when:
+    - package_result_go is defined
+    - not package_result_go.skipped | default(false)
+  tags: ["always"]

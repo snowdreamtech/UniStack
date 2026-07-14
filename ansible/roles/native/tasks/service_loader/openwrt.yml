@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/service_loader/openwrt.yml
+#
+# Purpose:
+#   OpenWrt-specific service loader entry.
+#   Proxies requests to the Procd implementation.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openwrt"
+#     vars:
+#       service_name: "network"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openwrt"
+#     vars:
+#       service_name: "network"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: OpenWrt uses the Procd init system. We delegate to the 
+# dedicated procd handler within the same directory.
+- ansible.builtin.include_tasks: "procd.yml"

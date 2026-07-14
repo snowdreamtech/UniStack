@@ -1,0 +1,133 @@
+# =====================================================================
+# roles/native/tasks/service_loader/openrc.yml
+#
+# Purpose:
+#   OpenRC Service Implementation.
+#   Provides idempotent and auditable service management for Alpine/Gentoo.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openrc"
+#     vars:
+#       service_name: "sshd"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openrc"
+#     vars:
+#       service_name: "sshd"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Validation ---
+# ---------------------------------------------------------------------
+
+# WHY: Ensure mandatory service identity is provided before proceeding.
+- ansible.builtin.assert:
+    that:
+      - service_name is defined
+      - service_name | length > 0
+    fail_msg: "OpenRC Error: service_name is required."
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Detection ---
+# ---------------------------------------------------------------------
+
+# WHY: Reset functional variables to prevent pollution.
+- name: "Service (OpenRC): Reset loader variables"
+  ansible.builtin.set_fact:
+    _openrc_init_check: null
+    _openrc_status_raw: null
+    _openrc_enabled_raw: null
+    _is_running: null
+    _is_enabled: null
+  tags: ["always"]
+
+# WHY: Check if the service script exists in /etc/init.d/
+- name: "Service (OpenRC): Verify service script"
+  ansible.builtin.stat:
+    path: "/etc/init.d/{{ service_name }}"
+  register: _openrc_init_check
+  tags: ["always"]
+
+# WHY: Detect current status to avoid unnecessary service commands (idempotency).
+- name: "Service (OpenRC): Detect current status"
+  ansible.builtin.command: "rc-service {{ service_name }} status"
+  register: _openrc_status_raw
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ os_paths | default('/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin') }}"
+
+# WHY: Check boot enablement status to ensure idempotency for rc-update.
+- name: "Service (OpenRC): Detect boot enablement"
+  ansible.builtin.command: "rc-update show"
+  register: _openrc_enabled_raw
+  failed_when: false
+  changed_when: false
+  environment:
+    PATH: "{{ os_paths | default('/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin') }}"
+
+- name: "Service (OpenRC): Set state facts"
+  ansible.builtin.set_fact:
+    _is_running: "{{ 'started' in (_openrc_status_raw.stdout | default('') | lower) }}"
+    _is_enabled: "{{ service_name in _openrc_enabled_raw.stdout | default('') }}"
+  when: _openrc_init_check.stat.exists | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: OpenRC uses rc-update for boot management.
+# Robustness: Skip if service is missing and we don't intend to enable it.
+- name: "Service (OpenRC): Adjust boot enablement"
+  ansible.builtin.command: "rc-update {{ 'add' if (service_enabled | default(true, true) | bool) else 'del' }} {{ service_name }}"
+  when:
+    - _openrc_init_check.stat.exists | default(false)
+    - (service_enabled | default(true, true) | bool) != (_is_enabled | default(false))
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  environment:
+    PATH: "{{ os_paths | default('/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin') }}"
+
+# WHY: OpenRC uses rc-service for runtime state control.
+# Robustness: Fault ONLY if we try to START a missing service. STOPPING a missing service is success.
+- name: "Service (OpenRC): Adjust running state"
+  ansible.builtin.command: "rc-service {{ service_name }} {{ service_state | default('started', true) | replace('started', 'start') | replace('stopped', 'stop') }}"
+  when:
+    - _openrc_init_check.stat.exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'stopped', 'restarted']
+    - (service_state | default('started', true) == 'restarted') or 
+      (service_state | default('started', true) == 'started' and not (_is_running | default(false))) or
+      (service_state | default('started', true) == 'stopped' and (_is_running | default(false)))
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  environment:
+    PATH: "{{ os_paths | default('/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin') }}"
+  vars:
+    fingerprint: "service_openrc_exec_{{ service_name }}"
+
+- name: "Service (OpenRC): Fault if starting missing service"
+  ansible.builtin.fail:
+    msg: "OpenRC service '{{ service_name }}' not found in /etc/init.d/. Cannot start/restart."
+  when:
+    - not _openrc_init_check.stat.exists | default(false)
+    - (service_state | default('started', true)) in ['started', 'restarted']
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Audit ---
+# ---------------------------------------------------------------------
+
+# WHY: Use include_role for log_loader to ensure cross-task consistency and traceability.
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "log_loader"
+  vars:
+    label: "SERVICE_OPENRC"
+    msg: "Name: {{ service_name }} | State: {{ service_state | default('started', true) }} | Enabled: {{ service_enabled | default(true, true) }}"

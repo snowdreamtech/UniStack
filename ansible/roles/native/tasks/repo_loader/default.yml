@@ -1,0 +1,25 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/default.yml
+#
+# Purpose:
+#   Fallback for unsupported repository management types.
+#   Currently no generic repository logic exists.
+#
+# Simple Usage:
+#   # Not intended for direct use
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#
+# Comprehensive Usage:
+#   # Not intended for direct use
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#
+# =====================================================================
+
+- name: "Repo (Fallback): No generic repo loader available"
+  ansible.builtin.debug:
+    msg: "No generic repository configuration is defined for this OS family."
+  when: ansible_check_mode | default(false, true)

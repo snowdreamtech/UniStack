@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/gpg_loader/debian.yml
+#
+# Purpose:
+#   Import GPG keys on Debian/Ubuntu (APT).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#       become_enabled: true
+# =====================================================================
+
+- name: "Import GPG key (apt)"
+  ansible.builtin.apt_key:
+    url: "{{ gpg_key_url }}"
+    state: "present"
+    validate_certs: true
+  register: gpg_apt_result
+  retries: 3
+  delay: 2
+  until: gpg_apt_result is succeeded
+  become: "{{ become_enabled }}"

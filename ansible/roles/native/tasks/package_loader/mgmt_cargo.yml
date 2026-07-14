@@ -1,0 +1,57 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_cargo.yml
+#
+# Purpose:
+#   Rust Cargo package manager integration.
+#   Installs Rust crates and binaries via 'cargo install'.
+#
+# Author: Native AI Team
+#
+# Requirements:
+#   - Rust/Cargo must be pre-installed on the system
+#   - Packages install to ~/.cargo/bin (user-local)
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list: ["cargo:ripgrep", "cargo:fd-find"]
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "native"
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_list:
+#         - "cargo:ripgrep"      # Fast grep alternative
+#         - "cargo:bat"          # Cat with syntax highlighting
+#         - "cargo:exa"          # Modern ls replacement
+#       package_state: "present"
+# =====================================================================
+
+# 1. Lifecycle: Assert (Auto-install Rust is too heavy, we assert only)
+- name: "Package (Cargo): Verify Cargo presence"
+  ansible.builtin.assert:
+    that: "is_cargo_installed | bool"
+    fail_msg: "Rust/Cargo is required for 'cargo install'. Please install Rust first."
+
+# 2. Execution
+- name: "Package (Cargo): Cargo binary installation"
+  ansible.builtin.shell: "PATH={{ os_paths }} cargo install {{ pkg_item }}"
+  loop: "{{ pkg_cargo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_cargo
+  become: false # Cargo usually installs to ~/.cargo/bin
+  vars:
+    fingerprint: "package_cargo_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (Cargo): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'cargo': true}) }}"
+  when:
+    - package_result_cargo is defined
+    - not package_result_cargo.skipped | default(false)
+  tags: ["always"]

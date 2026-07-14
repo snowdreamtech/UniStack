@@ -1,0 +1,33 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/debian.yml
+#
+# Purpose:
+#   Debian/Ubuntu specific repository configuration (APT).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_apt: "deb https://example.com/debian stable main"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "docker"
+#       repo_apt: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+#
+# =====================================================================
+
+- name: "Configure APT repository {{ repo_name | default('', true) }}"
+  ansible.builtin.apt_repository:
+    repo: "{{ repo_apt }}"
+    state: "present"
+  register: repo_apt_result
+  retries: 3
+  delay: 2
+  until: repo_apt_result is succeeded
+  become: "{{ become_enabled }}"
+  when: repo_apt is defined

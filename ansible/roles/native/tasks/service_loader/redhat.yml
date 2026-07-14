@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/native/tasks/service_loader/redhat.yml
+#
+# Purpose:
+#   RedHat-specific service manager routing.
+#   Dynamically routes to systemd or sysvinit.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/redhat"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/redhat"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: Support legacy RHEL (SysVinit) and modern RHEL (Systemd) 
+# by dynamically including the detected manager's implementation.
+- ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
+  vars:
+    fingerprint: "service_route_redhat_{{ os_service_mgr | default('systemd', true) }}"

@@ -1,0 +1,48 @@
+# =====================================================================
+# roles/native/tasks/package_loader/android.yml
+#
+# Purpose:
+#   Android specific package management (primarily for Termux).
+#   Handles 'pkg' or 'apt' logic in Android-based environments.
+#
+# WHY: On Android/Termux, Ansible identifies the system as 'Android'.
+# We provide a tailored loader that respects the single-user nature 
+# of the environment and uses the recommended 'pkg' wrapper.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Execution: Android Binary Branch
+# ---------------------------------------------------------------------
+
+# WHY: 'pkg' is the standard wrapper for Termux on Android. 
+# It automates environment sync and repository selection.
+- name: "Package (Android): pkg execution"
+
+  ansible.builtin.shell: |
+    set -euo pipefail
+    pkg install -y {{ pkg_item }}
+  loop: "{{ pkg_repo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result
+  changed_when: "'Upgrading' in package_result.stdout or 'Installing' in package_result.stdout"
+  become: false
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_termux_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Android): Mark pkg cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'termux_pkg': true}) }}"
+  when: (pkg_repo_list | length) > 0
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+
+# WHY: Even on Android, users may need to compile small utilities.
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0
+  vars:
+    become_enabled: false

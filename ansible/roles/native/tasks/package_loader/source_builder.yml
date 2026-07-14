@@ -1,0 +1,97 @@
+# noqa
+# roles/native/tasks/package_loader/source_builder.yml
+#
+# Purpose:
+#   Generic multi-platform source code builder.
+#   Handles download, extraction, compilation, and installation.
+#
+# WHY: When binary packages are unavailable, compiling from source 
+# provides ultimate flexibility. This builder automates the repetitive 
+# tasks while allowing override of build steps.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Preparation: Ensure Build Toolchain (OS-Specific)
+# ---------------------------------------------------------------------
+
+# WHY: We must ensure common compilers and utilities exist before 
+# attempting to build. We use standard package names for each family.
+- name: "Source Build: Ensure toolchain exists"
+  ansible.builtin.package:
+    name: >-
+      {{
+        ['build-essential', 'pkg-config'] if os_family == 'debian' else
+        (['development-tools', 'pkg-config'] if os_family == 'redhat' else
+        (['build-base', 'pkgconf'] if os_family == 'alpine' else
+        (['base-devel'] if os_family == 'archlinux' else
+        (['devel_basis'] if os_family == 'suse' else
+        (['sys-devel/gcc', 'sys-devel/make'] if os_family == 'gentoo' else
+        (['developer/build/make', 'developer/gcc-11'] if os_family == 'solaris' else
+        (['base-devel', 'pkg-config'] if (os_pkg_mgr | default('', true)) == 'xbps' else
+        (['system.devel'] if (os_pkg_mgr | default('', true)) == 'eopkg' else
+        (['os-core-update-dev'] if (os_pkg_mgr | default('', true)) == 'swupd' else
+        (['build-essential'] if (os_pkg_mgr | default('', true)) == 'opkg' else
+        (['build-essential'] if (os_family == 'android' or os_distribution == 'android') else
+        (['gcc', 'make'] if (os_family | lower).endswith('bsd') else
+        ['gcc', 'make']))))))))))))
+
+
+      }}
+    state: "present"
+  become: "{{ become_enabled }}"
+  when: (pkg_src_list | length) > 0
+
+
+
+
+# ---------------------------------------------------------------------
+# Execution: Build Loop
+# ---------------------------------------------------------------------
+- name: "Source Build: Processing source packages"
+  block:
+    - name: "Create temporary build directory"
+      ansible.builtin.tempfile:
+        state: "directory"
+        suffix: "build"
+      register: _build_tmp
+
+    - name: "Download source archive: {{ src_item | basename }}"
+      ansible.builtin.get_url:
+        url: "{{ src_item }}"
+        dest: "{{ _build_tmp.path }}/{{ src_item | basename }}"
+        mode: "0644"
+
+    - name: "Extract source archive: {{ src_item | basename }}"
+      ansible.builtin.unarchive:
+        src: "{{ _build_tmp.path }}/{{ src_item | basename }}"
+        dest: "{{ _build_tmp.path }}"
+        remote_src: true
+
+    - name: "Discover extracted source directory"
+      ansible.builtin.find:
+        paths: ["{{ _build_tmp.path }}"]
+        file_type: "directory"
+        recurse: false
+      register: _extracted_dir
+
+    - name: "Execute Build and Install: {{ src_item | basename }}"
+      ansible.builtin.shell: |
+        PATH={{ os_paths }}
+        set -euo pipefail
+        {{ package_src_configure_cmd | default('./configure', true) }}
+        {{ package_src_make_cmd | default('make -j $(nproc)', true) }}
+        {{ package_src_install_cmd | default('make install', true) }}
+      args:
+        chdir: "{{ _extracted_dir.files[0].path }}"
+      become: "{{ become_enabled }}"
+      changed_when: true
+
+    - name: "Clean up build directory"
+      ansible.builtin.file:
+        path: "{{ _build_tmp.path }}"
+        state: "absent"
+
+  loop: "{{ pkg_src_list }}"
+  loop_control:
+    loop_var: src_item
+  when: (pkg_src_list | length) > 0

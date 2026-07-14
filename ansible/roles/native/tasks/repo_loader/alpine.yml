@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/alpine.yml
+#
+# Purpose:
+#   Alpine Linux specific repository configuration (APK).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_apk: "http://dl-cdn.alpinelinux.org/alpine/v3.18/main"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "alpine-edge-community"
+#       repo_apk: "http://dl-cdn.alpinelinux.org/alpine/edge/community"
+#
+# =====================================================================
+
+- name: "Configure APK repository {{ repo_name | default('', true) }}"
+  ansible.builtin.lineinfile:
+    path: "/etc/apk/repositories"
+    line: "{{ repo_apk }}"
+    state: "present"
+  register: repo_apk_result
+  retries: 3
+  delay: 2
+  until: repo_apk_result is succeeded
+  become: "{{ become_enabled }}"
+  when: repo_apk is defined

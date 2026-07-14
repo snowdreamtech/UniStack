@@ -1,0 +1,40 @@
+# =====================================================================
+# roles/native/tasks/gpg_loader/alpine.yml
+#
+# Purpose:
+#   Download GPG keys on Alpine (APK).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#       gpg_checksum: "sha256:..."
+# =====================================================================
+
+- name: "Ensure /etc/apk/keys directory exists"
+  ansible.builtin.file:
+    path: "/etc/apk/keys"
+    state: "directory"
+    mode: "0755"
+  become: "{{ become_enabled }}"
+
+- name: "Download GPG key for apk"
+  ansible.builtin.get_url:
+    url: "{{ gpg_key_url }}"
+    dest: "/etc/apk/keys/{{ gpg_key_file }}"
+    mode: "0644"
+    checksum: "{{ gpg_checksum | default(omit) }}"
+  register: gpg_apk_result
+  retries: 3
+  delay: 2
+  until: gpg_apk_result is succeeded
+  become: "{{ become_enabled }}"

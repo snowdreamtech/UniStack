@@ -1,0 +1,927 @@
+# =====================================================================
+# roles/native/tasks/package_loader/darwin.yml
+#
+# Purpose:
+#   macOS (Darwin) specific package management orchestration.
+#   Supports Homebrew and MacPorts as first-class citizens with
+#   comprehensive format support for native macOS applications.
+#
+# Supported Package Managers:
+#   - Homebrew (brew)        : Default package manager
+#   - Homebrew Cask          : GUI applications via Cask
+#   - MacPorts (port)        : Alternative package manager
+#   - Mac App Store (mas)    : App Store applications via mas-cli
+#
+# Supported File Formats:
+#   - .dmg                   : Disk images containing .app bundles
+#   - .pkg / .mpkg           : Installer packages (flat/meta)
+#   - .app                   : Application bundles (direct copy)
+#   - .zip                   : ZIP archives containing .app bundles
+#   - .framework             : Framework bundles
+#   - .dylib                 : Dynamic libraries
+#   - .kext                  : Kernel extensions
+#
+# Note: This file is called internally by package_loader/main.yml.
+#       Users should call main.yml, not this file directly.
+#
+# Related Variables (passed from main.yml):
+#   - pkg_repo_list          : Standard package names
+#   - pkg_dmg_list           : DMG disk images
+#   - pkg_pkg_list           : PKG installers
+#   - pkg_mpkg_list          : Multi-PKG installers
+#   - pkg_app_list           : APP bundles
+#   - pkg_zip_list           : ZIP archives
+#   - pkg_mas_list           : Mac App Store apps (mas:ID or mas:Name)
+#   - pkg_framework_list     : Framework bundles
+#   - pkg_dylib_list         : Dynamic libraries
+#   - pkg_kext_list          : Kernel extensions
+#   - package_is_cask        : Use Homebrew Cask for installation
+#   - package_dmg_app_name   : Name of .app inside DMG
+#   - package_bundle_name    : Target bundle name for copy
+#   - package_pkg_id         : Package identifier for uninstallation
+#
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# 1. Environment Detection
+# ---------------------------------------------------------------------
+
+- name: "Package (Darwin): Detect Homebrew and MacPorts presence"
+  ansible.builtin.shell: "PATH={{ os_paths }} command -v {{ item }}"
+  loop: ["brew", "port"]
+  register: _darwin_mgr_check
+  failed_when: false
+  changed_when: false
+  tags: ["always"]
+
+- name: "Package (Darwin): Map installation facts"
+  ansible.builtin.set_fact:
+    is_homebrew_installed: "{{ _darwin_mgr_check.results[0].rc == 0 }}"
+    is_macports_installed: "{{ _darwin_mgr_check.results[1].rc == 0 }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 2. Lifecycle: Auto-install or Assert
+# ---------------------------------------------------------------------
+
+# 2.1 Homebrew
+- name: "Package (Darwin): Auto-install Homebrew if requested"
+  ansible.builtin.shell: |
+    PATH={{ os_paths }} /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+  when:
+    - os_pkg_mgr == 'homebrew'
+    - not is_homebrew_installed | bool
+    - package_auto_install_managers | default(false, true) | bool
+  register: _brew_install_result
+
+- name: "Package (Darwin): Re-verify Homebrew presence after installation"
+  ansible.builtin.shell: "PATH={{ os_paths }} command -v brew"
+  register: _brew_recheck
+  changed_when: false
+  failed_when: false
+  when: _brew_install_result is changed
+
+- name: "Package (Darwin): Update Homebrew fact after installation"
+  ansible.builtin.set_fact:
+    is_homebrew_installed: "{{ _brew_recheck.rc == 0 }}"
+  when: _brew_recheck is defined and not _brew_recheck.skipped | default(false)
+
+- name: "Package (Darwin): Verify Homebrew before action"
+  ansible.builtin.assert:
+    that: "is_homebrew_installed | bool"
+    fail_msg: "Homebrew is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
+  when: 
+    - (pkg_repo_list | length) > 0
+    - os_pkg_mgr == 'homebrew'
+
+# 2.2 MacPorts (Auto-installing MacPorts is complex as it depends on OS version PKG downloads, so we only provide ASSERT here)
+- name: "Package (Darwin): Verify MacPorts before action"
+  ansible.builtin.assert:
+    that: "is_macports_installed | bool"
+    fail_msg: "MacPorts is required but not installed. Please install it manually from https://www.macports.org/install.php"
+  when: 
+    - (pkg_repo_list | length) > 0
+    - os_pkg_mgr == 'macports'
+
+# ---------------------------------------------------------------------
+# Execution: Homebrew Branch
+# ---------------------------------------------------------------------
+
+# WHY: Homebrew casks are GUI applications, formulas are CLI tools.
+# Use community.general.homebrew_cask for casks, homebrew for formulas.
+
+- name: "Package (Darwin): Install implicit packages (Homebrew Primary)"
+  when: 
+    - (pkg_repo_list | length) > 0
+    - os_pkg_mgr == 'homebrew'
+  block:
+    - name: "Package (Darwin): Homebrew cask execution (Implicit)"
+      community.general.homebrew_cask:
+        name: "{{ pkg_repo_list }}"
+        state: "{{ package_state | default('present', true) }}"
+      when: package_is_cask | default(false, true) | bool
+      register: _brew_cask_result
+      until: _brew_cask_result is succeeded
+      retries: 3
+      delay: 5
+
+    - name: "Package (Darwin): Homebrew formula execution (Implicit)"
+      community.general.homebrew:
+        name: "{{ pkg_repo_list }}"
+        state: "{{ package_state | default('present', true) }}"
+      when: not (package_is_cask | default(false, true) | bool)
+      register: _brew_formula_result
+      until: _brew_formula_result is succeeded
+      retries: 3
+      delay: 5
+
+  rescue:
+    - name: "Package (Darwin): Fallback to MacPorts for implicit packages"
+      community.general.macports:
+        name: "{{ pkg_item }}"
+        state: "{{ package_state | default('present', true) }}"
+      loop: "{{ pkg_repo_list }}"
+      loop_control:
+        loop_var: pkg_item
+      when: 
+        - is_macports_installed | bool
+        - not (package_is_cask | default(false, true) | bool) # MacPorts doesn't support Casks explicitly
+      register: _port_fallback_result
+      until: _port_fallback_result is succeeded
+      retries: 3
+      delay: 5
+
+    - name: "Package (Darwin): Fail if primary and fallback both failed"
+      ansible.builtin.fail:
+        msg: "Failed to install packages using Homebrew (Primary) and MacPorts (Fallback)."
+      when: 
+        - is_macports_installed | bool
+        - _port_fallback_result is failed
+
+- name: "Package (Darwin): Install implicit packages (MacPorts Primary)"
+  when: 
+    - (pkg_repo_list | length) > 0
+    - os_pkg_mgr == 'macports'
+  block:
+    - name: "Package (Darwin): MacPorts execution (Implicit)"
+      community.general.macports:
+        name: "{{ pkg_item }}"
+        state: "{{ package_state | default('present', true) }}"
+      loop: "{{ pkg_repo_list }}"
+      loop_control:
+        loop_var: pkg_item
+      register: _port_result
+      until: _port_result is succeeded
+      retries: 3
+      delay: 5
+
+  rescue:
+    - name: "Package (Darwin): Fallback to Homebrew for implicit packages"
+      community.general.homebrew:
+        name: "{{ pkg_repo_list }}"
+        state: "{{ package_state | default('present', true) }}"
+      when: is_homebrew_installed | bool
+      register: _brew_fallback_result
+      until: _brew_fallback_result is succeeded
+      retries: 3
+      delay: 5
+
+    - name: "Package (Darwin): Fail if primary and fallback both failed"
+      ansible.builtin.fail:
+        msg: "Failed to install packages using MacPorts (Primary) and Homebrew (Fallback)."
+      when: 
+        - is_homebrew_installed | bool
+        - _brew_fallback_result is failed
+
+- name: "Package (Darwin): Homebrew formula execution (Explicit)"
+  community.general.homebrew:
+    name: "{{ pkg_brew_list }}"
+    state: "{{ package_state | default('present', true) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.homebrew | default(false, true)))
+      }}
+  register: package_result_brew_explicit
+  when: 
+    - (pkg_brew_list | length) > 0
+    - is_homebrew_installed | bool
+  become: false
+  vars:
+    fingerprint: "package_darwin_brew_formula_explicit_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Darwin): Homebrew formula execution (Explicit)"
+  community.general.homebrew:
+    name: "{{ pkg_brew_list }}"
+    state: "{{ package_state | default('present', true) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.homebrew | default(false, true)))
+      }}
+  register: package_result_brew_explicit
+  until: package_result_brew_explicit is succeeded
+  retries: 3
+  delay: 5
+  when: 
+    - (pkg_brew_list | length) > 0
+    - is_homebrew_installed | bool
+  become: false
+  vars:
+    fingerprint: "package_darwin_brew_formula_explicit_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Darwin): Homebrew cask execution (Explicit)"
+  community.general.homebrew_cask:
+    name: "{{ pkg_cask_list }}"
+    state: "{{ package_state | default('present', true) }}"
+  register: package_result_brew_cask_explicit
+  until: package_result_brew_cask_explicit is succeeded
+  retries: 3
+  delay: 5
+  when: 
+    - (pkg_cask_list | length) > 0
+    - is_homebrew_installed | bool
+  become: false
+  vars:
+    fingerprint: "package_darwin_brew_cask_explicit_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Darwin): Warn about missing Homebrew for Casks"
+  ansible.builtin.fail:
+    msg: "Warning: 'cask:' items requested {{ pkg_cask_list }} but Homebrew is not installed. These packages will NOT be installed. Please install Homebrew or use 'dmg:'/'pkg:' prefixes for direct download."
+  when:
+    - (pkg_cask_list | length) > 0
+    - not (is_homebrew_installed | bool)
+  ignore_errors: true # Do not hard fail, just warn (in Ansible fail module works as error, ignore_errors makes it red but non-fatal usually, or we can use debug)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: MacPorts Branch
+# ---------------------------------------------------------------------
+- name: "Package (Darwin): MacPorts execution"
+  community.general.macports:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+  loop: "{{ pkg_repo_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_port
+  when: 
+    - (pkg_repo_list | length) > 0
+    - os_pkg_mgr == 'macports'
+  become: "{{ become_enabled }}"
+  vars:
+    fingerprint: "package_darwin_port_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Darwin): MacPorts execution (Explicit)"
+  community.general.macports:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+  loop: "{{ pkg_port_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_port_explicit
+  when: 
+    - (pkg_port_list | length) > 0
+    - is_macports_installed | bool
+  become: "{{ become_enabled }}"
+  vars:
+    fingerprint: "package_darwin_port_explicit_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (Darwin): MacPorts execution (Explicit)"
+  community.general.macports:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+  loop: "{{ pkg_port_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_port_explicit
+  until: package_result_port_explicit is succeeded
+  retries: 3
+  delay: 5
+  when: 
+    - (pkg_port_list | length) > 0
+    - os_pkg_mgr == 'macports' or os_pkg_mgr == 'homebrew' # Allow cross-manager usage if installed
+  become: "{{ become_enabled }}"
+  vars:
+    fingerprint: "package_darwin_port_explicit_{{ package_name | default('unknown', true) }}"
+- name: "Package (Darwin): Mark Homebrew cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'homebrew': true}) }}"
+  when:
+    - package_result_brew is defined
+    - not package_result_brew.skipped | default(false)
+  tags: ["always"]
+
+- name: "Package (Darwin): Mark MacPorts cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'macports': true}) }}"
+  when:
+    - package_result_port is defined
+    - not package_result_port.skipped | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0
+  vars:
+    become_enabled: false
+# ---------------------------------------------------------------------
+# Execution: DMG Installation/Uninstallation
+# ---------------------------------------------------------------------
+
+# WHY: DMG files contain .app bundles that need to be mounted, copied, and unmounted.
+# We support both installation (present/latest) and uninstallation (absent/purged).
+
+- name: "Package (Darwin): Process DMG files"
+  when: (pkg_dmg_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check DMG app existence"
+      ansible.builtin.stat:
+        path: "/Applications/{{ package_dmg_app_name }}.app"
+      register: _dmg_app_stat
+      when: package_dmg_app_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Download remote DMGs"
+      ansible.builtin.get_url:
+        url: "{{ dmg_url_item }}"
+        dest: "/tmp/ansible_pkg_{{ dmg_url_item | hash('sha1') }}.dmg"
+        mode: '0644'
+        force: false
+        timeout: 60
+      loop: "{{ pkg_dmg_list | select('match', '^https?://') | list }}"
+      loop_control:
+        loop_var: dmg_url_item
+      register: _dmg_downloads
+      until: _dmg_downloads is succeeded
+      retries: 5
+      delay: 10
+      when: pkg_dmg_list | select('match', '^https?://') | list | length > 0
+      changed_when: false # Downloading isn't a state change of the system config itself
+
+    - name: "Package (Darwin): Resolve DMG paths"
+      ansible.builtin.set_fact:
+        _pkg_dmg_effective_list: >-
+          {%- set resolved = [] -%}
+          {%- for item in pkg_dmg_list -%}
+            {%- if item is match('^https?://') -%}
+               {%- set download = _dmg_downloads.results | selectattr('dmg_url_item', 'equalto', item) | first -%}
+               {%- set _ = resolved.append(download.dest) -%}
+            {%- else -%}
+               {%- set _ = resolved.append(item) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ resolved }}
+
+    - name: "Package (Darwin): Install DMG applications"
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_dmg_app_name is defined
+        - not (_dmg_app_stat.stat.exists | default(false, true))
+      block:
+        - name: "Package (Darwin): Mount DMG {{ dmg_item | default('unknown') }}"
+          ansible.builtin.command: "hdiutil attach {{ dmg_item }} -nobrowse -quiet"
+          register: _dmg_mount
+          changed_when: true
+          loop: "{{ _pkg_dmg_effective_list }}"
+          loop_control:
+            loop_var: dmg_item
+
+        - name: "Package (Darwin): Find content in DMG"
+          ansible.builtin.find:
+            paths: "/Volumes"
+            patterns: 
+              - "{{ package_dmg_app_name }}.app"
+              - "*.pkg"
+              - "*.mpkg"
+            file_type: any
+            recurse: true
+          register: _dmg_content
+
+        - name: "Package (Darwin): Install found .app from DMG"
+          ansible.builtin.command: "cp -R {{ item.path }} /Applications/"
+          loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.app$') | list }}"
+          when: _dmg_content.matched > 0
+          changed_when: true
+          become: "{{ become_enabled }}"
+
+        - name: "Package (Darwin): Install found .pkg/.mpkg from DMG"
+          ansible.builtin.command: "installer -pkg {{ item.path }} -target /"
+          loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.(pkg|mpkg)$') | list }}"
+          when: _dmg_content.matched > 0
+          changed_when: true
+          become: "{{ become_enabled }}"
+
+      rescue:
+        - name: "Package (Darwin): Log DMG installation failure"
+          ansible.builtin.debug:
+            msg: "Failed to install DMG: {{ dmg_item | default('unknown', true) }}"
+
+      always:
+        - name: "Package (Darwin): Unmount DMG volumes"
+          ansible.builtin.shell: |
+            set -euo pipefail
+            hdiutil info | grep '/Volumes/' | awk '{print $1}' | xargs -I {} hdiutil detach {} -quiet
+          failed_when: false
+          changed_when: false
+
+    - name: "Package (Darwin): Uninstall DMG applications"
+      ansible.builtin.file:
+        path: "/Applications/{{ package_dmg_app_name }}.app"
+        state: absent
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_dmg_app_name is defined
+        - _dmg_app_stat.stat.exists | default(false, true)
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Purge DMG user data"
+      ansible.builtin.file:
+        path: "{{ ansible_user_home }}/Library/{{ purge_item }}/{{ package_dmg_app_name }}"
+        state: absent
+      loop:
+        - "Application Support"
+        - "Caches"
+      loop_control:
+        loop_var: purge_item
+      when:
+        - package_state | default('present', true) == 'purged'
+        - package_dmg_app_name is defined
+      failed_when: false
+
+# ---------------------------------------------------------------------
+# Execution: PKG Installation/Uninstallation
+# ---------------------------------------------------------------------
+
+# WHY: PKG files are macOS installer packages. Installation uses the 'installer' command.
+# Uninstallation is complex: prefer vendor scripts, fallback to file list deletion.
+
+- name: "Package (Darwin): Process PKG files"
+  when: (pkg_pkg_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check PKG installation status"
+      ansible.builtin.command: "pkgutil --pkg-info {{ package_pkg_id }}"
+      register: _pkg_status
+      failed_when: false
+      changed_when: false
+      when: package_pkg_id is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Download remote PKGs"
+      ansible.builtin.get_url:
+        url: "{{ pkg_url_item }}"
+        dest: "/tmp/ansible_pkg_{{ pkg_url_item | hash('sha1') }}.pkg"
+        mode: '0644'
+        force: false
+        timeout: 60
+      loop: "{{ pkg_pkg_list | select('match', '^https?://') | list }}"
+      loop_control:
+        loop_var: pkg_url_item
+      register: _pkg_downloads
+      until: _pkg_downloads is succeeded
+      retries: 5
+      delay: 10
+      when: pkg_pkg_list | select('match', '^https?://') | list | length > 0
+      changed_when: false
+
+    - name: "Package (Darwin): Resolve PKG paths"
+      ansible.builtin.set_fact:
+        _pkg_pkg_effective_list: >-
+          {%- set resolved = [] -%}
+          {%- for item in pkg_pkg_list -%}
+            {%- if item is match('^https?://') -%}
+               {%- set download = _pkg_downloads.results | selectattr('pkg_url_item', 'equalto', item) | first -%}
+               {%- set _ = resolved.append(download.dest) -%}
+            {%- else -%}
+               {%- set _ = resolved.append(item) -%}
+            {%- endif -%}
+          {%- endfor -%}
+          {{ resolved }}
+
+    - name: "Package (Darwin): Install PKG packages"
+      ansible.builtin.command: "installer -pkg {{ pkg_item }} -target /"
+      loop: "{{ _pkg_pkg_effective_list }}"
+      loop_control:
+        loop_var: pkg_item
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_pkg_id is defined
+        - _pkg_status.rc != 0
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall PKG via vendor script"
+      ansible.builtin.command: "{{ package_pkg_uninstall_script }}"
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_pkg_id is defined
+        - _pkg_status.rc == 0
+        - package_pkg_uninstall_script is defined
+        - package_pkg_uninstall_script | length > 0
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall PKG via file list (fallback)"
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_pkg_id is defined
+        - _pkg_status.rc == 0
+        - package_pkg_uninstall_script is not defined or (package_pkg_uninstall_script | length == 0)
+      block:
+        - name: "Package (Darwin): Get PKG file list"
+          ansible.builtin.command: "pkgutil --files {{ package_pkg_id }}"
+          register: _pkg_files
+          changed_when: false
+
+        - name: "Package (Darwin): Remove PKG files (safe paths only)"
+          ansible.builtin.file:
+            path: "/{{ file_item }}"
+            state: absent
+          loop: "{{ _pkg_files.stdout_lines }}"
+          loop_control:
+            loop_var: file_item
+          when:
+            - file_item is match('^(Applications|Library/Application Support|opt)/.*')
+            - file_item is not match('^(usr/bin|System|usr/lib)/.*')
+          failed_when: false
+          become: "{{ become_enabled }}"
+
+        - name: "Package (Darwin): Forget PKG receipt"
+          ansible.builtin.command: "pkgutil --forget {{ package_pkg_id }}"
+          changed_when: true
+          become: "{{ become_enabled }}"
+# ---------------------------------------------------------------------
+# Execution: MPKG Installation/Uninstallation
+# ---------------------------------------------------------------------
+
+# WHY: MPKG is similar to PKG but for meta-packages. Use same logic as PKG.
+
+- name: "Package (Darwin): Process MPKG files"
+  when: (pkg_mpkg_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check MPKG installation status"
+      ansible.builtin.command: "pkgutil --pkg-info {{ package_pkg_id }}"
+      register: _mpkg_status
+      failed_when: false
+      changed_when: false
+      when: package_pkg_id is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install MPKG packages"
+      ansible.builtin.command: "installer -pkg {{ mpkg_item }} -target /"
+      loop: "{{ pkg_mpkg_list }}"
+      loop_control:
+        loop_var: mpkg_item
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_pkg_id is defined
+        - _mpkg_status.rc != 0
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall MPKG (same as PKG)"
+      ansible.builtin.command: "{{ package_pkg_uninstall_script }}"
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_pkg_id is defined
+        - _mpkg_status.rc == 0
+        - package_pkg_uninstall_script is defined
+        - package_pkg_uninstall_script | length > 0
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: APP Bundle Direct Copy
+# ---------------------------------------------------------------------
+
+# WHY: Some .app bundles are distributed directly without installers.
+# Simply copy them to /Applications/.
+
+- name: "Package (Darwin): Process APP bundles"
+  when: (pkg_app_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check APP existence"
+      ansible.builtin.stat:
+        path: "/Applications/{{ package_bundle_name }}.app"
+      register: _app_stat
+      when: package_bundle_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install APP bundles"
+      ansible.builtin.command: "cp -R {{ app_item }} /Applications/"
+      loop: "{{ pkg_app_list }}"
+      loop_control:
+        loop_var: app_item
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_bundle_name is defined
+        - not (_app_stat.stat.exists | default(false, true))
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall APP bundles"
+      ansible.builtin.file:
+        path: "/Applications/{{ package_bundle_name }}.app"
+        state: absent
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_bundle_name is defined
+        - _app_stat.stat.exists | default(false, true)
+      become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: ZIP Archive Extraction
+# ---------------------------------------------------------------------
+
+# WHY: Some apps are distributed as .zip archives containing .app bundles.
+# Extract and copy the .app to /Applications/.
+
+- name: "Package (Darwin): Process ZIP archives"
+  when: (pkg_zip_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check ZIP app existence"
+      ansible.builtin.stat:
+        path: "/Applications/{{ package_bundle_name }}.app"
+      register: _zip_app_stat
+      when: package_bundle_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install from ZIP"
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_bundle_name is defined
+        - not (_zip_app_stat.stat.exists | default(false, true))
+      block:
+        - name: "Package (Darwin): Create temp directory"
+          ansible.builtin.tempfile:
+            state: directory
+            suffix: "_ansible_unzip"
+          register: _temp_dir
+
+        - name: "Package (Darwin): Unzip archive"
+          ansible.builtin.unarchive:
+            src: "{{ zip_item }}"
+            dest: "{{ _temp_dir.path }}"
+            remote_src: true
+          loop: "{{ pkg_zip_list }}"
+          loop_control:
+            loop_var: zip_item
+
+        - name: "Package (Darwin): Find APP in unzipped content"
+          ansible.builtin.find:
+            paths: "{{ _temp_dir.path }}"
+            patterns: "{{ package_bundle_name }}.app"
+            file_type: directory
+            recurse: true
+          register: _unzipped_app
+
+        - name: "Package (Darwin): Copy APP to Applications"
+          ansible.builtin.command: "cp -R {{ _unzipped_app.files[0].path }} /Applications/"
+          when: _unzipped_app.matched > 0
+          changed_when: true
+          become: "{{ become_enabled }}"
+
+      always:
+        - name: "Package (Darwin): Cleanup temp directory"
+          ansible.builtin.file:
+            path: "{{ _temp_dir.path }}"
+            state: absent
+          when: _temp_dir is defined
+
+    - name: "Package (Darwin): Uninstall ZIP app"
+      ansible.builtin.file:
+        path: "/Applications/{{ package_bundle_name }}.app"
+        state: absent
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_bundle_name is defined
+        - _zip_app_stat.stat.exists | default(false, true)
+      become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Framework Installation
+# ---------------------------------------------------------------------
+
+# WHY: Frameworks are installed to /Library/Frameworks/ for system-wide use.
+
+- name: "Package (Darwin): Process Frameworks"
+  when: (pkg_framework_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check Framework existence"
+      ansible.builtin.stat:
+        path: "/Library/Frameworks/{{ package_framework_name }}.framework"
+      register: _framework_stat
+      when: package_framework_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install Frameworks"
+      ansible.builtin.command: "cp -R {{ framework_item }} /Library/Frameworks/"
+      loop: "{{ pkg_framework_list }}"
+      loop_control:
+        loop_var: framework_item
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_framework_name is defined
+        - not (_framework_stat.stat.exists | default(false, true))
+      changed_when: true
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall Frameworks"
+      ansible.builtin.file:
+        path: "/Library/Frameworks/{{ package_framework_name }}.framework"
+        state: absent
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_framework_name is defined
+        - _framework_stat.stat.exists | default(false, true)
+      become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Dynamic Library Installation
+# ---------------------------------------------------------------------
+
+# WHY: Dylibs are installed to /usr/local/lib/ for linking.
+
+- name: "Package (Darwin): Process Dynamic Libraries"
+  when: (pkg_dylib_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check Dylib existence"
+      ansible.builtin.stat:
+        path: "/usr/local/lib/{{ package_dylib_name }}.dylib"
+      register: _dylib_stat
+      when: package_dylib_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install Dynamic Libraries"
+      ansible.builtin.copy:
+        src: "{{ dylib_item }}"
+        dest: "/usr/local/lib/"
+        mode: '0755'
+      loop: "{{ pkg_dylib_list }}"
+      loop_control:
+        loop_var: dylib_item
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_dylib_name is defined
+        - not (_dylib_stat.stat.exists | default(false, true))
+      become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall Dynamic Libraries"
+      ansible.builtin.file:
+        path: "/usr/local/lib/{{ package_dylib_name }}.dylib"
+        state: absent
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_dylib_name is defined
+        - _dylib_stat.stat.exists | default(false, true)
+      become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Kernel Extension Installation
+# ---------------------------------------------------------------------
+
+# WHY: Kexts require special handling with kextload/kextunload.
+# WARNING: Requires SIP disabled or proper code signing.
+
+- name: "Package (Darwin): Process Kernel Extensions"
+  when: (pkg_kext_list | length) > 0
+  block:
+    - name: "Package (Darwin): Check Kext existence"
+      ansible.builtin.stat:
+        path: "/Library/Extensions/{{ package_kext_name }}.kext"
+      register: _kext_stat
+      when: package_kext_name is defined
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install Kernel Extensions"
+      when:
+        - package_state | default('present', true) in ['present', 'latest']
+        - package_kext_name is defined
+        - not (_kext_stat.stat.exists | default(false, true))
+      block:
+        - name: "Package (Darwin): Copy Kext to Extensions"
+          ansible.builtin.command: "cp -R {{ kext_item }} /Library/Extensions/"
+          loop: "{{ pkg_kext_list }}"
+          loop_control:
+            loop_var: kext_item
+          changed_when: true
+          become: "{{ become_enabled }}"
+
+        - name: "Package (Darwin): Set Kext permissions"
+          ansible.builtin.file:
+            path: "/Library/Extensions/{{ package_kext_name }}.kext"
+            owner: root
+            group: wheel
+            mode: '0755'
+            recurse: true
+          become: "{{ become_enabled }}"
+
+        - name: "Package (Darwin): Load Kext"
+          ansible.builtin.command: "kextload /Library/Extensions/{{ package_kext_name }}.kext"
+          register: _kext_load
+          failed_when: false
+          changed_when: _kext_load.rc == 0
+          become: "{{ become_enabled }}"
+
+    - name: "Package (Darwin): Uninstall Kernel Extensions"
+      when:
+        - package_state | default('present', true) in ['absent', 'purged']
+        - package_kext_name is defined
+        - _kext_stat.stat.exists | default(false, true)
+      block:
+        - name: "Package (Darwin): Unload Kext"
+          ansible.builtin.command: "kextunload /Library/Extensions/{{ package_kext_name }}.kext"
+          register: _kext_unload
+          failed_when: false
+          changed_when: _kext_unload.rc == 0
+          become: "{{ become_enabled }}"
+
+        - name: "Package (Darwin): Remove Kext"
+          ansible.builtin.file:
+            path: "/Library/Extensions/{{ package_kext_name }}.kext"
+            state: absent
+          become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Mac App Store (MAS) Support
+# ---------------------------------------------------------------------
+
+# WHY: Install apps from Mac App Store using 'mas' CLI tool.
+# Requires 'mas' to be installed via Homebrew or MacPorts.
+# Format: mas:ID (recommended) or mas:Name
+
+- name: "Package (Darwin): Fail if mas is used on unsupported macOS"
+  ansible.builtin.fail:
+    msg: "Error: 'mas' packages requested {{ pkg_mas_list }} but macOS version {{ ansible_distribution_major_version }} < 13. 'mas' is essentially unusable on this version. Please remove 'mas:' entries from your configuration or upgrade macOS."
+  when:
+    - (pkg_mas_list | length) > 0
+    - ansible_distribution_major_version | int < 13
+  tags: ["always"]
+
+- name: "Package (Darwin): Process MAS apps"
+  when:
+    - (pkg_mas_list | length) > 0
+    - ansible_distribution_major_version | int >= 13
+  block:
+    # 1. Check and Install Dependency: mas-cli
+    - name: "Package (Darwin): Check for mas-cli"
+      ansible.builtin.shell: "PATH={{ os_paths }} command -v mas"
+      register: _mas_check
+      failed_when: false
+      changed_when: false
+      check_mode: false
+      tags: ["always"]
+
+    - name: "Package (Darwin): Install mas-cli if missing"
+      when: _mas_check.rc != 0
+      block:
+        - name: "Package (Darwin): Check for Homebrew"
+          ansible.builtin.shell: "PATH={{ os_paths }} command -v brew"
+          register: _brew_check
+          failed_when: false
+          changed_when: false
+          check_mode: false
+          tags: ["always"]
+
+        - name: "Package (Darwin): Check for MacPorts"
+          ansible.builtin.shell: "PATH={{ os_paths }} command -v port"
+          register: _port_check
+          failed_when: false
+          changed_when: false
+          check_mode: false
+          tags: ["always"]
+
+        - name: "Package (Darwin): Install mas via Homebrew"
+          ansible.builtin.command: "brew install mas"
+          when: _brew_check.rc == 0
+          changed_when: true
+
+        - name: "Package (Darwin): Install mas via MacPorts"
+          ansible.builtin.command: "port install mas"
+          when:
+            - _brew_check.rc != 0
+            - _port_check.rc == 0
+          become: "{{ become_enabled }}"
+          changed_when: true
+
+        - name: "Package (Darwin): Fail if no package manager found for mas"
+          ansible.builtin.fail:
+            msg: "Cannot install 'mas-cli'. Neither Homebrew nor MacPorts found. Please install one of them or install 'mas' manually."
+          when:
+            - _brew_check.rc != 0
+            - _port_check.rc != 0
+
+    # 2. Extract MAS IDs calling mas module
+    - name: "Package (Darwin): Install MAS apps"
+      community.general.mas:
+        id: "{{ mas_item | regex_replace('^mas:', '') }}"
+        state: "{{ package_state | default('present', true) }}"
+      loop: "{{ pkg_mas_list }}"
+      loop_control:
+        loop_var: mas_item
+      become: false

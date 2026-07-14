@@ -1,0 +1,15 @@
+# =====================================================================
+# roles/native/tasks/package_loader/lfs.yml
+#
+# Purpose:
+#   Linux From Scratch specific management.
+#   Relies entirely on the source builder.
+# =====================================================================
+
+# WHY: LFS doesn't have a package manager. We use our source_builder 
+# to fulfill all requests through compilation.
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_repo_list + pkg_file_list + pkg_url_list + pkg_src_list) | length > 0
+  vars:
+    # Everything is treated as source building in LFS
+    pkg_src_list: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list + pkg_src_list) }}"

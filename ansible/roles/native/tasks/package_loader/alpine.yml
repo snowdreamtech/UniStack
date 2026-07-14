@@ -1,0 +1,81 @@
+# =====================================================================
+# roles/native/tasks/package_loader/alpine.yml
+#
+# Purpose:
+#   Alpine Linux-specific package management via APK.
+#   Handles repository packages, local .apk files, and remote URLs.
+#
+# Supported Installation Sources:
+#   - Repository packages    : Standard apk add
+#   - Local .apk files       : /path/to/package.apk (--allow-untrusted)
+#   - Remote .apk URLs       : https://example.com/package.apk
+#   - Source archives        : Delegated to source_builder.yml
+#
+# Note: This file is called internally by package_loader/main.yml.
+#
+# Related Variables (passed from main.yml):
+#   - pkg_repo_list          : Standard package names
+#   - pkg_file_list          : Local .apk file paths
+#   - pkg_url_list           : Remote .apk URLs
+#   - pkg_src_list           : Source archives for compilation
+#
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# Execution: APK Binary Branch
+# ---------------------------------------------------------------------
+
+# WHY: Standard APK repository installation.
+- name: "Package (Alpine): Repository installation"
+  ansible.builtin.apk:
+    name: "{{ pkg_repo_list }}"
+    state: "{{ package_state | default('present', true) }}"
+    update_cache: >-
+      {{
+        package_force_update_cache | default(false, true)
+        or
+        (not (package_caches_updated.apk | default(false, true)))
+      }}
+  when: (pkg_repo_list | length) > 0
+  register: package_repo_result
+  become: "{{ become_enabled }}"
+  vars:
+    fingerprint: "package_apk_repo_exec_{{ package_name | default('unknown', true) }}"
+
+# WHY: Direct 'apk add' command supports URLs and local files with 
+# '--allow-untrusted' flag, which is essential for custom APKs.
+- name: "Package (Alpine): Local/URL .apk installation"
+  ansible.builtin.command: "apk add --allow-untrusted {{ pkg_item }}"
+  loop: "{{ (pkg_file_list + pkg_url_list) }}"
+  loop_control:
+    loop_var: pkg_item
+  when: (pkg_file_list + pkg_url_list) | length > 0
+  register: package_apk_result
+  changed_when: "'OK' in package_apk_result.stdout"
+  become: "{{ become_enabled }}"
+  vars:
+    fingerprint: "package_apk_file_exec_{{ package_name | default('unknown', true) }}"
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0
+
+# ---------------------------------------------------------------------
+# Registration: Set common result fact
+# ---------------------------------------------------------------------
+- name: "Package (Alpine): Mark apk cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'apk': true}) }}"
+  when:
+    - package_repo_result is defined
+    - not package_repo_result.skipped | default(false)
+  tags: ["always"]
+
+- name: "Package (Alpine): Consolidate results"
+  ansible.builtin.set_fact:
+    package_result: "{{ package_repo_result if (pkg_repo_list | length > 0) else package_apk_result }}"
+  when: package_repo_result is defined or package_apk_result is defined
+  tags: ["always"]

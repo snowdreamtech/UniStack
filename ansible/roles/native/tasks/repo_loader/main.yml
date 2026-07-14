@@ -1,0 +1,39 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/main.yml
+#
+# Purpose:
+#   Entry point for repository management tasks.
+#   Delegates execution to the OS-specific loader.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "custom_repo"
+#       repo_baseurl: "https://example.com/rpm"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "docker"
+#       repo_desc: "Docker Community Edition"
+#       repo_apt: "deb [arch=amd64] https://download.docker.com/linux/debian {{ ansible_distribution_release }} stable"
+#       repo_baseurl: "https://download.docker.com/linux/centos/7/x86_64/stable/"
+#       repo_apk: "http://dl-cdn.alpinelinux.org/alpine/v3.18/main"
+#       repo_brew: "homebrew/cask"
+#       gpg_key_url: "https://download.docker.com/linux/debian/gpg"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Invoke the os_loader to select the appropriate repo configuration 
+# tasks (debian/redhat/alpine/darwin) based on the target OS.
+# ---------------------------------------------------------------------
+- ansible.builtin.include_role:
+    name: "core"
+    tasks_from: "os_loader"
+  vars:
+    module_name: "repo_loader"

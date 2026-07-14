@@ -1,0 +1,77 @@
+# =====================================================================
+# roles/native/tasks/service_loader/main.yml
+#
+# Purpose:
+#   Entry point for unified service management.
+#   Initializes defaults and dispatches to OS-specific service loaders.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/main"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/main"
+#     vars:
+#       service_name: "nginx"           # Service identifier
+#       service_state: "started"        # started|stopped|restarted
+#       service_enabled: true           # Enable on boot
+#       service_shell: "/bin/bash"      # Optional: custom shell for service commands
+#       service_restart_policy: "omit"  # Optional: service-system specific policy
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Validation ---
+# ---------------------------------------------------------------------
+
+# WHY: Ensure mandatory service identity is provided before proceeding.
+# Adding tags: ["always"] to ensure validation runs even when using filters.
+- ansible.builtin.assert:
+    that:
+      - service_name is defined
+      - service_name | length > 0
+    fail_msg: "Invalid Service API: service_name must be a non-empty string."
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Normalization ---
+# ---------------------------------------------------------------------
+
+# WHY: Set predictable defaults to ensure consistency across all backend loaders.
+# Adding tags: ["always"] is critical for variable availability in subsequent tasks.
+- name: "Service (Global): Load variable schema"
+  ansible.builtin.include_vars:
+    file: "../../vars/service_loader_schema.yml"
+  tags: ["always"]
+
+- ansible.builtin.set_fact:
+    "{{ item }}": null
+  loop: "{{ service_loader_internal_vars }}"
+  loop_control:
+    label: "reset {{ item }} (null)"
+  tags: ["always"]
+
+- name: "Service (Global): Normalize variables"
+  ansible.builtin.set_fact:
+    service_state: "{{ service_state | default('started', true) }}"
+    service_enabled: "{{ service_enabled | default(true, true) }}"
+    service_shell: "{{ service_shell | default(omit) }}"
+    service_restart_policy: "{{ service_restart_policy | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Dispatch ---
+# ---------------------------------------------------------------------
+
+# WHY: Delegate to the distribution-specific loader while keeping this 
+# entry point generic and lean.
+- ansible.builtin.include_role:
+    name: "core"
+    tasks_from: "os_loader"
+  vars:
+    module_name: "service_loader"

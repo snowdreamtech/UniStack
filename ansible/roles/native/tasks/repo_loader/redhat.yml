@@ -1,0 +1,40 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/redhat.yml
+#
+# Purpose:
+#   RedHat/CentOS specific repository configuration (YUM/DNF).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "epel"
+#       repo_baseurl: "https://download.fedoraproject.org/pub/epel/$releasever/$basearch/"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "docker-ce"
+#       repo_desc: "Docker CE Stable - $basearch"
+#       repo_baseurl: "https://download.docker.com/linux/centos/7/$basearch/stable"
+#       gpg_key_url: "https://download.docker.com/linux/centos/gpg"
+#
+# =====================================================================
+
+- name: "Configure RPM repository {{ repo_name | default('', true) }}"
+  ansible.builtin.yum_repository:
+    name: "{{ repo_name }}"
+    description: "{{ repo_desc | default(repo_name, true) }}"
+    baseurl: "{{ repo_baseurl }}"
+    gpgcheck: true
+    gpgkey: "{{ gpg_key_url | default(omit) }}"
+    enabled: true
+  register: repo_dnf_result
+  retries: 3
+  delay: 2
+  until: repo_dnf_result is succeeded
+  become: "{{ become_enabled }}"
+  when: repo_baseurl is defined

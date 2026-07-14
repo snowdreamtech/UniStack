@@ -1,0 +1,42 @@
+# =====================================================================
+# roles/native/tasks/package_loader/mgmt_gem.yml
+# =====================================================================
+
+# 1. Lifecycle: Auto-install or Assert
+- name: "Package (Gem): Auto-install Ruby/Gem if requested"
+  ansible.builtin.package:
+    name: "ruby"
+    state: "present"
+  become: true
+  when:
+    - not is_gem_installed | bool
+    - package_auto_install_managers | default(false, true) | bool
+  register: _gem_install_result
+
+- name: "Package (Gem): Verify Gem presence"
+  ansible.builtin.assert:
+    that: "is_gem_installed | bool or (_gem_install_result is defined and not _gem_install_result.failed | default(false))"
+    fail_msg: "Ruby/Gem is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
+
+# 2. Execution
+- name: "Package (Gem): Gem execution"
+  community.general.gem:
+    name: "{{ pkg_item }}"
+    state: "{{ package_state | default('present', true) }}"
+    user_install: false
+  loop: "{{ pkg_gem_list }}"
+  loop_control:
+    loop_var: pkg_item
+  register: package_result_gem
+  become: true # Global install requires root
+  vars:
+    fingerprint: "package_gem_exec_{{ pkg_item }}"
+
+# 3. Cache Marking
+- name: "Package (Gem): Mark cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'gem': true}) }}"
+  when:
+    - package_result_gem is defined
+    - not package_result_gem.skipped | default(false)
+  tags: ["always"]

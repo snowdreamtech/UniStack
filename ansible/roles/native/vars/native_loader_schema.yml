@@ -1,0 +1,96 @@
+# =====================================================================
+# roles/native/vars/native_loader_schema.yml
+#
+# Purpose:
+#   Definition of the Native Loader variable schema.
+# =====================================================================
+
+native_loader_api_vars:
+  # Core Parameters
+  - native_app_name
+  - native_app_state
+  - native_app_packages
+  - native_app_desc
+  - native_app_force_update_cache
+
+  # Normalized Internal State
+  - native_package_name
+  - native_package_list
+  - native_package_desc
+  - native_package_force_update_cache
+  - native_package_dmg_app_name
+  - native_package_pkg_id
+  - native_package_pkg_uninstall_script
+  - native_package_bundle_name
+  - native_package_framework_name
+  - native_package_dylib_name
+  - native_package_kext_name
+  - native_package_is_cask
+
+  # Service Orchestration
+  - native_app_service
+  - native_app_service_enabled
+  - native_app_service_shell
+  - native_app_service_stop_timeout
+  - native_service_name
+  - native_service_enabled
+  - native_service_shell
+  - native_service_restart_policy
+  - native_service_stop_timeout
+
+  # Script-based Lifecycle
+  - native_app_install_cmd
+  - native_app_install_creates
+  - native_app_install_env
+  - native_app_install_user
+  - native_app_install_changed_when
+  - native_app_install_failed_when
+  - native_app_uninstall_cmd
+  - native_app_uninstall_changed_when
+  - native_app_uninstall_failed_when
+  - native_install_cmd
+  - native_install_creates
+  - native_install_env
+  - native_install_user
+  - native_install_changed_when
+  - native_install_failed_when
+  - native_uninstall_cmd
+  - native_uninstall_changed_when
+  - native_uninstall_failed_when
+
+# ---------------------------------------------------------------------
+# Internal state variables that should be reset between calls
+# These are normalized/computed values, NOT user input parameters.
+# ---------------------------------------------------------------------
+native_loader_internal_vars:
+  # Normalized package variables (computed from native_app_*)
+  - native_package_name
+  - native_package_list
+  - native_package_desc
+  - native_package_force_update_cache
+  - native_package_dmg_app_name
+  - native_package_pkg_id
+  - native_package_pkg_uninstall_script
+  - native_package_bundle_name
+  - native_package_framework_name
+  - native_package_dylib_name
+  - native_package_kext_name
+  - native_package_is_cask
+  
+  # Normalized service variables (computed from native_app_service_*)
+  - native_service_name
+  - native_service_enabled
+  - native_service_shell
+  - native_service_restart_policy
+  - native_service_stop_timeout
+  
+  # Normalized script variables (computed from native_app_install_*)
+  - native_install_cmd
+  - native_install_creates
+  - native_install_env
+  - native_install_user
+  - native_install_changed_when
+  - native_install_failed_when
+  - native_uninstall_cmd
+  - native_uninstall_changed_when
+  - native_uninstall_failed_when

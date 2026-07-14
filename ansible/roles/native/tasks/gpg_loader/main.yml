@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/native/tasks/gpg_loader/main.yml
+#
+# Purpose:
+#   Entry point for GPG key management tasks.
+#   Delegates to OS-specific loader.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#       gpg_key_file: "myrepo.gpg"
+# =====================================================================
+
+- name: "Derive GPG key filename from URL"
+  ansible.builtin.set_fact:
+    gpg_key_file: "{{ gpg_key_url | basename }}"
+  when: gpg_key_file is not defined
+  tags: ["always"]
+
+- ansible.builtin.include_role:
+    name: "core"
+    tasks_from: "os_loader"
+  vars:
+    module_name: "gpg_loader"

@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/native/tasks/package_loader/nixos.yml
+#
+# Purpose:
+#   NixOS specific package management.
+#   Identifies use of Nix as the distribution's native engine.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Execution: Native Binary Branch
+# ---------------------------------------------------------------------
+- name: "Package (NixOS): Nix execution"
+  community.general.nix:
+    name: "{{ pkg_repo_list }}"
+    state: "{{ package_state | default('present', true) }}"
+  register: package_result
+  become: "{{ become_enabled }}"
+  when: (pkg_repo_list | length) > 0
+  vars:
+    fingerprint: "package_nixos_exec_{{ package_name | default('unknown', true) }}"
+
+- name: "Package (NixOS): Mark nix cache as updated"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | combine({'nix': true}) }}"
+  when:
+    - package_result is defined
+    - not package_result.skipped | default(false)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/service_loader/openbsd.yml
+#
+# Purpose:
+#   OpenBSD-specific service loader entry.
+#   Proxies requests to the BSD implementation.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openbsd"
+#     vars:
+#       service_name: "sshd"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/openbsd"
+#     vars:
+#       service_name: "sshd"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: OpenBSD uses the rc.d system, which we manage via the generic 
+# BSD service loader.
+- ansible.builtin.include_tasks: "bsd.yml"

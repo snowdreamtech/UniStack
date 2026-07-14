@@ -1,0 +1,13 @@
+---
+# =====================================================================
+# roles/native/tasks/curl_conflict_loader/default.yml
+#
+# Purpose:
+#   Default loader for curl_conflict_loader.
+#   This task is only required for RHEL9, so we skip it for other OSes.
+#
+# =====================================================================
+
+- name: "Skip curl conflict resolution (not required for this OS)"
+  ansible.builtin.debug:
+    msg: "Skipping curl conflict loader: Only required for RHEL9."

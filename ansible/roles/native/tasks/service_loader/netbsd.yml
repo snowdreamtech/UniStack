@@ -1,0 +1,32 @@
+# =====================================================================
+# roles/native/tasks/service_loader/netbsd.yml
+#
+# Purpose:
+#   NetBSD-specific service loader entry.
+#   Proxies requests to the BSD implementation.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/netbsd"
+#     vars:
+#       service_name: "nginx"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/netbsd"
+#     vars:
+#       service_name: "nginx"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: NetBSD utilizes the standard rc.d infrastructure common across 
+# traditional BSD systems.
+- ansible.builtin.include_tasks: "bsd.yml"

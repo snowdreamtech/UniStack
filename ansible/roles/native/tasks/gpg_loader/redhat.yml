@@ -1,0 +1,31 @@
+# =====================================================================
+# roles/native/tasks/gpg_loader/redhat.yml
+#
+# Purpose:
+#   Import GPG keys on RedHat/CentOS (RPM).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "gpg_loader/main"
+#     vars:
+#       gpg_key_url: "https://example.com/repo.gpg"
+#       become_enabled: true
+# =====================================================================
+
+- name: "Import GPG key (rpm)"
+  ansible.builtin.rpm_key:
+    key: "{{ gpg_key_url }}"
+    state: "present"
+  register: gpg_rpm_result
+  retries: 3
+  delay: 2
+  until: gpg_rpm_result is succeeded
+  become: "{{ become_enabled }}"

@@ -1,0 +1,33 @@
+# =====================================================================
+# roles/native/tasks/repo_loader/darwin.yml
+#
+# Purpose:
+#   macOS specific repository configuration (Homebrew Taps).
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_brew: "homebrew/cask-versions"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "repo_loader/main"
+#     vars:
+#       repo_name: "mongodb/brew"
+#       repo_brew: "mongodb/brew"
+#
+# =====================================================================
+
+- name: "Configure Homebrew Tap {{ repo_name | default(repo_brew, true) }}"
+  community.general.homebrew_tap:
+    name: "{{ repo_brew }}"
+    state: "present"
+  register: repo_brew_result
+  retries: 3
+  delay: 2
+  until: repo_brew_result is succeeded
+  become: "{{ become_enabled }}"
+  when: repo_brew is defined

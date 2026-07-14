@@ -1,0 +1,324 @@
+# =====================================================================
+# roles/native/tasks/native_loader.yml
+#
+# Purpose:
+#   Unified application lifecycle loader for native deployments.
+#   Abstracts package management and service orchestration across
+#   Alpine, Debian, RHEL, and macOS.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: native_loader
+#     vars:
+#       native_app_name: "curl"
+#       native_app_state: "present"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: native_loader
+#     vars:
+#       # --- Core Parameters ---
+#       native_app_name: "nginx"               # Unique application identifier
+#       native_app_state: "started"            # present|latest|started|stopped|restarted|absent|purged
+#       native_app_packages: ["nginx-full"]    # Optional: override package name for manager
+#       native_app_desc: "High-perf web server" # Description for audit logs
+#       native_app_force_update_cache: false   # Force update package manager cache
+#
+#       # --- Service Orchestration ---
+#       native_app_service: "nginx"            # Service name in init system
+#       native_app_service_enabled: true       # Enable service on boot
+#       native_app_service_shell: "/bin/bash"  # Custom shell for service commands
+#       native_app_service_stop_timeout: 15    # Seconds to wait for graceful stop
+#
+#       # --- Script-based Lifecycle (Advanced) ---
+#       native_app_install_cmd: "curl | bash"  # Custom shell command for installation
+#       native_app_install_creates: "/opt/bin" # Path to check for idempotency
+#       native_app_install_env: {"KEY": "VAL"} # Environment variables for install script
+#       native_app_install_user: "root"        # Execute install/uninstall as this user
+#       native_app_install_changed_when: true  # Custom status logic for installation
+#       native_app_install_failed_when: "rc!=0" # Custom failure logic for installation
+#       native_app_uninstall_cmd: "rm -rf /"   # Custom shell command for removal
+#       native_app_uninstall_changed_when: true # Custom status logic for removal
+#       native_app_uninstall_failed_when: "rc!=0" # Custom failure logic for removal
+#
+#       # --- macOS Specialized Metadata ---
+#       native_app_is_cask: false              # Use Homebrew Cask engine
+#       native_app_dmg_app_name: "Google Chrome" # Name of the .app inside a DMG
+#       native_app_pkg_id: "com.google.chrome"  # Package ID for .pkg installation
+#       native_app_pkg_uninstall_script: "/pth" # Custom cleanup script for .pkg
+#       native_app_bundle_name: "Chrome.app"    # Bundle directory name
+#       native_app_framework_name: "Core.fw"    # Framework directory name
+#       native_app_dylib_name: "lib.dylib"      # Shared library name
+#       native_app_kext_name: "driver.kext"     # Kernel extension name
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Validation ---
+# ---------------------------------------------------------------------
+
+# WHY: Specific tasks (assert) must not have names per .aiconfig.
+# Adding tags: ["always"] to ensure validation runs even when using filters.
+- ansible.builtin.assert:
+    that:
+      - native_app_name is defined
+      - native_app_name is string
+      - (native_app_name | length) > 0
+    fail_msg: |
+      native_loader parameter validation failed:
+      
+      Required parameter 'native_app_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ native_app_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ native_app_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "native"
+            tasks_from: "native_loader"
+          vars:
+            native_app_name: "nginx"
+            native_app_state: "started"  # present|latest|started|stopped|restarted|absent|purged
+    success_msg: "native_loader: native_app_name validated ({{ native_app_name }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted', 'absent', 'purged']
+    fail_msg: |
+      native_loader parameter validation failed:
+      
+      Parameter 'native_app_state' must be one of: present, latest, started, stopped, restarted, absent, purged.
+      
+      Received:
+        - Value: {{ native_app_state | default('present') }}
+      
+      State descriptions:
+        - present: Install package (if not already installed)
+        - latest: Install/upgrade to latest version
+        - started: Install + start service
+        - stopped: Stop service (keep installed)
+        - restarted: Restart service
+        - absent: Uninstall package (keep data)
+        - purged: Uninstall package + remove data
+    success_msg: "native_loader: native_app_state validated ({{ native_app_state | default('present') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Normalization ---
+# ---------------------------------------------------------------------
+
+# WHY: Centralizing variables ensures predictable behavior across all phases.
+# Adding tags: ["always"] is critical for variable availability in subsequent tasks.
+- name: "Native: Load variable schema"
+  ansible.builtin.include_vars:
+    file: "../vars/native_loader_schema.yml"
+  tags: ["always"]
+
+- ansible.builtin.set_fact:
+    "{{ item }}": null
+  loop: "{{ native_loader_internal_vars }}"
+  loop_control:
+    label: "reset {{ item }} (null)"
+  tags: ["always"]
+
+- name: "Normalize native variables"
+  ansible.builtin.set_fact:
+    native_package_name: "{{ native_app_name }}"
+    native_package_list: "{{ native_app_packages | default(native_app_name, true) }}"
+    native_package_desc: "{{ native_app_desc | default('', true) }}"
+    native_package_force_update_cache: "{{ native_app_force_update_cache | default(false, true) }}"
+    # Service management variables
+    native_service_name: "{{ native_app_service | default('', true) }}"
+    native_service_enabled: "{{ native_app_service_enabled | default(true, true) }}"
+    native_service_shell: "{{ native_app_service_shell | default(omit) }}"
+    native_service_restart_policy: "{{ native_app_service_restart_policy | default(omit) }}"
+    native_service_stop_timeout: "{{ (native_app_service_stop_timeout | default(10, true)) | int }}"
+    # macOS specialized format metadata
+    native_package_dmg_app_name: "{{ native_app_dmg_app_name | default(omit) }}"
+    native_package_pkg_id: "{{ native_app_pkg_id | default(omit) }}"
+    native_package_pkg_uninstall_script: "{{ native_app_pkg_uninstall_script | default(omit) }}"
+    native_package_bundle_name: "{{ native_app_bundle_name | default(omit) }}"
+    native_package_framework_name: "{{ native_app_framework_name | default(omit) }}"
+    native_package_dylib_name: "{{ native_package_dylib_name | default(omit) }}"
+    native_package_kext_name: "{{ native_app_kext_name | default(omit) }}"
+    native_package_is_cask: "{{ native_app_is_cask | default(false, true) }}"
+    # Script-based lifecycle parameters
+    native_install_cmd: "{{ native_app_install_cmd | default('', true) }}"
+    native_install_creates: "{{ native_app_install_creates | default(omit) }}"
+    native_install_env: "{{ native_app_install_env | default({}, true) }}"
+    native_install_user: "{{ native_app_install_user | default(omit) }}"
+    native_install_changed_when: "{{ native_app_install_changed_when | default(omit) }}"
+    native_install_failed_when: "{{ native_app_install_failed_when | default(omit) }}"
+    native_uninstall_cmd: "{{ native_app_uninstall_cmd | default('', true) }}"
+    native_uninstall_changed_when: "{{ native_app_uninstall_changed_when | default(omit) }}"
+    native_uninstall_failed_when: "{{ native_app_uninstall_failed_when | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# --- Phase 1: Preparation ---
+# ---------------------------------------------------------------------
+
+# WHY: Ensure required binaries exist if a script installation is requested.
+- ansible.builtin.include_tasks: "package_loader/main.yml"
+  vars:
+    package_name: "{{ 'curl' if 'curl' in (native_install_cmd | default('', true) | string) else ('wget' if 'wget' in (native_install_cmd | default('', true) | string) else omit) }}"
+    package_state: "present"
+  when: 
+    - (native_install_cmd | default('', true) | length > 0)
+    - ("curl" in (native_install_cmd | default('', true) | string) or "wget" in (native_install_cmd | default('', true) | string))
+
+# ---------------------------------------------------------------------
+# --- Phase 2: Installation ---
+# ---------------------------------------------------------------------
+
+# WHY: Audit the decision for script-based installation.
+- ansible.builtin.debug:
+    msg: "[NATIVE_INSTALL_SCRIPT] Executing script-based installation for {{ native_app_name }}"
+  when: 
+    - (native_install_cmd | default('', true) | length > 0)
+    - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted']
+
+- name: "Install: Script-based execution for {{ native_app_name }}"
+  ansible.builtin.shell: |
+    PATH={{ os_paths }}
+    set -o pipefail
+    {{ native_install_cmd }}
+  args:
+    creates: "{{ native_install_creates | default(omit) }}"
+    executable: "/bin/bash"
+  environment: "{{ native_install_env }}"
+  # WHY: Use designated user if provided, otherwise fallback to global status.
+  become: "{{ native_install_user != omit or (become_enabled | default(false, true) | bool) }}"
+  become_user: "{{ native_install_user | default(omit) }}"
+  # WHY: Task attributes do not support 'omit' safely; use ternary or defined checks.
+  changed_when: "{{ native_install_changed_when if native_install_changed_when != omit else true }}"
+  failed_when: "{{ native_install_failed_when if native_install_failed_when != omit else (_native_script_install_result.rc != 0) }}"
+  register: _native_script_install_result
+  when: 
+    - (native_install_cmd | default('', true) | length > 0)
+    - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted']
+  vars:
+    fingerprint: "native_script_install_{{ native_app_name }}"
+
+# WHY: Use package_loader ONLY if no manual install command is provided.
+- ansible.builtin.include_tasks: "package_loader/main.yml"
+  vars:
+    package_name: "{{ native_package_name }}"
+    package_list: "{{ native_package_list }}"
+    package_desc: "{{ native_package_desc }}"
+    package_force_update_cache: "{{ native_package_force_update_cache }}"
+    package_state: "{{ 'latest' if (native_app_state | default('present', true)) == 'latest' else 'present' }}"
+    # Passthrough macOS metadata
+    package_dmg_app_name: "{{ native_package_dmg_app_name }}"
+    package_pkg_id: "{{ native_package_pkg_id }}"
+    package_pkg_uninstall_script: "{{ native_package_pkg_uninstall_script }}"
+    package_bundle_name: "{{ native_package_bundle_name }}"
+    package_framework_name: "{{ native_package_framework_name }}"
+    package_dylib_name: "{{ native_package_dylib_name }}"
+    package_kext_name: "{{ native_package_kext_name }}"
+    package_is_cask: "{{ native_package_is_cask }}"
+  when: 
+    - (native_install_cmd | default('', true) | length == 0)
+    - native_package_name is defined
+    - (native_package_name is string) or (native_package_name is sequence)
+    - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted']
+
+# ---------------------------------------------------------------------
+# --- Phase 3: Service Management ---
+# ---------------------------------------------------------------------
+
+- name: "Service (Start): App {{ native_app_name }}"
+  ansible.builtin.include_tasks: "service_loader/main.yml"
+  vars:
+    service_name: "{{ native_service_name }}"
+    service_state: "started"
+    service_enabled: "{{ native_service_enabled }}"
+    service_shell: "{{ native_service_shell }}"
+  when: 
+    - native_service_name is defined
+    - native_service_name | default('', true) | length > 0
+    - (native_app_state | default('present', true)) in ['present', 'latest', 'started']
+
+- name: "Service (Stop): App {{ native_app_name }}"
+  ansible.builtin.include_tasks: "service_loader/main.yml"
+  vars:
+    service_name: "{{ native_service_name }}"
+    service_state: "stopped"
+  when: 
+    - native_service_name is defined
+    - native_service_name | default('', true) | length > 0
+    - (native_app_state | default('present', true)) == 'stopped'
+
+- name: "Service (Restart): App {{ native_app_name }}"
+  ansible.builtin.include_tasks: "service_loader/main.yml"
+  vars:
+    service_name: "{{ native_service_name }}"
+    service_state: "restarted"
+  when: 
+    - native_service_name is defined
+    - native_service_name | default('', true) | length > 0
+    - (native_app_state | default('present', true)) == 'restarted'
+
+# ---------------------------------------------------------------------
+# --- Phase 4: Teardown ---
+# ---------------------------------------------------------------------
+
+# WHY: Ensure service is stopped before package removal.
+- ansible.builtin.include_tasks: "service_loader/main.yml"
+  vars:
+    service_name: "{{ native_service_name }}"
+    service_state: "stopped"
+  when: 
+    - native_service_name is defined
+    - native_service_name | default('', true) | length > 0
+    - (native_app_state | default('present', true)) in ['absent', 'purged']
+
+# WHY: Audit the decision for script-based removal.
+- ansible.builtin.debug:
+    msg: "[NATIVE_UNINSTALL_SCRIPT] Executing script-based removal for {{ native_app_name }}"
+  when: 
+    - (native_uninstall_cmd | default('', true) | length > 0)
+    - (native_app_state | default('present', true)) in ['absent', 'purged']
+
+- name: "Teardown: Script-based removal for {{ native_app_name }}"
+  ansible.builtin.shell: "set -o pipefail && {{ native_uninstall_cmd }}"
+  args:
+    executable: "/bin/bash"
+  # WHY: Mirror installation privilege logic.
+  become: "{{ native_install_user != omit or (become_enabled | default(false, true) | bool) }}"
+  become_user: "{{ native_install_user | default(omit) }}"
+  changed_when: "{{ native_uninstall_changed_when if native_uninstall_changed_when != omit else true }}"
+  failed_when: "{{ native_uninstall_failed_when if native_uninstall_failed_when != omit else (_native_script_uninstall_result.rc != 0) }}"
+  register: _native_script_uninstall_result
+  when: 
+    - (native_uninstall_cmd | default('', true) | length > 0)
+    - (native_app_state | default('present', true)) in ['absent', 'purged']
+  vars:
+    fingerprint: "native_script_uninstall_{{ native_app_name }}"
+
+# WHY: Use package_loader removal fallback ONLY if no manual uninstall command is provided.
+- name: "Teardown: Remove package for {{ native_app_name }}"
+  ansible.builtin.include_tasks: "package_loader/main.yml"
+  vars:
+    package_name: "{{ native_package_name }}"
+    package_list: "{{ native_package_list }}"
+    package_desc: "{{ native_package_desc }}"
+    package_state: "{{ native_app_state | default('absent', true) }}"
+    # Ensure symmetrical metadata passthrough
+    package_dmg_app_name: "{{ native_package_dmg_app_name }}"
+    package_pkg_id: "{{ native_package_pkg_id }}"
+    package_pkg_uninstall_script: "{{ native_package_pkg_uninstall_script }}"
+    package_bundle_name: "{{ native_package_bundle_name }}"
+    package_framework_name: "{{ native_package_framework_name }}"
+    package_dylib_name: "{{ native_package_dylib_name }}"
+    package_kext_name: "{{ native_package_kext_name }}"
+    package_is_cask: "{{ native_package_is_cask }}"
+  when: 
+    - (native_uninstall_cmd | default('', true) | length == 0)
+    - native_package_name is defined
+    - (native_package_name is string) or (native_package_name is sequence)
+    - (native_app_state | default('present', true)) in ['absent', 'purged']

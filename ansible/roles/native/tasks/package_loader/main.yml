@@ -1,0 +1,395 @@
+# =====================================================================
+# roles/native/tasks/package_loader/main.yml
+#
+# Purpose:
+#   Advanced package orchestration engine.
+#   Performs deep analysis of package strings to categorize them into:
+#     - Repositories (standard package names)
+#     - Files (local .deb, .rpm, .apk paths)
+#     - URLs (remote .deb, .rpm, .apk links)
+#     - Sources (.tar.gz, .zip archives requiring compilation)
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_name: "curl"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "package_loader/main"
+#     vars:
+#       package_state: "present"          # present|latest|absent|purged
+#       package_force_update_cache: true  # Force refresh of package manager cache
+#       package_list:
+#         # -----------------------------------------------------------
+#         # Standard Package Manager (apt/dnf/apk/brew/port/pacman)
+#         # -----------------------------------------------------------
+#         - "nginx"                        # Install from system package manager
+#         - "nginx-extras"
+#
+#         # -----------------------------------------------------------
+#         # Local File Installation
+#         # -----------------------------------------------------------
+#         - "/tmp/package.deb"             # Debian/Ubuntu .deb file
+#         - "/tmp/package.rpm"             # RHEL/Fedora .rpm file
+#         - "/tmp/package.apk"             # Alpine .apk file
+#         - "./relative/path/package.deb"  # Relative path supported
+#
+#         # -----------------------------------------------------------
+#         # Remote URL Installation
+#         # -----------------------------------------------------------
+#         - "https://example.com/app.deb"  # Remote .deb download
+#         - "https://example.com/app.rpm"  # Remote .rpm download
+#
+#         # -----------------------------------------------------------
+#         # Source Compilation (tar archives)
+#         # -----------------------------------------------------------
+#         - "/tmp/source.tar.gz"           # Local source archive
+#         - "https://example.com/src.tgz"  # Remote source archive
+#
+#         # -----------------------------------------------------------
+#         # macOS: Homebrew/MacPorts (standard names work directly)
+#         # -----------------------------------------------------------
+#         - "wget"                         # brew install wget / port install wget
+#
+#         # -----------------------------------------------------------
+#         # macOS: DMG/PKG/APP Installation
+#         # -----------------------------------------------------------
+#         - "/tmp/Firefox.dmg"             # DMG disk image
+#         - "https://example.com/app.dmg"  # Remote DMG
+#         - "/tmp/Installer.pkg"           # PKG installer
+#         - "/tmp/Installer.mpkg"          # Multi-package installer
+#         - "/tmp/MyApp.app"               # Application bundle
+#         - "/tmp/Archive.zip"             # ZIP containing .app
+#         - "/tmp/Core.framework"          # Framework bundle
+#         - "/tmp/library.dylib"           # Dynamic library
+#         - "/tmp/driver.kext"             # Kernel extension
+#
+#         # -----------------------------------------------------------
+#         # macOS: Mac App Store (mas-cli required)
+#         # -----------------------------------------------------------
+#         - "mas:497799835"                # Install by App ID (Xcode)
+#         - "mas:Keynote"                  # Install by App Name
+#         - "mas:1295203466"               # Microsoft Remote Desktop
+#
+#         # -----------------------------------------------------------
+#         # Windows: Package Managers
+#         # -----------------------------------------------------------
+#         - "winget:Microsoft.VisualStudioCode"  # Windows Package Manager
+#         - "winget:Git.Git"
+#         - "choco:7zip"                   # Chocolatey
+#         - "choco:nodejs-lts"
+#         - "scoop:neovim"                 # Scoop
+#         - "scoop:fzf"
+#         - "msstore:9NBLGGH5R558"         # Microsoft Store by ID
+#
+#         # -----------------------------------------------------------
+#         # Universal Linux: Snap
+#         # -----------------------------------------------------------
+#         - "snap:certbot"                 # Classic snap
+#         - "snap:code"                    # VS Code
+#         - "snap:spotify"
+#
+#         # -----------------------------------------------------------
+#         # Universal Linux: Flatpak
+#         # -----------------------------------------------------------
+#         - "flatpak:org.gimp.GIMP"        # GIMP
+#         - "flatpak:org.mozilla.firefox"  # Firefox
+#         - "flatpak:com.spotify.Client"   # Spotify
+#
+#         # -----------------------------------------------------------
+#         # Universal: Nix Package Manager
+#         # -----------------------------------------------------------
+#         - "nix:ripgrep"                  # ripgrep
+#         - "nix:fd"                       # fd-find
+#         - "nix:bat"                      # bat (cat replacement)
+#
+#         # -----------------------------------------------------------
+#         # Universal: GNU Guix
+#         # -----------------------------------------------------------
+#         - "guix:emacs"                   # Emacs
+#         - "guix:shepherd"                # Shepherd init system
+#
+#         # -----------------------------------------------------------
+#         # Arch Linux: AUR (yay/paru required)
+#         # -----------------------------------------------------------
+#         - "aur:visual-studio-code-bin"   # VS Code from AUR
+#         - "aur:google-chrome"            # Chrome from AUR
+#         - "aur:spotify"                  # Spotify from AUR
+#
+#         # -----------------------------------------------------------
+#         # Python: pip/pipx
+#         # -----------------------------------------------------------
+#         - "pip:ansible"                  # System-wide pip install
+#         - "pip:ansible-lint"
+#         - "pip:requests==2.28.0"         # Version pinning supported
+#         - "pipx:black"                   # Isolated Python apps
+#         - "pipx:poetry"
+#         - "pipx:httpie"
+#
+#         # -----------------------------------------------------------
+#         # Python: Conda
+#         # -----------------------------------------------------------
+#         - "conda:numpy"                  # Conda packages
+#         - "conda:pandas"
+#         - "conda:scikit-learn"
+#
+#         # -----------------------------------------------------------
+#         # Node.js: npm/yarn/pnpm/bun
+#         # -----------------------------------------------------------
+#         - "npm:typescript"               # npm global install
+#         - "npm:eslint"
+#         - "yarn:prettier"                # Yarn global install
+#         - "pnpm:vite"                    # pnpm global install
+#         - "bun:elysia"                   # Bun package manager
+#
+#         # -----------------------------------------------------------
+#         # Deno
+#         # -----------------------------------------------------------
+#         - "deno:fresh"                   # Deno modules
+#         - "deno:oak"
+#
+#         # -----------------------------------------------------------
+#         # Rust: Cargo
+#         # -----------------------------------------------------------
+#         - "cargo:ripgrep"                # cargo install
+#         - "cargo:fd-find"
+#         - "cargo:bat"
+#         - "cargo:exa"
+#
+#         # -----------------------------------------------------------
+#         # Go: go install
+#         # -----------------------------------------------------------
+#         - "go:github.com/junegunn/fzf@latest"     # Go modules
+#         - "go:github.com/jesseduffield/lazygit@latest"
+#         - "go:golang.org/x/tools/gopls@latest"
+#
+#         # -----------------------------------------------------------
+#         # Ruby: gem
+#         # -----------------------------------------------------------
+#         - "gem:rails"                    # Ruby gems
+#         - "gem:bundler"
+#         - "gem:jekyll"
+#
+#         # -----------------------------------------------------------
+#         # PHP: Composer
+#         # -----------------------------------------------------------
+#         - "composer:laravel/installer"   # Composer global require
+#         - "composer:phpunit/phpunit"
+#
+#         # -----------------------------------------------------------
+#         # Dart/Flutter: pub
+#         # -----------------------------------------------------------
+#         - "dart:stagehand"               # Dart packages
+#         - "dart:webdev"
+#
+#         # -----------------------------------------------------------
+#         # Nim: nimble
+#         # -----------------------------------------------------------
+#         - "nim:nimble"                   # Nim packages
+#         - "nim:choosenim"
+#
+#         # -----------------------------------------------------------
+#         # .NET: dotnet tool
+#         # -----------------------------------------------------------
+#         - "dotnet:dotnet-ef"             # .NET global tools
+#         - "dotnet:dotnet-format"
+#
+#         # -----------------------------------------------------------
+#         # Scala/Haskell: Coursier (cs)
+#         # -----------------------------------------------------------
+#         - "cs:scalafmt"                  # Coursier apps
+#         - "cs:metals"
+#
+#         # -----------------------------------------------------------
+#         # SDK Manager (sdkman)
+#         # -----------------------------------------------------------
+#         - "sdk:java"                     # SDKMAN packages
+#         - "sdk:gradle"
+#         - "sdk:kotlin"
+#
+#       # --- macOS DMG/PKG Metadata (when using file/URL installation) ---
+#       package_is_cask: true             # Use Homebrew Cask engine
+#       package_dmg_app_name: "Firefox"   # Name of .app inside DMG
+#       package_bundle_name: "Firefox.app" # Bundle directory name
+#       package_pkg_id: "com.google.chrome" # Package ID for .pkg uninstall
+#
+# =====================================================================
+
+
+# ---------------------------------------------------------------------
+# 0. Reset & Initialization
+# ---------------------------------------------------------------------
+
+# WHY: Resetting temporary facts prevents leakage from previous calls.
+# package_caches_updated is persistent across calls to avoid redundant updates.
+- name: "Package: Load variable schema"
+  ansible.builtin.include_vars:
+    file: "../../vars/package_loader_schema.yml"
+  tags: ["always"]
+
+- ansible.builtin.set_fact:
+    "{{ item }}": null
+  loop: "{{ package_loader_api_vars }}"
+  loop_control:
+    label: "reset {{ item }} (null)"
+  tags: ["always"]
+
+- name: "Package: Initialize cache tracking dictionary"
+  ansible.builtin.set_fact:
+    package_caches_updated: "{{ package_caches_updated | default({}, true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Multi-Mode Classification
+# ---------------------------------------------------------------------
+
+# WHY: We automate the detection of package types to provide a 
+# unified API for the user. They simply pass a list, and we route 
+# and handle the low-level complexities.
+# Adding tags: ["always"] ensures this normalization runs even with filters.
+- name: "Package: Normalization and Classification"
+  ansible.builtin.set_fact:
+    # 1. Standardize to list
+    _pkg_input_list: >-
+      {{
+        [package_list | default(package_name, true)]
+        if (package_list | default(package_name, true)) is string
+        else (package_list | default(package_name | default([], true), true))
+      }}
+    package_cache_updated: "{{ package_cache_updated | default(false, true) }}"
+  tags: ["always"]
+
+- name: "Package: Categorize inputs"
+  ansible.builtin.set_fact:
+    # Categorize based on regex matching
+    pkg_file_list: "{{ _pkg_input_list | select('match', '^(/|\\./|\\.\\./).*\\.(deb|rpm|apk|pkg\\.tar\\..*)$') | list }}"
+    pkg_url_list: "{{ _pkg_input_list | select('match', '^https?://.*\\.(deb|rpm|apk|pkg\\.tar\\..*)$') | list }}"
+    pkg_src_list: "{{ _pkg_input_list | select('match', '^.*\\.(tar\\.gz|tar\\.xz|tar\\.bz2|tgz)$') | list }}"
+    # WHY: macOS-specific formats - comprehensive support for all package types
+    pkg_dmg_list: >-
+      {{ 
+        (_pkg_input_list | select('match', '^.*\\.dmg$') | list)
+        +
+        (_pkg_input_list | select('match', '^dmg:.*$') | map('regex_replace', '^dmg:', '') | list)
+      }}
+    pkg_pkg_list: >-
+      {{ 
+        (_pkg_input_list | select('match', '^.*\\.pkg$') | list)
+        +
+        (_pkg_input_list | select('match', '^pkg:.*$') | map('regex_replace', '^pkg:', '') | list)
+      }}
+    pkg_mpkg_list: "{{ _pkg_input_list | select('match', '^.*\\.mpkg$') | list }}"
+    pkg_app_list: "{{ _pkg_input_list | select('match', '^.*\\.app$') | list }}"
+    pkg_zip_list: "{{ _pkg_input_list | select('match', '^.*\\.zip$') | list }}"
+    pkg_framework_list: "{{ _pkg_input_list | select('match', '^.*\\.framework$') | list }}"
+    pkg_dylib_list: "{{ _pkg_input_list | select('match', '^.*\\.dylib$') | list }}"
+    pkg_kext_list: "{{ _pkg_input_list | select('match', '^.*\\.kext$') | list }}"
+    # WHY: Mac App Store apps (format: mas:ID or mas:Name)
+    pkg_mas_list: "{{ _pkg_input_list | select('match', '^mas:.*$') | list }}"
+    # WHY: Homebrew Casks (format: cask:token)
+    pkg_cask_list: "{{ _pkg_input_list | select('match', '^cask:.*$') | map('regex_replace', '^cask:', '') | list }}"
+    # WHY: Explicit Homebrew Formula (format: brew:formula)
+    pkg_brew_list: "{{ _pkg_input_list | select('match', '^brew:.*$') | map('regex_replace', '^brew:', '') | list }}"
+    # WHY: Explicit MacPorts (format: port:portname)
+    pkg_port_list: "{{ _pkg_input_list | select('match', '^port:.*$') | map('regex_replace', '^port:', '') | list }}"
+    # WHY: Windows package managers (format: winget:ID, choco:Name, scoop:Name, msstore:ID)
+    pkg_winget_list: "{{ _pkg_input_list | select('match', '^winget:.*$') | map('regex_replace', '^winget:', '') | list }}"
+    pkg_choco_list: "{{ _pkg_input_list | select('match', '^choco:.*$') | map('regex_replace', '^choco:', '') | list }}"
+    pkg_scoop_list: "{{ _pkg_input_list | select('match', '^scoop:.*$') | map('regex_replace', '^scoop:', '') | list }}"
+    pkg_msstore_list: "{{ _pkg_input_list | select('match', '^msstore:.*$') | map('regex_replace', '^msstore:', '') | list }}"
+    # WHY: Universal Linux package managers (format: snap:Name, flatpak:ID)
+    pkg_snap_list: "{{ _pkg_input_list | select('match', '^snap:.*$') | map('regex_replace', '^snap:', '') | list }}"
+    pkg_flatpak_list: "{{ _pkg_input_list | select('match', '^flatpak:.*$') | map('regex_replace', '^flatpak:', '') | list }}"
+    pkg_nix_list: "{{ _pkg_input_list | select('match', '^nix:.*$') | map('regex_replace', '^nix:', '') | list }}"
+    pkg_guix_list: "{{ _pkg_input_list | select('match', '^guix:.*$') | map('regex_replace', '^guix:', '') | list }}"
+    pkg_aur_list: "{{ _pkg_input_list | select('match', '^aur:.*$') | map('regex_replace', '^aur:', '') | list }}"
+    pkg_pip_list: "{{ _pkg_input_list | select('match', '^pip:.*$') | map('regex_replace', '^pip:', '') | list }}"
+    pkg_go_list: "{{ _pkg_input_list | select('match', '^go:.*$') | map('regex_replace', '^go:', '') | list }}"
+    pkg_npm_list: "{{ _pkg_input_list | select('match', '^npm:.*$') | map('regex_replace', '^npm:', '') | list }}"
+    pkg_yarn_list: "{{ _pkg_input_list | select('match', '^yarn:.*$') | map('regex_replace', '^yarn:', '') | list }}"
+    pkg_pnpm_list: "{{ _pkg_input_list | select('match', '^pnpm:.*$') | map('regex_replace', '^pnpm:', '') | list }}"
+    pkg_cargo_list: "{{ _pkg_input_list | select('match', '^cargo:.*$') | map('regex_replace', '^cargo:', '') | list }}"
+    pkg_deno_list: "{{ _pkg_input_list | select('match', '^deno:.*$') | map('regex_replace', '^deno:', '') | list }}"
+    pkg_composer_list: "{{ _pkg_input_list | select('match', '^composer:.*$') | map('regex_replace', '^composer:', '') | list }}"
+    pkg_dart_list: "{{ _pkg_input_list | select('match', '^dart:.*$') | map('regex_replace', '^dart:', '') | list }}"
+    pkg_nim_list: "{{ _pkg_input_list | select('match', '^nim:.*$') | map('regex_replace', '^nim:', '') | list }}"
+    pkg_pipx_list: "{{ _pkg_input_list | select('match', '^pipx:.*$') | map('regex_replace', '^pipx:', '') | list }}"
+    pkg_dotnet_list: "{{ _pkg_input_list | select('match', '^dotnet:.*$') | map('regex_replace', '^dotnet:', '') | list }}"
+    pkg_bun_list: "{{ _pkg_input_list | select('match', '^bun:.*$') | map('regex_replace', '^bun:', '') | list }}"
+    pkg_cs_list: "{{ _pkg_input_list | select('match', '^cs:.*$') | map('regex_replace', '^cs:', '') | list }}"
+    pkg_sdk_list: "{{ _pkg_input_list | select('match', '^sdk:.*$') | map('regex_replace', '^sdk:', '') | list }}"
+    pkg_conda_list: "{{ _pkg_input_list | select('match', '^conda:.*$') | map('regex_replace', '^conda:', '') | list }}"
+    pkg_gem_list: "{{ _pkg_input_list | select('match', '^gem:.*$') | map('regex_replace', '^gem:', '') | list }}"
+    pkg_repo_list: >-
+      {{
+        _pkg_input_list 
+        | reject('match', '^(/|\\./|\\.\\./).*') 
+        | reject('match', '^https?://.*') 
+        | reject('match', '^.*\\.(tar\\.gz|tar\\.xz|tar\\.bz2|tgz)$')
+        | reject('match', '^.*\\.(dmg|pkg|mpkg|app|zip|framework|dylib|kext)$')
+        | reject('match', '^mas:.*$')
+        | reject('match', '^cask:.*$')
+        | reject('match', '^(brew|port):.*$')
+        | reject('match', '^(dmg|pkg):.*$')
+        | reject('match', '^(winget|choco|scoop|msstore|snap|flatpak|nix|guix|aur|pip|pipx|go|npm|yarn|pnpm|cargo|deno|composer|dart|nim|dotnet|bun|cs|sdk|conda|gem):.*$')
+        | list
+      }}
+  vars:
+    fingerprint: "package_norm_class_{{ package_name | default('unknown', true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Dispatch: Universal Linux Managers (Snap/Flatpak)
+# ---------------------------------------------------------------------
+
+# WHY: Some package managers (Snap, Flatpak, Nix, Guix, AUR, PIP) are cross-platform or 
+# need specialized handlers. We handle them centrally if requested.
+- name: "Package: Universal managers execution"
+  ansible.builtin.include_tasks: "universal_managers.yml"
+  when:
+    - ( (pkg_snap_list | default([], true) | length > 0) or
+        (pkg_flatpak_list | default([], true) | length > 0) or
+        (pkg_nix_list | default([], true) | length > 0) or
+        (pkg_guix_list | default([], true) | length > 0) or
+        (pkg_aur_list | default([], true) | length > 0) or
+        (pkg_pip_list | default([], true) | length > 0) or
+        (pkg_go_list | default([], true) | length > 0) or
+        (pkg_npm_list | default([], true) | length > 0) or
+        (pkg_yarn_list | default([], true) | length > 0) or
+        (pkg_pnpm_list | default([], true) | length > 0) or
+        (pkg_cargo_list | default([], true) | length > 0) or
+        (pkg_deno_list | default([], true) | length > 0) or
+        (pkg_composer_list | default([], true) | length > 0) or
+        (pkg_dart_list | default([], true) | length > 0) or
+        (pkg_nim_list | default([], true) | length > 0) or
+        (pkg_pipx_list | default([], true) | length > 0) or
+        (pkg_dotnet_list | default([], true) | length > 0) or
+        (pkg_bun_list | default([], true) | length > 0) or
+        (pkg_cs_list | default([], true) | length > 0) or
+        (pkg_sdk_list | default([], true) | length > 0) or
+        (pkg_conda_list | default([], true) | length > 0) or
+        (pkg_gem_list | default([], true) | length > 0) )
+
+# ---------------------------------------------------------------------
+# Dispatch: Invoke the OS Loader
+# ---------------------------------------------------------------------
+
+# WHY: Delegate to distribution-specific logic while keeping the 
+# interface generic and lean.
+- ansible.builtin.include_role:
+    name: "core"
+    tasks_from: "os_loader"
+  vars:
+    module_name: "package_loader"
+
+# ---------------------------------------------------------------------
+# Registration: Set common result fact
+# ---------------------------------------------------------------------
+- name: "Package: Consolidate result fact"
+  ansible.builtin.set_fact:
+    package_result: "{{ package_result | default(omit) }}"
+  tags: ["always"]
