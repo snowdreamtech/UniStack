@@ -1,0 +1,21 @@
+---
+# =====================================================================
+# playbooks/scenarios/foundation.yml
+#
+# Purpose:
+#   Deploys the basic foundation software stack and environment.
+#   Replaces the legacy base.yml and init.yml playbooks.
+# =====================================================================
+
+- name: Deploy System Foundation
+  hosts: all
+  become: "{{ become_enabled | default(true) }}"
+  gather_facts: false
+
+  tasks:
+    - name: "Scenario: Execute Foundation via App Dispatcher"
+      ansible.builtin.include_role:
+        name: app
+      vars:
+        unistack_app_name: "foundation"
+        unistack_deploy_type: "native"
