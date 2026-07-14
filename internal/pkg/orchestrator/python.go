@@ -44,7 +44,7 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 	packageManagers := []string{
 		"apk", "apt-get", "microdnf", "dnf", "yum", "pacman",
 		"zypper", "xbps-install", "emerge", "pkg", "pkg_add", "brew", "port",
-		"eopkg", "nix-env", "opkg", "tdnf", "urpmi", "slackpkg",
+		"eopkg", "slackpkg",
 	}
 
 	var detectedPM string
@@ -92,14 +92,6 @@ func EnsurePythonInstalled(ctx context.Context) (string, error) {
 		installCmd = "port selfupdate || true && port install python311 || port install python310 || port install python3"
 	case "eopkg":
 		installCmd = "eopkg install -y python3"
-	case "nix-env":
-		installCmd = "nix-env -iA nixpkgs.python3"
-	case "opkg":
-		installCmd = "opkg update && opkg install python3"
-	case "tdnf":
-		installCmd = "tdnf install -y python3"
-	case "urpmi":
-		installCmd = "urpmi --auto python3"
 	case "slackpkg":
 		installCmd = "slackpkg update && slackpkg install python3"
 	}

@@ -27,22 +27,20 @@
 # Photon OS / Fedora / RHEL: Ansible's package module requires Python
 # bindings (python3-libdnf5 / python3-dnf) to be importable from the
 # venv, which may not work. Use the raw binary instead.
-# Note: Photon uses tdnf (dnf-compatible), while Fedora uses dnf/dnf5.
-- name: "Install sudo (dnf/tdnf/dnf5 workaround)"
+# Note: Fedora uses dnf/dnf5.
+- name: "Install sudo (dnf/dnf5 workaround)"
   ansible.builtin.shell: |
-    if command -v tdnf > /dev/null 2>&1; then
-      tdnf install -y sudo
-    elif command -v dnf > /dev/null 2>&1; then
+    if command -v dnf > /dev/null 2>&1; then
       dnf install -y sudo
     fi
   args:
     creates: "/usr/bin/sudo"
   become: "{{ become_enabled }}"
-  when: "(ansible_pkg_mgr | default('')) in ['tdnf', 'dnf', 'dnf5']"
+  when: "(ansible_pkg_mgr | default('')) in ['dnf', 'dnf5']"
 
 # Generic package install for all other supported distros.
 # Skip: macOS (no sudo needed), OpenWrt (no useradd infra),
-# emerge (handled above), dnf/tdnf (handled above), unknown managers.
+# emerge (handled above), dnf (handled above), unknown managers.
 - name: "Install sudo"
   ansible.builtin.package:
     name: sudo
@@ -50,5 +48,5 @@
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) != 'darwin'"
-    - "ansible_pkg_mgr not in ['portage', 'tdnf', 'dnf', 'dnf5', 'unknown']"
+    - "ansible_pkg_mgr not in ['portage', 'dnf', 'dnf5', 'unknown']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"

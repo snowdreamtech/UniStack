@@ -40,39 +40,20 @@
 # vars (e.g., zip, jq, vim, procps).
 # Replaces Uniloader's `app` role with direct ansible.builtin.package.
 # ---------------------------------------------------------------------
-- name: "Install base system packages (tdnf workaround) {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
-  ansible.builtin.shell: "tdnf install -y {{ base_packages | join(' ') }}"
-  become: "{{ become_enabled }}"
-  when:
-    - base_packages | default([]) | length > 0
-    - "ansible_pkg_mgr == 'tdnf'"
-  changed_when: false
 
 - name: "Install base system packages {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
   ansible.builtin.package:
     name: "{{ base_packages }}"
     state: present
   become: "{{ become_enabled }}"
-  when:
-    - base_packages | default([]) | length > 0
-    - "ansible_pkg_mgr != 'tdnf'"
-
-- name: "Install base development packages (tdnf workaround) {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
-  ansible.builtin.shell: "tdnf install -y {{ base_dev_packages | join(' ') }}"
-  become: "{{ become_enabled }}"
-  when:
-    - base_dev_packages | default([]) | length > 0
-    - "ansible_pkg_mgr == 'tdnf'"
-  changed_when: false
+  when: base_packages | default([]) | length > 0
 
 - name: "Install base development packages {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
   ansible.builtin.package:
     name: "{{ base_dev_packages }}"
     state: present
   become: "{{ become_enabled }}"
-  when:
-    - base_dev_packages | default([]) | length > 0
-    - "ansible_pkg_mgr != 'tdnf'"
+  when: base_dev_packages | default([]) | length > 0
 
 # ---------------------------------------------------------------------
 # Configuration: Apply global VIM preferences.

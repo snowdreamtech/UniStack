@@ -10,7 +10,7 @@
 - name: "Determine appropriate shell for OS family"
   ansible.builtin.set_fact:
     _init_user_shell: >-
-      {%- if os_family == 'alpine' or os_family == 'openwrt' -%}
+      {%- if os_family == 'alpine' -%}
         /bin/sh
       {%- elif os_family == 'freebsd' or os_family == 'openbsd' or os_family == 'netbsd' -%}
         /bin/sh
@@ -20,15 +20,6 @@
         /bin/bash
       {%- endif -%}
   when: _init_user_shell is not defined or _init_user_shell == '/bin/bash'
-
-# OpenWrt ships BusyBox only; shadow-* provides the standard user tools.
-# The 'creates' guard ensures idempotency.
-- name: "Install shadow user tools (OpenWrt)"
-  ansible.builtin.shell: "mkdir -p /var/lock && opkg update && opkg install shadow-useradd shadow-groupadd shadow-usermod"
-  args:
-    creates: "/usr/sbin/useradd"
-  become: "{{ become_enabled }}"
-  when: "ansible_pkg_mgr == 'opkg'"
 
 - name: "Create deployment user"
   ansible.builtin.user:

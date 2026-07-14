@@ -6,17 +6,15 @@
 #   Install and secure the OpenSSH daemon.
 # =====================================================================
 
-- name: "Install OpenSSH packages (dnf/tdnf/dnf5 workaround)"
+- name: "Install OpenSSH packages (dnf/dnf5 workaround)"
   ansible.builtin.shell: |
-    if command -v tdnf > /dev/null 2>&1; then
-      tdnf install -y {{ init_openssh_packages | join(' ') }}
-    elif command -v dnf > /dev/null 2>&1; then
+    if command -v dnf > /dev/null 2>&1; then
       dnf install -y {{ init_openssh_packages | join(' ') }}
     fi
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) not in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
-    - "ansible_pkg_mgr in ['tdnf', 'dnf', 'dnf5']"
+    - "ansible_pkg_mgr in ['dnf', 'dnf5']"
     - "init_openssh_packages | length > 0"
   changed_when: false
 
@@ -28,7 +26,7 @@
   become: "{{ become_enabled }}"
   when:
     - "(os_family | default('') | lower) not in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
-    - "ansible_pkg_mgr not in ['tdnf', 'dnf', 'dnf5']"
+    - "ansible_pkg_mgr not in ['dnf', 'dnf5']"
     - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
 
 - name: "Generate SSH host keys (Critical for Containers)"
