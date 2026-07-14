@@ -223,11 +223,11 @@ jobs:
           go build -o unistack main.go
 
       - name: "📥 Run Init Playbook"
-        run: ./unistack apply -i "unistack-target," -c docker ansible/playbooks/base.yml
+        run: ./unistack apply -i "unistack-target," -c docker ansible/playbooks/scenarios/foundation.yml
 
       - name: "🔁 Verify Idempotency"
         run: |
-          ./unistack apply -i "unistack-target," -c docker ansible/playbooks/base.yml > ansible_output.txt
+          ./unistack apply -i "unistack-target," -c docker ansible/playbooks/scenarios/foundation.yml > ansible_output.txt
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
@@ -261,11 +261,11 @@ jobs:
           go build -o unistack main.go
 
       - name: "📥 Run Init Playbook"
-        run: ./unistack apply -i "localhost," -c local ansible/playbooks/base.yml
+        run: ./unistack apply -i "localhost," -c local ansible/playbooks/scenarios/foundation.yml
 
       - name: "🔁 Verify Idempotency"
         run: |
-          ./unistack apply -i "localhost," -c local ansible/playbooks/base.yml > ansible_output.txt
+          ./unistack apply -i "localhost," -c local ansible/playbooks/scenarios/foundation.yml > ansible_output.txt
           cat ansible_output.txt
           grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
 
