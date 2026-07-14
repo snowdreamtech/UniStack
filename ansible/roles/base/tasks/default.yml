@@ -15,25 +15,7 @@
 #
 # =====================================================================
 
-# ---------------------------------------------------------------------
-# Preparation: Ensure Ansible package module dependencies
-# For VMware Photon, install python3-dnf into the system AND venv
-# before using ansible.builtin.package with dnf backend.
-# The venv is created with --system-site-packages, but we need to
-# ensure dnf module is accessible to Ansible's Python interpreter.
-# ---------------------------------------------------------------------
-- name: "Install python3-dnf (Photon) for Ansible package module"
-  ansible.builtin.raw: |
-    set -eu
-    # Install to system first
-    tdnf install -y python3-dnf || true
-    # Also try to install in current Python environment
-    {{ ansible_python_interpreter | default('/usr/bin/python3') }} -m pip install dnf || true
-  changed_when: false
-  failed_when: false
-  when:
-    - os_distribution_id | default('', true) == 'photon'
-  become: "{{ become_enabled }}"
+
 
 # Preparation: resolve known curl conflicts during package manager
 # initialization (RedHat only).
@@ -58,19 +40,39 @@
 # vars (e.g., zip, jq, vim, procps).
 # Replaces Uniloader's `app` role with direct ansible.builtin.package.
 # ---------------------------------------------------------------------
+- name: "Install base system packages (tdnf workaround) {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.shell: "tdnf install -y {{ base_packages | join(' ') }}"
+  become: "{{ become_enabled }}"
+  when:
+    - base_packages | default([]) | length > 0
+    - "ansible_pkg_mgr == 'tdnf'"
+  changed_when: false
+
 - name: "Install base system packages {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
   ansible.builtin.package:
     name: "{{ base_packages }}"
     state: present
   become: "{{ become_enabled }}"
-  when: base_packages | default([]) | length > 0
+  when:
+    - base_packages | default([]) | length > 0
+    - "ansible_pkg_mgr != 'tdnf'"
+
+- name: "Install base development packages (tdnf workaround) {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
+  ansible.builtin.shell: "tdnf install -y {{ base_dev_packages | join(' ') }}"
+  become: "{{ become_enabled }}"
+  when:
+    - base_dev_packages | default([]) | length > 0
+    - "ansible_pkg_mgr == 'tdnf'"
+  changed_when: false
 
 - name: "Install base development packages {{ '(' ~ os_family ~ ')' if os_family is defined else '' }}"
   ansible.builtin.package:
     name: "{{ base_dev_packages }}"
     state: present
   become: "{{ become_enabled }}"
-  when: base_dev_packages | default([]) | length > 0
+  when:
+    - base_dev_packages | default([]) | length > 0
+    - "ansible_pkg_mgr != 'tdnf'"
 
 # ---------------------------------------------------------------------
 # Configuration: Apply global VIM preferences.

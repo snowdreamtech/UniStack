@@ -24,7 +24,6 @@ base_packages:
   - coreutils
   - ca-bundle
   - git
-  - wget
   - curl
   - openssh-client
 
