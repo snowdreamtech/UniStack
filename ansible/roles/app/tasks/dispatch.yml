@@ -1,0 +1,146 @@
+---
+# =====================================================================
+# roles/app/tasks/dispatch.yml
+#
+# Purpose:
+#   Application API routing engine.
+#   Forwards normalized application deployment parameters to the 
+#   appropriate technology-specific role (native or container). 
+#   Acts as an abstract bridge between the high-level API and the 
+#   low-level implementation.
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Dispatch: Execute generic logic based on app_delivery_mode.
+# ---------------------------------------------------------------------
+
+# Routing (Native):
+- name: "Dispatch API to native layer"
+  ansible.builtin.include_role:
+    name: "native"
+  vars:
+    # Basic API
+    native_app_name: "{{ app_name }}"
+    native_app_state: "{{ app_state }}"
+    native_app_packages: "{{ app_packages | default(app_name, true) }}"
+    native_app_desc: "{{ app_desc | default('', true) }}"
+    native_app_homepage: "{{ app_homepage | default('', true) }}"
+    native_app_force_update_cache: "{{ app_force_update_cache | default(false, true) }}"
+    native_app_service: "{{ app_service | default(omit) }}"
+    native_app_service_enabled: "{{ app_service_enabled | default(true, true) }}"
+    native_app_service_shell: "{{ app_service_shell | default(omit) }}"
+    native_app_service_restart_policy: "{{ app_service_restart_policy | default(omit) }}"
+    native_app_service_stop_timeout: "{{ app_service_stop_timeout | default(omit) }}"
+    
+    # Script-based Installation
+    native_app_install_cmd: "{{ app_install_cmd | default(omit) }}"
+    native_app_install_creates: "{{ app_install_creates | default(omit) }}"
+    native_app_install_env: "{{ app_install_env | default(app_env | default(omit), true) }}"
+    native_app_install_user: "{{ app_install_user | default(omit) }}"
+    native_app_install_changed_when: "{{ app_install_changed_when | default(omit) }}"
+    native_app_install_failed_when: "{{ app_install_failed_when | default(omit) }}"
+    native_app_uninstall_cmd: "{{ app_uninstall_cmd | default(omit) }}"
+    native_app_uninstall_changed_when: "{{ app_uninstall_changed_when | default(omit) }}"
+    native_app_uninstall_failed_when: "{{ app_uninstall_failed_when | default(omit) }}"
+    
+    # macOS Specialized Meta
+    native_app_dmg_app_name: "{{ app_dmg_app_name | default(omit) }}"
+    native_app_pkg_id: "{{ app_pkg_id | default(omit) }}"
+    native_app_pkg_uninstall_script: "{{ app_pkg_uninstall_script | default(omit) }}"
+    native_app_bundle_name: "{{ app_bundle_name | default(omit) }}"
+    native_app_framework_name: "{{ app_framework_name | default(omit) }}"
+    native_app_dylib_name: "{{ app_dylib_name | default(omit) }}"
+    native_app_kext_name: "{{ app_kext_name | default(omit) }}"
+    native_app_is_cask: "{{ app_is_cask | default(false, true) }}"
+  when: 
+    - app_delivery_mode == 'native'
+
+# Routing (Container):
+
+- name: "Dispatch API to container layer"
+  ansible.builtin.include_role:
+    name: "container"
+  vars:
+    container_app_name: "{{ app_name }}"
+    container_app_state: "{{ app_state }}"
+    container_app_image: "{{ app_image | default(app_name, true) }}"
+    container_app_desc: "{{ app_desc | default('', true) }}"
+    container_app_homepage: "{{ app_homepage | default('', true) }}"
+    container_app_pull: "{{ app_pull | default(true, true) }}"
+    container_app_env: "{{ app_env | default(omit) }}"
+    container_app_env_file: "{{ app_env_file | default(omit) }}"
+    container_app_ports: "{{ app_ports | default(omit) }}"
+    container_app_volumes: "{{ app_volumes | default(omit) }}"
+    container_app_networks: "{{ app_networks | default(omit) }}"
+    container_app_command: "{{ app_command | default(omit) }}"
+    container_app_args: "{{ app_args | default(omit) }}"
+    container_app_labels: "{{ app_labels | default(omit) }}"
+    container_app_restart_policy: "{{ app_restart_policy | default('unless-stopped', true) }}"
+    container_app_resources: "{{ app_resources | default(omit) }}"
+    container_app_healthcheck: "{{ app_healthcheck | default(omit) }}"
+    container_app_hostname: "{{ app_hostname | default(omit) }}"
+    container_app_read_only: "{{ app_read_only | default(false, true) }}"
+    container_app_tty: "{{ app_tty | default(false, true) }}"
+    container_app_interactive: "{{ app_interactive | default(false, true) }}"
+    container_app_privileged: "{{ app_privileged | default(false, true) }}"
+    container_app_memory: "{{ app_memory | default(omit) }}"
+    container_app_cpus: "{{ app_cpus | default(omit) }}"
+    container_app_cpu_shares: "{{ app_cpu_shares | default(omit) }}"
+    container_app_stop_timeout: "{{ (app_stop_timeout | default(10, true)) | int }}"
+    container_app_shm_size: "{{ app_shm_size | default(omit) }}"
+  when: 
+    - app_delivery_mode == 'container'
+
+# Routing (Compose):
+- name: "Dispatch API to compose layer"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: "compose_loader"
+  vars:
+    container_engine: "{{ app_engine | default(omit) }}"
+    compose_project_src: "{{ app_compose_project_src }}"
+    compose_files: "{{ app_compose_files }}"
+    compose_project_name: "{{ app_compose_project_name }}"
+    compose_state: "{{ 'present' if app_state == 'started' else app_state }}"
+    compose_pull: "{{ 'always' if app_pull | default(true, true) else 'missing' }}"
+    compose_env_file: "{{ app_env_file | default(omit) }}"
+    compose_environment: "{{ app_env | default(omit) }}"
+  when: 
+    - app_delivery_mode == 'compose'
+
+# Routing (Kube):
+- name: "Dispatch API to kube layer"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: "kube_loader"
+  vars:
+    container_engine: "{{ app_engine | default(omit) }}"
+    kube_manifest: "{{ app_kube_manifest }}"
+    kube_state: "{{ app_state }}"
+  when: 
+    - app_delivery_mode == 'kube'
+
+# ---------------------------------------------------------------------
+# 3. Audit: Log the dispatched configuration.
+# ---------------------------------------------------------------------
+- name: "Log application dispatch"
+  ansible.builtin.include_role:
+    name: "app"
+    tasks_from: "log_loader"
+  vars:
+    label: "APP_DISPATCH"
+    msg: |
+      name={{ app_name }}
+      mode={{ app_delivery_mode }}
+      state={{ app_state }}
+      {% if app_delivery_mode | default('', true) == 'native' %}
+      packages={{ app_packages | default(app_name, true) }}
+      {% elif app_delivery_mode | default('', true) == 'compose' %}
+      project_src={{ app_compose_project_src }}
+      files={{ app_compose_files }}
+      {% elif app_delivery_mode | default('', true) == 'kube' %}
+      manifest={{ app_kube_manifest }}
+      {% else %}
+      image={{ app_image | default(app_name, true) }}
+      {% endif %}
+      homepage={{ app_homepage | default('', true) }}

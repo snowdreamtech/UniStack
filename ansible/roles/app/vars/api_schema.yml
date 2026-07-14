@@ -1,0 +1,130 @@
+# =====================================================================
+# roles/app/vars/api_schema.yml
+#
+# Purpose:
+#   Definition of the unified application API variable schema.
+#   This file acts as a single source of truth for all 'app_*' variables.
+#   It is used by the loader to perform automated resets and validation.
+# =====================================================================
+
+app_api_vars:
+  # ---------------------------------------------------------------------
+  # 1. Core Identifiers (Inputs)
+  # ---------------------------------------------------------------------
+  - app_name
+  - app_delivery_mode
+  - app_version
+  - app_state
+
+  # ---------------------------------------------------------------------
+  # 2. General Metadata
+  # ---------------------------------------------------------------------
+  - app_desc
+  - app_homepage
+  - app_license
+  - app_role_path
+  - app_var_prefixes
+
+  # ---------------------------------------------------------------------
+  # 3. Native: Package & Service Management
+  # ---------------------------------------------------------------------
+  - app_packages
+  - app_force_update_cache
+  - app_service
+  - app_service_enabled
+  - app_service_shell
+  - app_service_restart_policy
+  - app_service_stop_timeout
+
+  # ---------------------------------------------------------------------
+  # 4. Native: Script-based Installation/Uninstallation
+  # ---------------------------------------------------------------------
+  - app_install_cmd
+  - app_install_creates
+  - app_install_env
+  - app_install_user
+  - app_install_changed_when
+  - app_install_failed_when
+  - app_uninstall_cmd
+  - app_uninstall_changed_when
+  - app_uninstall_failed_when
+
+  # ---------------------------------------------------------------------
+  # 5. Native: macOS Specialized Meta
+  # ---------------------------------------------------------------------
+  - app_dmg_app_name
+  - app_pkg_id
+  - app_pkg_uninstall_script
+  - app_bundle_name
+  - app_framework_name
+  - app_dylib_name
+  - app_kext_name
+  - app_is_cask
+
+  # ---------------------------------------------------------------------
+  # 6. Containers: Shared Orchestration
+  # ---------------------------------------------------------------------
+  - app_engine
+  - app_image
+  - app_pull
+  - app_env
+  - app_env_file
+  - app_ports
+  - app_volumes
+  - app_networks
+  - app_command
+  - app_args
+  - app_labels
+  - app_restart_policy
+  - app_resources
+  - app_healthcheck
+  - app_hostname
+  - app_read_only
+  - app_tty
+  - app_interactive
+  - app_privileged
+  - app_memory
+  - app_cpus
+  - app_cpu_shares
+  - app_stop_timeout
+  - app_shm_size
+  - app_volume_owner
+  - app_volume_group
+
+  # ---------------------------------------------------------------------
+  # 7. Containers: Specialized Loaders (Compose/Kube)
+  # ---------------------------------------------------------------------
+  - app_compose_project_src
+  - app_compose_files
+  - app_compose_project_name
+  - app_kube_manifest
+
+  # ---------------------------------------------------------------------
+  # 8. Loader Internal State (Temporary Facts)
+  # ---------------------------------------------------------------------
+  - resolved_apps_path
+  - app_loader_root_mode
+  - app_loader_custom_exists
+  - app_loader_effective_prefixes
+  - app_vars_path
+  - app_tasks_path
+  - app_tasks_file
+  - app_vars_dir
+  - app_tasks_dir
+  - app_version
+
+# ---------------------------------------------------------------------
+# Internal state variables that should be reset between calls
+# These are temporary facts used by the loader and should not persist
+# across multiple app role invocations on the same host.
+# ---------------------------------------------------------------------
+app_api_internal_vars:
+  - resolved_apps_path
+  - app_loader_root_mode
+  - app_loader_custom_exists
+  - app_loader_effective_prefixes
+  - app_vars_path
+  - app_tasks_path
+  - app_tasks_file
+  - app_vars_dir
+  - app_tasks_dir

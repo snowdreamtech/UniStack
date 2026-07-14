@@ -1,0 +1,352 @@
+---
+# =====================================================================
+# roles/app/tasks/app_loader.yml
+#
+# Purpose:
+#   Integrated application loader inspired by os_loader and vars_loader.
+#   - Hierarchical variable merging (Additive)
+#   - Specialized OS-version aware tasks resolution
+#   - Intelligent delivery mode auto-detection
+# =====================================================================
+
+# 0. Context Discovery (Ensure core facts are present)
+# ---------------------------------------------------------------------
+- ansible.builtin.include_role:
+    name: "context"
+  when: os_fingerprint is not defined
+
+# 1. Basic Validation (app_name only)
+# ---------------------------------------------------------------------
+- name: "Validate app_name is provided"
+  ansible.builtin.assert:
+    that:
+      - app_name is defined
+      - app_name is string
+      - (app_name | length) > 0
+    fail_msg: |
+      app_loader: app_name must be a non-empty string
+      Received type: {{ app_name | type_debug if app_name is defined else 'undefined' }}
+      Received value: {{ app_name | default('UNDEFINED', true) }}
+    success_msg: "app_loader: app_name validated ({{ app_name }})"
+  tags: ["always"]
+
+# 1.5 Load API Schema Variables
+# ---------------------------------------------------------------------
+- name: "Load API schema for {{ app_name }}"
+  ansible.builtin.include_vars:
+    file: "vars/api_schema.yml"
+  tags: ["always"]
+
+# 2. Reset Loader & API State
+#    Prevent fact leakage from previous calls on the same host.
+#    Only reset internal state variables, NOT user input parameters.
+# ---------------------------------------------------------------------
+- ansible.builtin.set_fact:
+    "{{ loader_internal_item }}": null
+  loop: "{{ app_api_internal_vars }}"
+  loop_control:
+    loop_var: loader_internal_item
+    label: "reset {{ loader_internal_item }} (null)"
+  tags: ["always"]
+
+
+# ---------------------------------------------------------------------
+# 3. Path Resolution & Base Discovery
+#    Identify the source directory for application definitions.
+# ---------------------------------------------------------------------
+- name: "Resolve apps role base path"
+  ansible.builtin.set_fact:
+    resolved_apps_path: >-
+      {{
+        (role_path | dirname ~ '/apps')
+        if (
+          (role_path | dirname ~ '/apps/vars/' ~ app_name) is directory or
+          (role_path | dirname ~ '/apps/vars/' ~ app_name ~ '.yml') is file or
+          (role_path | dirname ~ '/apps/tasks/' ~ app_name) is directory or
+          (role_path | dirname ~ '/apps/tasks/' ~ app_name ~ '.yml') is file
+        )
+        else (
+          app_role_path
+            | default(((ansible_parent_role_paths | default([], true)) | first), true)
+            | default(role_path | dirname ~ '/apps', true)
+        )
+      }}
+  tags: ["always"]
+
+- name: "Log base path resolution for {{ app_name }}"
+  ansible.builtin.debug:
+    msg: "Apps Base selected: {{ resolved_apps_path }}"
+  when: verbose | default(false, true) | bool
+  tags: ["always"]
+
+- name: "Verify apps role existence at {{ resolved_apps_path }}"
+  ansible.builtin.stat:
+    path: "{{ resolved_apps_path }}"
+  register: app_base_dir_stat
+  delegate_to: localhost
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 4. Discovery: Multi-Mode Presence Check
+#    Check for any custom definitions (folders or files) for this app.
+# ---------------------------------------------------------------------
+- name: "Probe for custom definitions of {{ app_name }}"
+  when: app_base_dir_stat.stat.exists | default(false, true)
+  tags: ["always"]
+  block:
+    - name: "Detect module-mode structures for {{ app_name }}"
+      ansible.builtin.stat:
+        path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}"
+      loop:
+        - { path: 'vars', type: 'dir' }
+        - { path: 'tasks', type: 'dir' }
+      loop_control:
+        loop_var: loader_item
+      register: _app_mod_stat
+      delegate_to: localhost
+      vars:
+        ansible_python_interpreter: "{{ ansible_playbook_python }}"
+      tags: ["always"]
+
+    - name: "Detect root-mode files for {{ app_name }}"
+      ansible.builtin.stat:
+        path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}.yml"
+      loop:
+        - { path: 'vars', type: 'file' }
+        - { path: 'tasks', type: 'file' }
+      loop_control:
+        loop_var: loader_item
+      register: _app_root_stat
+      delegate_to: localhost
+      tags: ["always"]
+
+    - name: "Set custom existence facts for {{ app_name }}"
+      ansible.builtin.set_fact:
+        app_loader_custom_exists: >-
+          {{
+            (_app_mod_stat.results[0].stat.exists | default(false, true)) or
+            (_app_mod_stat.results[1].stat.exists | default(false, true)) or
+            (_app_root_stat.results[0].stat.exists | default(false, true)) or
+            (_app_root_stat.results[1].stat.exists | default(false, true))
+          }}
+        app_loader_root_mode: >-
+          {{
+            not (
+              (_app_mod_stat.results[0].stat.exists | default(false, true)) or
+              (_app_mod_stat.results[1].stat.exists | default(false, true))
+            )
+          }}
+        app_vars_dir: "{{ _app_mod_stat.results[0] }}"
+        app_tasks_dir: "{{ _app_mod_stat.results[1] }}"
+      when: app_base_dir_stat.stat.exists | default(false, true)
+      tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 5. State Initialization
+# ---------------------------------------------------------------------
+- name: "Initialize app loader state for {{ app_name }}"
+  ansible.builtin.set_fact:
+    app_vars_path: >-
+      {{
+        (app_loader_root_mode | default(false, true))
+        | ternary(resolved_apps_path ~ '/vars', resolved_apps_path ~ '/vars/' ~ app_name)
+      }}
+    app_tasks_path: >-
+      {{
+        (app_loader_root_mode | default(false, true))
+        | ternary(resolved_apps_path ~ '/tasks', resolved_apps_path ~ '/tasks/' ~ app_name)
+      }}
+    app_tasks_file: ""
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 6. Mode Auto-Detection
+# ---------------------------------------------------------------------
+- name: "Auto-detect app_delivery_mode for {{ app_name }}"
+  ansible.builtin.set_fact:
+    app_delivery_mode: >-
+      {{
+        'container' if (container_engine_available | default(false, true)) else 'native'
+      }}
+  when: (app_delivery_mode | default('auto', true)) == 'auto'
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 7. Variable Hierarchy Loading (Additive)
+# ---------------------------------------------------------------------
+- name: "Load hierarchical variables for {{ app_name }}"
+  ansible.builtin.include_vars:
+    file: "{{ app_vars_path }}/{{ loader_item }}"
+  loop:
+    - "default.yml"
+    - "{{ app_name }}.yml"
+    - "{{ family }}.yml"
+    - "{{ family }}-{{ version }}.yml"
+    - "{{ distro }}.yml"
+    - "{{ distro }}-{{ version }}.yml"
+    - "{{ mode }}.yml"
+    - "{{ mode }}/default.yml"
+    - "{{ mode }}/{{ family }}.yml"
+    - "{{ mode }}/{{ family }}-{{ version }}.yml"
+    - "{{ mode }}/{{ distro }}.yml"
+    - "{{ mode }}/{{ distro }}-{{ version }}.yml"
+  vars:
+    distro: "{{ os_distribution | default('unknown', true) }}"
+    family: "{{ os_family | default('unknown', true) }}"
+    version: "{{ os_version_major | default('0', true) }}"
+    mode: "{{ app_delivery_mode }}"
+  when: 
+    - app_loader_custom_exists | default(false, true)
+    - "lookup('first_found', {'paths': [app_vars_path], 'files': [loader_item]}, errors='ignore') != ''"
+  failed_when: false
+  loop_control:
+    loop_var: loader_item
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 8. Variable Prefixing: Aggregate all variable prefixes to be used 
+#    in the subsequent merging step.
+# ---------------------------------------------------------------------
+- name: "Resolve effective variable prefixes for {{ app_name }}"
+  ansible.builtin.set_fact:
+    app_loader_effective_prefixes: >-
+      {{
+        app_var_prefixes
+          | default([app_var_prefix | default(app_name, true)], true)
+          | select('defined')
+          | reject('none')
+          | list
+      }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 9. Variable Merging (Explicit Combine)
+#    Safely merge defaults and overrides for each variable prefix.
+# ---------------------------------------------------------------------
+- name: "Merge defaults/overrides for multiple objects in {{ app_name }}"
+  ansible.builtin.set_fact:
+    "{{ loader_item }}": >-
+      {{
+        (lookup('vars', loader_item ~ '_defaults', default={}))
+        | combine(
+            lookup('vars', loader_item ~ '_overrides', default={}),
+            recursive=True
+          )
+      }}
+  loop: "{{ app_loader_effective_prefixes | default([], true) }}"
+  when:
+    - loader_item is string
+    - app_loader_custom_exists | default(false, true)
+    - app_loader_effective_prefixes is defined
+    - app_loader_effective_prefixes | length > 0
+    - (
+      lookup('vars', loader_item ~ '_defaults', default={}) is mapping
+      or
+      lookup('vars', loader_item ~ '_overrides', default={}) is mapping
+      )
+  loop_control:
+    loop_var: loader_item
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 10. API Mapping
+#     Map merged variables from the primary app object to the unified 
+#     app_* API if they are not already set.
+# ---------------------------------------------------------------------
+- name: "Map merged variables to unified API for {{ app_name }}"
+  ansible.builtin.set_fact:
+    "{{ loader_var_item.key }}": "{{ loader_var_item.value }}"
+  loop: "{{ lookup('vars', app_name, default={}) | dict2items }}"
+  when:
+    - app_loader_custom_exists | default(false, true)
+    - lookup('vars', app_name, default={}) is mapping
+    - loader_var_item.key.startswith('app_')
+    - (hostvars[inventory_hostname].get(loader_var_item.key) | default('', true) | string | trim | length == 0)
+  loop_control:
+    loop_var: loader_var_item
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 11. Normalization (Unified API state)
+#     Apply defaults and convert types before validation.
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "normalize.yml"
+
+# ---------------------------------------------------------------------
+# 12. Full API Validation
+#     Validate all fields after normalization has set defaults.
+# ---------------------------------------------------------------------
+- ansible.builtin.import_tasks: "validate.yml"
+
+# ---------------------------------------------------------------------
+# 13. Task Resolution (Best Match)
+# ---------------------------------------------------------------------
+- name: "Resolve tasks file for {{ app_name }} ({{ app_delivery_mode }})"
+  ansible.builtin.set_fact:
+    app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
+  vars:
+    distro: "{{ os_distribution | default('unknown', true) }}"
+    family: "{{ os_family | default('unknown', true) }}"
+    version: "{{ os_version_major | default('0', true) }}"
+    mode: "{{ app_delivery_mode }}"
+    params_tasks:
+      paths: ["{{ app_tasks_path }}"]
+      files:
+        - "{{ mode }}/{{ distro }}-{{ version }}.yml"
+        - "{{ mode }}/{{ distro }}.yml"
+        - "{{ mode }}/{{ family }}-{{ version }}.yml"
+        - "{{ mode }}/{{ family }}.yml"
+        - "{{ mode }}/{{ app_name }}.yml"
+        - "{{ app_name }}.yml"
+        - "{{ mode }}/default.yml"
+        - "{{ mode }}.yml"
+        - "{{ distro }}-{{ version }}.yml"
+        - "{{ distro }}.yml"
+        - "{{ family }}-{{ version }}.yml"
+        - "{{ family }}.yml"
+        - "default.yml"
+  when: app_loader_custom_exists | default(false, true)
+  tags: ["always"]
+
+
+# ---------------------------------------------------------------------
+# 14. Audit Logging
+# ---------------------------------------------------------------------
+- ansible.builtin.debug:
+    msg: |
+      [APP_LOADER] {{ app_name }}
+      Status: {{ 'Custom-Tasks' if (app_tasks_file | default('', true) | length > 0) else 'Generic-Logic' }}
+      Delivery Mode: {{ app_delivery_mode }}
+      
+      Discovery Context:
+      - Apps Role Base: {{ resolved_apps_path }}
+      - Parent Chain: {{ ansible_parent_role_paths | default([], true) | join(' -> ') }}
+      - Discovery Mode: {{ 'Root-Mode' if (app_loader_root_mode | default(false, true)) else 'Module-Mode' }}
+      - Custom Exists: {{ app_loader_custom_exists | default(false, true) }}
+      
+      Path Context:
+      - Variables Root: {{ app_vars_path }}
+      - Tasks Root: {{ app_tasks_path }}
+      - Resolved Task: {{ app_tasks_file | default('NONE', true) }}
+      
+      OS Context:
+      - Family: {{ os_family | default('unknown', true) }}
+      - Distribution: {{ os_distribution | default('unknown', true) }}
+      - Major Version: {{ os_version_major | default('0', true) }}
+
+# ---------------------------------------------------------------------
+# 15. Execution
+# ---------------------------------------------------------------------
+- name: "Execute resolved tasks for {{ app_name }}"
+  ansible.builtin.include_tasks: "{{ app_tasks_file }}"
+  when: 
+    - app_tasks_file is defined
+    - app_tasks_file | default('', true) | length > 0
+
+- name: "Execute generic deployment logic for {{ app_name }}"
+  ansible.builtin.include_tasks: "dispatch.yml"
+  when: 
+    - app_tasks_file is defined
+    - app_tasks_file | default('', true) | length == 0

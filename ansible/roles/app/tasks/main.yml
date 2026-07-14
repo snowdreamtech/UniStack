@@ -3,15 +3,70 @@
 # roles/app/tasks/main.yml
 #
 # Purpose:
-#   Unified Application Dispatcher (L3 Gateway).
-#   Receives `unistack_app_name` and routes execution to the specific
-#   app's definition in the apps/ directory.
+#   Entry point for the unified application deployment API.
+#   This file orchestrates the validation, normalization, and dispatching
+#   of application deployment requests regardless of the underlying 
+#   technology (container vs. native).
 #
-# Inputs:
-#   - unistack_app_name: The name of the application (e.g., 'foundation', 'nginx')
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: app
+#     vars:
+#       app_name: "helloworld"
+#       app_delivery_mode: "container"
+#
+# Comprehensive Usage (Container Mode):
+#   - ansible.builtin.include_role:
+#       name: "app"
+#     vars:
+#       app_name: "web-application"
+#       app_delivery_mode: "container"
+#       app_state: "started"
+#       app_image: "nginx:1.25-alpine"
+#       app_ports: ["80:80", "443:443"]
+#       app_volumes:
+#         - "/opt/web/html:/usr/share/nginx/html:ro"
+#         - "/opt/web/config:/etc/nginx/conf.d:ro"
+#       app_env:
+#         DEBUG: "false"
+#         WORKER_PROCESSES: "4"
+#       app_restart_policy: "unless-stopped"
+#       app_memory: "512m"
+#       app_cpus: 2.0
+#       app_networks: ["frontend"]
+#       become_enabled: true
+#
+# Comprehensive Usage (Native Mode):
+#   - ansible.builtin.include_role:
+#       name: "app"
+#     vars:
+#       app_name: "postgresql"
+#       app_delivery_mode: "native"
+#       app_state: "started"
+#       app_packages: ["postgresql-15", "postgresql-contrib"]
+#       app_desc: "PostgreSQL Database Server"
+#       app_service_enabled: true
+#       app_force_update_cache: true
+#       become_enabled: true
+
+# Comprehensive Usage (Compose Mode):
+#   - ansible.builtin.include_role:
+#       name: "app"
+#     vars:
+#       app_name: "monitor"
+#       app_delivery_mode: "compose"
+#       app_state: "started"
+#       app_compose_project_src: "/opt/monitor"
+#       app_compose_files: ["docker-compose.yml"]
+#       app_env_file: "/opt/monitor/.env"
+#       become_enabled: true
+#
 # =====================================================================
 
-- name: "App Dispatcher: Execute '{{ unistack_app_name }}'"
-  ansible.builtin.include_role:
-    name: "apps/{{ unistack_app_name }}"
-  when: unistack_app_name is defined
+# ---------------------------------------------------------------------
+# 1. Unified Loader: Orchestrate the full application lifecycle.
+#    This includes validation, path resolution, variable merging, 
+#    task resolution, and final execution/dispatch.
+# ---------------------------------------------------------------------
+- name: "Load application configuration and execute"
+  ansible.builtin.include_tasks: "app_loader.yml"
