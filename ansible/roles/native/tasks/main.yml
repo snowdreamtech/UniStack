@@ -1,0 +1,17 @@
+---
+# =====================================================================
+# roles/native/tasks/main.yml
+#
+# Purpose:
+#   L2 Execution Engine for Native OS Package Management.
+#   Provides a unified abstraction over native OS package managers
+#   (apt, dnf, apk, brew, pacman, etc.) by exposing standard verbs.
+#
+# Inputs:
+#   - unistack_action: The standardized verb (install, remove, list, search, etc.)
+#   - unistack_packages: List of packages to operate on.
+# =====================================================================
+
+- name: "Native Engine: Route action '{{ unistack_action | default('unknown') }}'"
+  ansible.builtin.include_tasks: "{{ unistack_action }}.yml"
+  when: unistack_action is defined

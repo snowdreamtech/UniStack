@@ -1,0 +1,6 @@
+---
+- name: "Native Engine: Install packages"
+  ansible.builtin.package:
+    name: "{{ unistack_packages }}"
+    state: present
+  when: unistack_packages is defined and unistack_packages | length > 0

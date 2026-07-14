@@ -1,0 +1,16 @@
+---
+# =====================================================================
+# roles/container/tasks/main.yml
+#
+# Purpose:
+#   L2 Execution Engine for Container Orchestration.
+#   Provides a unified abstraction over Docker and Docker Compose.
+#
+# Inputs:
+#   - unistack_action: The standardized verb (install/up, remove/down, etc.)
+#   - unistack_container_spec: Definition of the container or compose stack.
+# =====================================================================
+
+- name: "Container Engine: Route action '{{ unistack_action | default('unknown') }}'"
+  ansible.builtin.include_tasks: "{{ unistack_action }}.yml"
+  when: unistack_action is defined

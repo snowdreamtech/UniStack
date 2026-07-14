@@ -1,0 +1,46 @@
+---
+# =====================================================================
+# roles/core/tasks/os_loader.yml
+#
+# Purpose:
+#   A highly reusable multi-stage OS context loader.
+#   Dynamically sniffs the OS context (family, distribution, etc.) and
+#   loads the best-fit variables or tasks for the calling role.
+#   This eliminates hardcoded `when: ansible_os_family == '...'` logic.
+#
+# Usage:
+#   - ansible.builtin.include_role:
+#       name: core
+#       tasks_from: os_loader
+#     vars:
+#       core_loader_type: "vars" # "vars" or "tasks"
+#       core_loader_path: "vars" # directory to search in the calling role
+# =====================================================================
+
+- name: "[Core] Load OS-specific variables"
+  ansible.builtin.include_vars: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ os_family | default('unknown', true) }}.yml"
+        - "{{ os_distribution_id | default('unknown', true) }}.yml"
+        - "{{ os_distribution | default('unknown', true) }}.yml"
+        - "default.yml"
+      paths:
+        - "{{ role_path }}/{{ core_loader_path | default('vars', true) }}"
+      skip: true
+  when: core_loader_type | default('vars', true) == 'vars'
+  tags: ["always"]
+
+- name: "[Core] Load OS-specific tasks"
+  ansible.builtin.include_tasks: "{{ item }}"
+  with_first_found:
+    - files:
+        - "{{ os_family | default('unknown', true) }}.yml"
+        - "{{ os_distribution_id | default('unknown', true) }}.yml"
+        - "{{ os_distribution | default('unknown', true) }}.yml"
+        - "default.yml"
+      paths:
+        - "{{ role_path }}/{{ core_loader_path | default('tasks', true) }}"
+      skip: true
+  when: core_loader_type | default('vars', true) == 'tasks'
+  tags: ["always"]

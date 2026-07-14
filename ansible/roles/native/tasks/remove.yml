@@ -1,0 +1,6 @@
+---
+- name: "Native Engine: Remove packages"
+  ansible.builtin.package:
+    name: "{{ unistack_packages }}"
+    state: absent
+  when: unistack_packages is defined and unistack_packages | length > 0
