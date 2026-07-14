@@ -8,7 +8,14 @@
 #   former Mandriva Linux. It uses urpmi package manager.
 # =====================================================================
 
-base_packages:
+# ---------------------------------------------------------------------
+# Note: Ansible's urpmi module crashes when passing a list to the
+# package module (TypeError: can only concatenate list not str to list).
+# We define the packages as a private list and expose a comma-separated
+# string to bypass this bug natively without polluting the main tasks.
+# ---------------------------------------------------------------------
+
+_mageia_base_packages:
   # -------------------------------------------------------------------
   # OS Core & Administrative
   # -------------------------------------------------------------------
@@ -95,4 +102,7 @@ base_packages:
   - lsof
   - ipcalc
 
-base_dev_packages: []
+_mageia_base_dev_packages: []
+
+base_packages: "{{ _mageia_base_packages | join(',') }}"
+base_dev_packages: "{{ _mageia_base_dev_packages | join(',') if _mageia_base_dev_packages | length > 0 else '' }}"
