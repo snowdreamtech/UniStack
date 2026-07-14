@@ -1,67 +1,70 @@
----
+init_openssh_packages:
+- openssh-server
+- openssh-client
+init_sshd_service: ssh
+init_sshd_use_pam: 'yes'
+base_dev_packages: []
 foundation_packages:
-  - age
-  - apt-transport-https
-  - aria2
-  - bash-completion
-  - bat
-  - bzip2
-  - ca-certificates
-  - curl
-  - dnsutils
-  - fd-find
-  - file
-  - fzf
-  - git
-  - git-lfs
-  - gnupg
-  - gzip
-  - htop
-  - httpie
-  - inotify-tools
-  - ipcalc
-  - iperf3
-  - iputils-ping
-  - jq
-  - libcap2-bin
-  - lsb-release
-  - lsof
-  - make
-  - man-db
-  - manpages
-  - moreutils
-  - mtr-tiny
-  - ncdu
-  - net-tools
-  - nmap
-  - openssh-client
-  - openssh-server
-  - openssl
-  - p7zip-full
-  - parallel
-  - patch
-  - pinentry-curses
-  - pinentry-tty
-  - procps
-  - psmisc
-  - pv
-  - ripgrep
-  - rsync
-  - shellcheck
-  - socat
-  - strace
-  - stress-ng
-  - sudo
-  - sysstat
-  - tcpdump
-  - tig
-  - tmux
-  - tree
-  - tzdata
-  - unzip
-  - vim
-  - wget
-  - xz-utils
-  - yq
-  - zip
-  - zstd
+- age
+- apt-transport-https
+- aria2
+- bash-completion
+- bat
+- bzip2
+- ca-certificates
+- curl
+- dnsutils
+- fd-find
+- file
+- fzf
+- git
+- git-lfs
+- gnupg
+- gzip
+- htop
+- httpie
+- inotify-tools
+- ipcalc
+- iperf3
+- iputils-ping
+- jq
+- libcap2-bin
+- lsb-release
+- lsof
+- make
+- man-db
+- manpages
+- moreutils
+- mtr-tiny
+- ncdu
+- net-tools
+- nmap
+- openssl
+- p7zip-full
+- parallel
+- patch
+- pinentry-curses
+- pinentry-tty
+- procps
+- psmisc
+- pv
+- ripgrep
+- rsync
+- shellcheck
+- socat
+- strace
+- stress-ng
+- sudo
+- sysstat
+- tcpdump
+- tig
+- tmux
+- tree
+- tzdata
+- unzip
+- vim
+- wget
+- xz-utils
+- yq
+- zip
+- zstd

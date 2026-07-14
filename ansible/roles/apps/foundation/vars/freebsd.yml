@@ -1,54 +1,56 @@
----
+init_openssh_packages:
+- openssh
+init_sshd_service: sshd
+base_dev_packages: []
 foundation_packages:
-  - age
-  - aria2
-  - bash-completion
-  - bat
-  - bind-tools
-  - bzip2
-  - ca_root_nss
-  - curl
-  - fd-find
-  - file
-  - fzf
-  - git
-  - git-lfs
-  - gmake
-  - gnupg
-  - gzip
-  - hs-ShellCheck
-  - htop
-  - inotify-tools
-  - ipcalc
-  - iperf3
-  - jq
-  - lsof
-  - moreutils
-  - mtr
-  - ncdu
-  - nmap
-  - openssh
-  - openssl
-  - p7zip
-  - parallel
-  - patch
-  - pinentry-curses
-  - pinentry-tty
-  - procps
-  - psmisc
-  - pv
-  - ripgrep
-  - rsync
-  - socat
-  - sudo
-  - sysutils/sysstat
-  - tig
-  - tmux
-  - tree
-  - unzip
-  - vim
-  - wget
-  - xz
-  - yq
-  - zip
-  - zstd
+- age
+- aria2
+- bash-completion
+- bat
+- bind-tools
+- bzip2
+- ca_root_nss
+- curl
+- fd-find
+- file
+- fzf
+- git
+- git-lfs
+- gmake
+- gnupg
+- gzip
+- hs-ShellCheck
+- htop
+- inotify-tools
+- ipcalc
+- iperf3
+- jq
+- lsof
+- moreutils
+- mtr
+- ncdu
+- nmap
+- openssl
+- p7zip
+- parallel
+- patch
+- pinentry-curses
+- pinentry-tty
+- procps
+- psmisc
+- pv
+- ripgrep
+- rsync
+- socat
+- sudo
+- sysutils/sysstat
+- tig
+- tmux
+- tree
+- unzip
+- vim
+- wget
+- xz
+- yq
+- zip
+- zstd

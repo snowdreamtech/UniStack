@@ -1,9 +1,0 @@
----
-# =====================================================================
-# roles/base/handlers/main.yml
-#
-# Purpose:
-#   Global notification handlers for core system services.
-#   Add service restart/reload handlers here as the base role grows.
-#
-# =====================================================================

@@ -22,3 +22,22 @@
   vars:
     unistack_action: install
     unistack_packages: "{{ foundation_packages | default([]) }}"
+
+# ---------------------------------------------------------------------
+# Foundation Stages (formerly roles/init)
+# ---------------------------------------------------------------------
+- name: "Foundation: Configure Sudo"
+  ansible.builtin.include_tasks: "sudo.yml"
+
+- name: "Foundation: Configure Repositories"
+  ansible.builtin.include_tasks: "repositories.yml"
+
+- name: "Foundation: Configure Mirror"
+  ansible.builtin.include_tasks: "mirror.yml"
+  when: init_mirror_enabled | default(false, true)
+
+- name: "Foundation: Provision User"
+  ansible.builtin.include_tasks: "user.yml"
+
+- name: "Foundation: Configure OpenSSH"
+  ansible.builtin.include_tasks: "openssh.yml"
