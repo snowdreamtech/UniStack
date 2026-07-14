@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/download"
+	"github.com/snowdreamtech/unigo/internal/download"
 )
 
 // ExampleDefaultDownloadOptions demonstrates creating download options with defaults.

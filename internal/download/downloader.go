@@ -62,7 +62,7 @@ type Downloader interface {
 	//
 	// The implementation MUST:
 	//   - Support SHA-256 checksums (required by Requirement 4.6)
-	//   - Return ErrChecksumMismatch from internal/pkg/errors when checksums don't match
+	//   - Return ErrChecksumMismatch from internal/errors when checksums don't match
 	//   - Delete the file if checksum verification fails
 	//   - Support the format "sha256:hash" or just "hash" (assuming SHA-256)
 	VerifyChecksum(ctx context.Context, file string, expectedChecksum string) error

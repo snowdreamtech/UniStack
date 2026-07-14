@@ -228,7 +228,7 @@ Created 12 example tests demonstrating:
 
 ### 6. Error Categorization
 
-**Decision**: Use categorized errors from `internal/pkg/errors`.
+**Decision**: Use categorized errors from `internal/errors`.
 
 **Rationale**:
 
@@ -358,10 +358,10 @@ Created 12 example tests demonstrating:
 
 ## Files Created
 
-1. `internal/pkg/download/http.go` - HTTP downloader implementation
-2. `internal/pkg/download/http_test.go` - Unit tests
-3. `internal/pkg/download/http_example_test.go` - Example tests
-4. `internal/pkg/download/HTTP_IMPLEMENTATION.md` - This file
+1. `internal/download/http.go` - HTTP downloader implementation
+2. `internal/download/http_test.go` - Unit tests
+3. `internal/download/http_example_test.go` - Example tests
+4. `internal/download/HTTP_IMPLEMENTATION.md` - This file
 
 ## Usage Examples
 

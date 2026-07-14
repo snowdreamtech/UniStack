@@ -31,10 +31,10 @@ import (
 
 	"log/slog"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
-	"github.com/snowdreamtech/unigo/internal/pkg/errors"
-	"github.com/snowdreamtech/unigo/internal/pkg/gpg"
-	pkgHttp "github.com/snowdreamtech/unigo/internal/pkg/http"
+	"github.com/snowdreamtech/unigo/internal/env"
+	"github.com/snowdreamtech/unigo/internal/errors"
+	"github.com/snowdreamtech/unigo/internal/gpg"
+	pkgHttp "github.com/snowdreamtech/unigo/internal/http"
 )
 
 // ErrGPGSkipped is returned when a signature file is not found (404) and verification is skipped.

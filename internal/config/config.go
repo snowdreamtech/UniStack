@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/pelletier/go-toml/v2"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/env"
 	"gopkg.in/yaml.v3"
 )
 

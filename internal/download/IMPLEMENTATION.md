@@ -115,7 +115,7 @@ Created comprehensive documentation:
 ### Requirement 4.7: Error Reporting ✅
 
 - ✅ Documentation specifies descriptive errors with URL, attempt count, and failure reason
-- ✅ Integration with categorized error system (`internal/pkg/errors`)
+- ✅ Integration with categorized error system (`internal/errors`)
 - ⏳ Actual error implementation will be in concrete downloader
 
 ### Requirement 4.8: Custom Implementations ✅
@@ -184,13 +184,13 @@ Created comprehensive documentation:
 
 ### 1. Error Handling System
 
-- Uses `ErrChecksumMismatch` from `internal/pkg/errors`
+- Uses `ErrChecksumMismatch` from `internal/errors`
 - Supports categorized errors (User, System, External)
 - Integrates with error wrapping using `fmt.Errorf` with `%w`
 
 ### 2. Logger System
 
-- Future implementations will use `internal/pkg/logger`
+- Future implementations will use `internal/logger`
 - Will log download operations, retries, and errors
 - Will include structured context (URL, destination, attempt count)
 
@@ -247,11 +247,11 @@ Created comprehensive documentation:
 
 ## Files Created
 
-1. `internal/pkg/download/downloader.go` - Interface and options definition
-2. `internal/pkg/download/downloader_test.go` - Unit tests
-3. `internal/pkg/download/example_test.go` - Example tests
-4. `internal/pkg/download/README.md` - Module documentation
-5. `internal/pkg/download/IMPLEMENTATION.md` - This file
+1. `internal/download/downloader.go` - Interface and options definition
+2. `internal/download/downloader_test.go` - Unit tests
+3. `internal/download/example_test.go` - Example tests
+4. `internal/download/README.md` - Module documentation
+5. `internal/download/IMPLEMENTATION.md` - This file
 
 ## Next Steps
 

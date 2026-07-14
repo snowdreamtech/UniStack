@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/common-nighthawk/go-figure"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/env"
 	"github.com/snowdreamtech/unigo/internal/sysinfo"
 	"github.com/spf13/cobra"
 )

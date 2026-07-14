@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/env"
 	"github.com/snowdreamtech/unigo/internal/utils"
 	"github.com/spf13/cobra"
 )

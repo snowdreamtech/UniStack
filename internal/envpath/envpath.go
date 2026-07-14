@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/env"
 )
 
 var isWindowsMode = runtime.GOOS == "windows"

@@ -16,7 +16,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/snowdreamtech/unigo/internal/cli/output"
 	"github.com/snowdreamtech/unigo/internal/database"
-	"github.com/snowdreamtech/unigo/internal/pkg/env"
+	"github.com/snowdreamtech/unigo/internal/env"
 	"github.com/spf13/cobra"
 )
 

@@ -40,7 +40,7 @@ package main
 import (
     "context"
     "fmt"
-    "github.com/snowdreamtech/unigo/internal/pkg/download"
+    "github.com/snowdreamtech/unigo/internal/download"
 )
 
 func main() {
@@ -125,7 +125,7 @@ Any implementation of the `Downloader` interface MUST:
 
 ## Error Handling
 
-The download module integrates with the project's error handling system (`internal/pkg/errors`):
+The download module integrates with the project's error handling system (`internal/errors`):
 
 - **User Errors** (CategoryUser): Invalid URL, invalid checksum format
 - **System Errors** (CategorySystem): Disk full, permission denied
@@ -212,12 +212,12 @@ Potential future improvements:
 ## Related Components
 
 - **Backend System** (`internal/backend/`): Uses the downloader to fetch tool artifacts
-- **Error Handling** (`internal/pkg/errors/`): Provides error classification
-- **Logger** (`internal/pkg/logger/`): Logs download operations and errors
+- **Error Handling** (`internal/errors/`): Provides error classification
+- **Logger** (`internal/logger/`): Logs download operations and errors
 - **Cache Manager** (future): Caches downloaded artifacts
 
 ## References
 
 - Design Document: `../../../../README.md` (Download System section)
 - Requirements: `../../../../README.md` (Requirement 4: Generic Download Interface)
-- Error Handling: `internal/pkg/errors/README.md`
+- Error Handling: `internal/errors/README.md`
