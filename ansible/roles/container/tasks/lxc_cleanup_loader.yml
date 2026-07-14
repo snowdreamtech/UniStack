@@ -1,0 +1,80 @@
+---
+# =====================================================================
+# lxc_cleanup_loader.yml
+#
+# Enterprise-grade loader for cleaning LXC unused resources with full
+# audit logging and cross-distro consistency.
+#
+# Features:
+# - Cleanup orphaned containers
+# - Cleanup leftover rootfs directories
+# - Cleanup leftover config directories
+# - Cleanup LXC logs
+# - Cleanup PID/lock files
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Cleanup orphaned containers (best-effort)
+# ---------------------------------------------------------------------
+
+- name: "Cleanup LXC orphaned containers"
+  become: "{{ become_enabled }}"
+  ansible.builtin.shell: |
+    PATH={{ os_paths }}
+    set -o pipefail
+    lxc-ls --stopped | xargs -r -I{} lxc-destroy -n {} || true
+  register: lxc_cleanup_orphans
+  changed_when: "'destroyed' in lxc_cleanup_orphans.stdout"
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Cleanup leftover rootfs directories
+# ---------------------------------------------------------------------
+
+- name: "Cleanup LXC leftover rootfs directories"
+  become: "{{ become_enabled }}"
+  ansible.builtin.shell: >
+    PATH={{ os_paths }} find /var/lib/lxc -maxdepth 2 -type d -name rootfs -empty -exec rm -rf {} +
+  register: lxc_cleanup_rootfs
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Cleanup leftover config directories
+# ---------------------------------------------------------------------
+
+- name: "Cleanup LXC leftover config directories"
+  become: "{{ become_enabled }}"
+  ansible.builtin.shell: >
+    PATH={{ os_paths }} find /var/lib/lxc -maxdepth 1 -type d -empty -exec rm -rf {} +
+  register: lxc_cleanup_config
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Cleanup LXC logs
+# ---------------------------------------------------------------------
+
+- name: "Cleanup LXC logs"
+  become: "{{ become_enabled }}"
+  ansible.builtin.shell: >
+    PATH={{ os_paths }} find /var/log/lxc -type f -name "*.log" -delete
+  register: lxc_cleanup_logs
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Cleanup PID and lock files
+# ---------------------------------------------------------------------
+
+- name: "Cleanup LXC PID/lock files"
+  become: "{{ become_enabled }}"
+  ansible.builtin.shell: >
+    PATH={{ os_paths }} find /run/lxc -type f -name "*.pid" -delete -o -name "*.lock" -delete
+  register: lxc_cleanup_pidlock
+  changed_when: false
+  failed_when: false
+

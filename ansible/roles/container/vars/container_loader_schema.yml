@@ -1,0 +1,97 @@
+# =====================================================================
+# roles/container/vars/container_loader_schema.yml
+#
+# Purpose:
+#   Definition of the Container Loader variable schema.
+# =====================================================================
+
+container_loader_api_vars:
+  # Internal State
+  - detected_engine
+  - container_result
+
+  # Normalized Container Configuration (Common across engines)
+  - container_name
+  - container_image
+  - container_pull
+  - container_env
+  - container_env_file
+  - container_ports
+  - container_volumes
+  - container_networks
+  - container_command
+  - container_args
+  - container_labels
+  - container_restart_policy
+  - container_resources
+  - container_healthcheck
+  - container_state
+  - container_ulimits
+  - container_sysctls
+  - container_capabilities
+  - container_devices
+  - container_security_opts
+  - container_user
+  - container_workdir
+  - container_entrypoint
+  - container_log_driver
+  - container_log_options
+  - container_detach
+  - container_hostname
+  - container_read_only
+  - container_tty
+  - container_interactive
+  - container_privileged
+  - container_memory
+  - container_cpus
+  - container_cpu_shares
+  - container_stop_timeout
+  - container_shm_size
+
+# ---------------------------------------------------------------------
+# Internal state variables that should be reset between calls
+# These are normalized/computed values, NOT user input parameters.
+# container_app_* variables are input parameters and should NOT be reset.
+# ---------------------------------------------------------------------
+container_loader_internal_vars:
+  # Internal state
+  - detected_engine
+  - container_result
+  
+  # Normalized container configuration (computed from container_app_*)
+  - container_name
+  - container_image
+  - container_pull
+  - container_env
+  - container_env_file
+  - container_ports
+  - container_volumes
+  - container_networks
+  - container_command
+  - container_args
+  - container_labels
+  - container_restart_policy
+  - container_resources
+  - container_healthcheck
+  - container_state
+  - container_ulimits
+  - container_sysctls
+  - container_capabilities
+  - container_devices
+  - container_security_opts
+  - container_user
+  - container_workdir
+  - container_entrypoint
+  - container_log_driver
+  - container_log_options
+  - container_detach
+  - container_hostname
+  - container_read_only
+  - container_tty
+  - container_interactive
+  - container_privileged
+  - container_memory
+  - container_cpus
+  - container_cpu_shares
+  - container_stop_timeout
+  - container_shm_size

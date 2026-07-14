@@ -1,0 +1,203 @@
+---
+# =====================================================================
+# roles/container/tasks/docker_compose_loader.yml
+#
+# Purpose:
+#   Enterprise-grade loader for managing Docker Compose V2 projects.
+#   Supports multi-file projects, service-level control, and advanced 
+#   Compose V2 features like recreate strategies, profiles, and 
+#   scaling with integrated audit logging.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_compose_loader
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_state: "present"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_compose_loader
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_files: ["docker-compose.yml", "docker-compose.prod.yml", "docker-compose.monitoring.yml"]
+#       compose_project_name: "myapp-production"
+#       compose_services: ["backend", "frontend", "prometheus"]
+#       compose_state: "present"
+#       compose_pull: "always"
+#       compose_recreate: "always"
+#       compose_remove_orphans: true
+#       compose_profiles: ["prod", "monitoring"]
+#       compose_scale: { "backend": 5, "frontend": 2 }
+#       compose_env_file: "/opt/myapp/.env.prod"
+#       compose_timeout: 120
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory project source and state are provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - compose_project_src is defined
+      - compose_project_src is string
+      - (compose_project_src | trim | length) > 0
+    fail_msg: |
+      docker_compose_loader validation failed:
+      
+      Required parameter 'compose_project_src' must be a non-empty string.
+      
+      Received:
+        - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
+        - Value: {{ compose_project_src | default('UNDEFINED') }}
+    success_msg: "docker_compose_loader: compose_project_src validated ({{ compose_project_src }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - compose_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
+    fail_msg: |
+      docker_compose_loader validation failed:
+      
+      Parameter 'compose_state' must be one of: present, absent, restarted, stopped.
+      
+      Received:
+        - Value: {{ compose_state | default('present') }}
+    success_msg: "docker_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
+  tags: ["always"]
+
+- name: "Set default compose files"
+  ansible.builtin.set_fact:
+    compose_files: "{{ compose_files | default(['docker-compose.yml'], true) }}"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - compose_files is iterable
+      - (compose_files | length) > 0
+    fail_msg: "compose_files must be a non-empty list."
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Validation: Verify project source directory and defined compose files.
+# ---------------------------------------------------------------------
+- name: "Check compose_project_src directory exists"
+  ansible.builtin.stat:
+    path: "{{ compose_project_src }}"
+  register: compose_src_stat
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - compose_src_stat.stat.exists and compose_src_stat.stat.isdir
+    fail_msg: |
+      docker_compose_loader validation failed:
+      
+      Project source directory does not exist or is not a directory.
+      
+      Path: {{ compose_project_src }}
+    success_msg: "docker_compose_loader: project directory exists ({{ compose_project_src }})"
+  tags: ["always"]
+
+- name: "Check compose files exist"
+  ansible.builtin.stat:
+    path: "{{ compose_project_src }}/{{ item }}"
+  loop: "{{ compose_files }}"
+  register: compose_file_stats
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - compose_file_stats.results | map(attribute='stat.exists') | min
+    fail_msg: "One or more compose files do not exist under {{ compose_project_src }}."
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional Compose parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize Docker Compose V2 behavior variables"
+  ansible.builtin.set_fact:
+    compose_state: "{{ compose_state | default('present', true) }}"
+    compose_project_name: "{{ compose_project_name | default(omit) }}"
+    compose_services: "{{ compose_services | default(omit) }}"
+    compose_pull: "{{ compose_pull | default(omit) }}"
+    compose_recreate: "{{ compose_recreate | default(omit) }}"
+    compose_remove_orphans: "{{ compose_remove_orphans | default(omit) }}"
+    compose_remove_volumes: "{{ compose_remove_volumes | default(omit) }}"
+    compose_timeout: "{{ compose_timeout | default(omit) }}"
+    compose_build: "{{ compose_build | default(omit) }}"
+    compose_compatibility: "{{ compose_compatibility | default(omit) }}"
+    compose_ansi: "{{ compose_ansi | default(omit) }}"
+    compose_profiles: "{{ compose_profiles | default(omit) }}"
+    compose_scale: "{{ compose_scale | default(omit) }}"
+    compose_abort_on_container_exit: "{{ compose_abort_on_container_exit | default(omit) }}"
+    compose_quiet_pull: "{{ compose_quiet_pull | default(omit) }}"
+    compose_env_file: "{{ compose_env_file | default(omit) }}"
+    compose_environment: "{{ compose_environment | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Verify that the 'docker compose' plugin is functional.
+# ---------------------------------------------------------------------
+- name: "Check Docker Compose V2 availability"
+  ansible.builtin.command: "docker compose version"
+  register: compose_check
+  failed_when: compose_check.rc != 0
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Invoke the community.docker collection for compose management.
+# ---------------------------------------------------------------------
+- name: "Manage Docker Compose V2 project"
+  community.docker.docker_compose_v2:
+    project_src: "{{ compose_project_src }}"
+    files: "{{ compose_files }}"
+    project_name: "{{ compose_project_name }}"
+    services: "{{ compose_services }}"
+    state: "{{ compose_state }}"
+    pull: "{{ compose_pull }}"
+    recreate: "{{ compose_recreate }}"
+    remove_orphans: "{{ compose_remove_orphans }}"
+    remove_volumes: "{{ compose_remove_volumes }}"
+    timeout: "{{ compose_timeout }}"
+    build: "{{ compose_build }}"
+    compatibility: "{{ compose_compatibility }}"
+    ansi: "{{ compose_ansi }}"
+    profiles: "{{ compose_profiles }}"
+    scale: "{{ compose_scale }}"
+    abort_on_container_exit: "{{ compose_abort_on_container_exit }}"
+    quiet_pull: "{{ compose_quiet_pull }}"
+    env_file: "{{ compose_env_file }}"
+    environment: "{{ compose_environment }}"
+  register: compose_result
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Audit: Log the successful execution of the Compose operation.
+# ---------------------------------------------------------------------
+- name: "Log Docker Compose operation"
+  ansible.builtin.debug:
+    msg: |
+      [DOCKER_COMPOSE] Project: {{ compose_project_name }} | Action: {{ compose_state }}
+      project_src='{{ compose_project_src }}'
+      files={{ compose_files }}
+      project_name='{{ compose_project_name | default('auto', true) }}'
+      services={{ compose_services | default('all', true) }}
+      pull={{ compose_pull | default('auto', true) }}
+      recreate={{ compose_recreate | default('auto', true) }}
+      remove_orphans={{ compose_remove_orphans | default(false, true) }}
+      remove_volumes={{ compose_remove_volumes | default(false, true) }}
+      timeout={{ compose_timeout | default('auto', true) }}
+      build={{ compose_build | default(false, true) }}
+      compatibility={{ compose_compatibility | default(false, true) }}
+      ansi={{ compose_ansi | default('auto', true) }}
+      profiles={{ compose_profiles | default('none', true) }}
+      scale={{ compose_scale | default('none', true) }}
+      abort_on_container_exit={{ compose_abort_on_container_exit | default(false, true) }}
+      quiet_pull={{ compose_quiet_pull | default(false, true) }}
+      changed={{ compose_result.changed }}

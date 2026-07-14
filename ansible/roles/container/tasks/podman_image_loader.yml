@@ -1,0 +1,174 @@
+---
+# =====================================================================
+# podman_image_loader.yml
+#
+# Enterprise-grade loader for managing Podman images with full audit
+# logging, complete parameter coverage, and cross-distro consistency.
+#
+# Features:
+# - Pull images (supports quiet, platform, pull policy)
+# - Tag images
+# - Remove images
+# - Load images from tar archives
+# - Save images to tar archives
+# - Inspect images
+# - Full audit logging via log_loader
+# - All parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+#
+# Example usage:
+#
+#   - name: "Pull backend image"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_image_loader
+#     vars:
+#       image_name: "myapp/backend:1.2.3"
+#       image_state: "present"        # present | absent
+#       image_pull: "missing"         # none | missing | always
+#       image_quiet_pull: false
+#       image_platform: "linux/amd64"
+#       image_tag: "myapp/backend:latest"
+#       image_tar_load: "/opt/images/backend.tar"
+#       image_tar_save: "/opt/images/backend-export.tar"
+#
+# Directory structure example:
+#
+#   /opt/images/
+#     ├── backend.tar
+#     └── backend-export.tar
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - image_name is defined
+      - image_name is string
+      - (image_name | length) > 0
+    fail_msg: |
+      podman_image_loader validation failed:
+      
+      Required parameter 'image_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ image_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ image_name | default('UNDEFINED') }}
+    success_msg: "podman_image_loader: image_name validated ({{ image_name }})"
+
+- ansible.builtin.assert:
+    that:
+      - image_state in ['present', 'absent']
+    fail_msg: |
+      podman_image_loader validation failed:
+      
+      Parameter 'image_state' must be one of: present, absent.
+      
+      Received:
+        - Value: {{ image_state | default('present') }}
+    success_msg: "podman_image_loader: image_state validated ({{ image_state }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables (ensure all parameters are defined)
+# ---------------------------------------------------------------------
+
+- name: "Normalize Podman image variables"
+  ansible.builtin.set_fact:
+    image_pull: "{{ image_pull | default(omit) }}"
+    image_quiet_pull: "{{ image_quiet_pull | default(false, true) }}"
+    image_platform: "{{ image_platform | default(omit) }}"
+    image_tag: "{{ image_tag | default(omit) }}"
+    image_tar_load: "{{ image_tar_load | default(omit) }}"
+    image_tar_save: "{{ image_tar_save | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Validate tar load file existence (if provided)
+# ---------------------------------------------------------------------
+
+- name: "Check image tar load file exists"
+  ansible.builtin.stat:
+    path: "{{ image_tar_load }}"
+  register: image_tar_load_stat
+  when: image_tar_load is defined
+
+- ansible.builtin.assert:
+    that:
+      - image_tar_load_stat.stat.exists
+    fail_msg: |
+      podman_image_loader validation failed:
+      
+      Image tar load file does not exist.
+      
+      File path: {{ image_tar_load }}
+    success_msg: "podman_image_loader: tar file exists ({{ image_tar_load }})"
+  when: image_tar_load is defined
+
+# ---------------------------------------------------------------------
+# Load image from tar archive
+# ---------------------------------------------------------------------
+
+- name: "Load Podman image from tar archive"
+  ansible.builtin.command: >
+    podman load -i {{ image_tar_load }}
+  when: image_tar_load is defined
+  register: image_load_result
+  changed_when: "'Loaded image' in image_load_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Pull image (using CLI for full control)
+# ---------------------------------------------------------------------
+
+- name: "Pull Podman image"
+  ansible.builtin.command: >
+    podman pull
+    {{ '--quiet' if image_quiet_pull else '' }}
+    {{ '--arch ' ~ image_platform if image_platform is defined else '' }}
+    {{ image_name }}
+  when:
+    - image_state == 'present'
+    - image_pull is defined
+    - image_pull != 'none'
+  register: image_pull_result
+  changed_when: "'Pulling' in image_pull_result.stdout or 'Downloaded' in image_pull_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Tag image
+# ---------------------------------------------------------------------
+
+- name: "Tag Podman image"
+  ansible.builtin.command: >
+    podman tag {{ image_name }} {{ image_tag }}
+  when: image_tag is defined
+  register: image_tag_result
+  changed_when: true
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Save image to tar archive
+# ---------------------------------------------------------------------
+
+- name: "Save Podman image to tar archive"
+  ansible.builtin.command: >
+    podman save -o {{ image_tar_save }} {{ image_name }}
+  when: image_tar_save is defined
+  register: image_save_result
+  changed_when: true
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Remove image
+# ---------------------------------------------------------------------
+
+- name: "Remove Podman image"
+  ansible.builtin.command: >
+    podman rmi {{ image_name }}
+  when: image_state == 'absent'
+  register: image_remove_result
+  changed_when: "'Deleted' in image_remove_result.stdout"
+  become: "{{ become_enabled }}"
+

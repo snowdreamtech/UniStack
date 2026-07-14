@@ -1,0 +1,76 @@
+---
+# =====================================================================
+# roles/container/tasks/containerd_cleanup_loader.yml
+#
+# Purpose:
+#   Enterprise-grade loader for cleaning containerd system resources.
+#   Provides aggressive cleanup of unused containers, images, snapshots,
+#   and filesystem artifacts to reclaim disk space and maintain runtime
+#   stability.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: containerd_cleanup_loader
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: containerd_cleanup_loader
+#     vars:
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Maintenance: Terminate and remove all exiting or dangling containers.
+# ---------------------------------------------------------------------
+- name: "Cleanup containerd unused containers"
+  ansible.builtin.shell: "PATH={{ os_paths }} nerdctl ps -a -q | xargs -r nerdctl rm -f"
+  register: ctr_cleanup_containers
+  changed_when: "'Deleted' in ctr_cleanup_containers.stdout"
+  failed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Maintenance: Remove all local container images to reclaim disk space.
+# ---------------------------------------------------------------------
+- name: "Cleanup containerd unused images"
+  ansible.builtin.shell: "PATH={{ os_paths }} nerdctl images -q | xargs -r nerdctl rmi -f"
+  register: ctr_cleanup_images
+  changed_when: "'Deleted' in ctr_cleanup_images.stdout"
+  failed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Maintenance: Remove dangling snapshots from the containerd namespace.
+# ---------------------------------------------------------------------
+- name: "Cleanup containerd unused snapshots"
+  ansible.builtin.shell: |
+    PATH={{ os_paths }}
+    set -o pipefail
+    ctr snapshot ls -q | xargs -r ctr snapshot rm
+  register: ctr_cleanup_snapshots
+  changed_when: "'removed' in ctr_cleanup_snapshots.stdout"
+  failed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Filesystem: Prune leftover runtime task metadata and mounting points.
+# ---------------------------------------------------------------------
+- name: "Cleanup containerd leftover mounts"
+  ansible.builtin.shell: "PATH={{ os_paths }} find /run/containerd/io.containerd.runtime.v2.task -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} +"
+  register: ctr_cleanup_mounts
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Filesystem: Prune orphaned overlayfs metadata and symbolic links.
+# ---------------------------------------------------------------------
+- name: "Cleanup containerd overlayfs leftovers"
+  ansible.builtin.shell: "PATH={{ os_paths }} find /var/lib/containerd/io.containerd.snapshotter.v1.overlayfs -type f -name 'link' -delete"
+  register: ctr_cleanup_overlay
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled }}"

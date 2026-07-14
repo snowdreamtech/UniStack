@@ -1,0 +1,125 @@
+---
+# =====================================================================
+# roles/container/tasks/docker_container_loader.yml
+#
+# Purpose:
+#   Low-level Docker container orchestration.
+#   Uses the 'community.docker.docker_container' module to manage 
+#   the full lifecycle of a single container instance.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_container_loader
+#     vars:
+#       container_name: "nginx"
+#       container_image: "nginx:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_container_loader
+#     vars:
+#       container_name: "webapp"
+#       container_image: "nginx:alpine"
+#       container_state: "started"
+#       container_ports: ["8080:80"]
+#       container_hostname: "web.example.com"
+#       container_memory: "256m"
+#       container_cpus: 0.5
+#       container_privileged: false
+#       container_read_only: true
+#       container_stop_timeout: 20
+#       container_shm_size: "64m"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory input fields for the Docker engine 
+# are correctly provided and non-empty.
+# ---------------------------------------------------------------------
+- name: "Assert container_name for Docker"
+  ansible.builtin.assert:
+    that:
+      - container_name is defined
+      - container_name is string
+      - (container_name | length) > 0
+    fail_msg: |
+      docker_container_loader parameter validation failed:
+      
+      Required parameter 'container_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ container_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ container_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "container"
+            tasks_from: "docker_container_loader"
+          vars:
+            container_name: "web-server"
+            container_image: "nginx:latest"
+    success_msg: "docker_container_loader: container_name validated ({{ container_name }})"
+
+- name: "Assert container_state for Docker"
+  ansible.builtin.assert:
+    that:
+      - container_state in ['present', 'started', 'stopped', 'restarted', 'absent']
+    fail_msg: |
+      docker_container_loader parameter validation failed:
+      
+      Parameter 'container_state' must be one of: present, started, stopped, restarted, absent.
+      
+      Received:
+        - Value: {{ container_state | default('present') }}
+      
+      State descriptions:
+        - present: Create container
+        - started: Start container
+        - stopped: Stop container
+        - restarted: Restart container
+        - absent: Remove container
+    success_msg: "docker_container_loader: container_state validated ({{ container_state }})"
+
+
+# ---------------------------------------------------------------------
+# Execution Phase: Invoke the Docker container module with all 
+# mapped variables to reach the desired state.
+# ---------------------------------------------------------------------
+- name: "Manage Docker container"
+  community.docker.docker_container:
+    name: "{{ container_name }}"
+    image: "{{ container_image | default(omit) }}"
+    state: "{{ container_state }}"
+    env: "{{ container_env | default(omit) }}"
+    env_file: "{{ container_env_file | default(omit) }}"
+    volumes: "{{ container_volumes | default(omit) }}"
+    ports: "{{ container_ports | default(omit) }}"
+    networks: "{{ container_networks | default(omit) }}"
+    labels: "{{ container_labels | default(omit) }}"
+    ulimits: "{{ container_ulimits | default(omit) }}"
+    sysctls: "{{ container_sysctls | default(omit) }}"
+    capabilities: "{{ container_capabilities | default(omit) }}"
+    devices: "{{ container_devices | default(omit) }}"
+    security_opts: "{{ container_security_opts | default(omit) }}"
+    user: "{{ container_user | default(omit) }}"
+    working_dir: "{{ container_workdir | default(omit) }}"
+    entrypoint: "{{ container_entrypoint | default(omit) }}"
+    command: "{{ container_command | default(omit) }}"
+    log_driver: "{{ container_log_driver | default(omit) }}"
+    log_options: "{{ container_log_options | default(omit) }}"
+    restart_policy: "{{ container_restart_policy | default(omit) }}"
+    detach: "{{ container_detach | default(true, true) }}"
+    hostname: "{{ container_hostname | default(omit) }}"
+    read_only: "{{ container_read_only | default(false, true) }}"
+    tty: "{{ container_tty | default(false, true) }}"
+    interactive: "{{ container_interactive | default(false, true) }}"
+    privileged: "{{ container_privileged | default(false, true) }}"
+    memory: "{{ container_memory | default(omit) }}"
+    cpus: "{{ container_cpus | default(omit) }}"
+    cpu_shares: "{{ container_cpu_shares | default(omit) }}"
+    stop_timeout: "{{ (container_stop_timeout | default(10, true)) | int }}"
+    shm_size: "{{ container_shm_size | default(omit) }}"
+  register: container_result
+  become: "{{ become_enabled }}"

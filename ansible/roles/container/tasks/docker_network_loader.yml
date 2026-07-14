@@ -1,0 +1,102 @@
+---
+# =====================================================================
+# docker_network_loader.yml
+#
+# Enterprise-grade loader for managing Docker networks with full audit
+# logging, complete parameter coverage, and cross-distro consistency.
+#
+# Features:
+# - Create or remove Docker networks
+# - Supports driver, driver options, labels
+# - Validates required variables
+# - All optional parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Create backend network"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_network_loader
+#     vars:
+#       network_name: "backend-net"
+#       network_state: "present"       # present | absent
+#       network_driver: "bridge"
+#       network_options:
+#         com.docker.network.bridge.enable_icc: "true"
+#       network_labels:
+#         role: "backend"
+#
+# Directory structure example:
+#
+#   (Docker networks are virtual and do not require filesystem layout)
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - network_name is defined
+      - network_name is string
+      - (network_name | length) > 0
+    fail_msg: |
+      docker_network_loader validation failed:
+      
+      Required parameter 'network_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ network_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ network_name | default('UNDEFINED') }}
+    success_msg: "docker_network_loader: network_name validated ({{ network_name }})"
+
+- ansible.builtin.assert:
+    that:
+      - network_state in ['present', 'absent']
+    fail_msg: |
+      docker_network_loader validation failed:
+      
+      Parameter 'network_state' must be one of: present, absent.
+      
+      Received:
+        - Value: {{ network_state | default('present') }}
+    success_msg: "docker_network_loader: network_state validated ({{ network_state }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables (ensure all parameters are defined)
+# ---------------------------------------------------------------------
+
+- name: "Normalize Docker network variables"
+  ansible.builtin.set_fact:
+    network_driver: "{{ network_driver | default('bridge', true) }}"
+    network_options: "{{ network_options | default(omit) }}"
+    network_labels: "{{ network_labels | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Manage Docker network lifecycle
+# ---------------------------------------------------------------------
+
+- name: "Manage Docker network"
+  community.docker.docker_network:
+    name: "{{ network_name }}"
+    state: "{{ network_state }}"
+    driver: "{{ network_driver }}"
+    driver_options: "{{ network_options }}"
+    labels: "{{ network_labels }}"
+  register: network_result
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Audit: Log the network operation results.
+# ---------------------------------------------------------------------
+- name: "Audit Docker network operation"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: "log_loader"
+  vars:
+    label: "DOCKER_NETWORK"
+    msg: "Name: {{ network_name }} | Action: {{ network_state }} | Driver: {{ network_driver }}"
+

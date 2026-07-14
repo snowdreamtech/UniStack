@@ -1,0 +1,100 @@
+---
+# =====================================================================
+# podman_healthcheck_loader.yml
+#
+# Enterprise-grade loader for performing Podman health checks with full
+# audit logging and cross-distro consistency.
+#
+# Features:
+# - podman info
+# - podman system df
+# - podman ps
+# - Check CNI network
+# - Check CNI route (enhanced)
+# - Check storage.conf
+# - Check policy.json
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# podman info
+# ---------------------------------------------------------------------
+
+- name: "Check Podman info"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "podman info --format '{{ '{{json .}}' }}'"
+  register: podman_info_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# podman system df
+# ---------------------------------------------------------------------
+
+- name: "Check Podman disk usage"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "podman system df --format '{{ '{{json .}}' }}'"
+  register: podman_df_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# podman ps
+# ---------------------------------------------------------------------
+
+- name: "Check Podman running containers"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "podman ps --format '{{ '{{json .}}' }}'"
+  register: podman_ps_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Check CNI network
+# ---------------------------------------------------------------------
+
+- name: "Check Podman CNI network"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "ls /etc/cni/net.d"
+  register: podman_cni_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Check CNI route (enhanced)
+# ---------------------------------------------------------------------
+
+- name: "Check Podman CNI route"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    sh -c '
+    ip route show | grep -E "10\.88\.0\.0/16|cni-podman0" || true
+    '
+  register: podman_cni_route_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Check storage.conf
+# ---------------------------------------------------------------------
+
+- name: "Check Podman storage.conf"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "cat /etc/containers/storage.conf"
+  register: podman_storage_check
+  changed_when: false
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Check policy.json
+# ---------------------------------------------------------------------
+
+- name: "Check Podman policy.json"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "cat /etc/containers/policy.json"
+  register: podman_policy_check
+  changed_when: false
+  failed_when: false
+

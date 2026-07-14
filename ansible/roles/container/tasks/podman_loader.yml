@@ -1,0 +1,183 @@
+---
+# =====================================================================
+# roles/container/tasks/podman_loader.yml
+#
+# Purpose:
+#   Enterprise-grade universal loader for managing Podman containers.
+#   Provides full lifecycle management (present/absent/restarted) 
+#   supporting advanced parameters like resource limits, network 
+#   configurations, and security options.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_loader
+#     vars:
+#       podman_name: "myapp"
+#       podman_image: "nginx:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "podman_loader"
+#     vars:
+#       podman_name: "redis-cache"
+#       podman_image: "docker.io/library/redis:7.2-alpine"
+#       podman_state: "present"
+#       podman_restart_policy: "always"
+#       podman_pull: "missing"
+#       podman_env:
+#         REDIS_PASSWORD: "securepassword"
+#       podman_volumes:
+#         - "/var/lib/redis:/data:Z"
+#       podman_ports:
+#         - "6379:6379"
+#       podman_security_opts:
+#         - "no-new-privileges"
+#       podman_user: "1001"
+#       podman_force_remove: true
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory container identity and state are provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - podman_name is defined
+      - podman_name is string
+      - (podman_name | trim | length) > 0
+    fail_msg: |
+      podman_loader parameter validation failed:
+      
+      Required parameter 'podman_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ podman_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ podman_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "container"
+            tasks_from: "podman_loader"
+          vars:
+            podman_name: "web-server"
+            podman_image: "nginx:latest"
+            podman_state: "started"
+    success_msg: "podman_loader: podman_name validated ({{ podman_name }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - podman_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
+    fail_msg: |
+      podman_loader parameter validation failed:
+      
+      Parameter 'podman_state' must be one of: present, absent, restarted, stopped.
+      
+      Received:
+        - Value: {{ podman_state | default('present') }}
+      
+      State descriptions:
+        - present: Create and start container
+        - absent: Remove container
+        - restarted: Restart existing container
+        - stopped: Stop running container
+    success_msg: "podman_loader: podman_state validated ({{ podman_state | default('present') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional Podman parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize Podman universal container variables"
+  ansible.builtin.set_fact:
+    podman_state: "{{ podman_state | default('present', true) }}"
+    podman_image: "{{ podman_image | default(omit) }}"
+    podman_detach: "{{ podman_detach | default(true, true) }}"
+    podman_restart_policy: "{{ podman_restart_policy | default(omit) }}"
+    podman_env: "{{ podman_env | default(omit) }}"
+    podman_env_file: "{{ podman_env_file | default(omit) }}"
+    podman_volumes: "{{ podman_volumes | default(omit) }}"
+    podman_ports: "{{ podman_ports | default(omit) }}"
+    podman_networks: "{{ podman_networks | default(omit) }}"
+    podman_labels: "{{ podman_labels | default(omit) }}"
+    podman_ulimits: "{{ podman_ulimits | default(omit) }}"
+    podman_sysctls: "{{ podman_sysctls | default(omit) }}"
+    podman_capabilities: "{{ podman_capabilities | default(omit) }}"
+    podman_devices: "{{ podman_devices | default(omit) }}"
+    podman_security_opts: "{{ podman_security_opts | default(omit) }}"
+    podman_user: "{{ podman_user | default(omit) }}"
+    podman_workdir: "{{ podman_workdir | default(omit) }}"
+    podman_entrypoint: "{{ podman_entrypoint | default(omit) }}"
+    podman_command: "{{ podman_command | default(omit) }}"
+    podman_log_driver: "{{ podman_log_driver | default(omit) }}"
+    podman_log_options: "{{ podman_log_options | default(omit) }}"
+    podman_pull: "{{ podman_pull | default('missing', true) }}"
+    podman_quiet_pull: "{{ podman_quiet_pull | default(false, true) }}"
+    podman_platform: "{{ podman_platform | default(omit) }}"
+    podman_force_remove: "{{ podman_force_remove | default(false, true) }}"
+    podman_remove_volumes: "{{ podman_remove_volumes | default(false, true) }}"
+    podman_timeout: "{{ podman_timeout | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Verify that the 'podman' binary is available and functional.
+# ---------------------------------------------------------------------
+- name: "Check Podman availability"
+  ansible.builtin.command: "podman version --format '{{ '{{.Version}}' }}'"
+  register: podman_check
+  failed_when: podman_check.rc != 0
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Image Management: Pull the required Podman image if requested.
+# ---------------------------------------------------------------------
+- name: "Pull Podman image"
+  ansible.builtin.command: >-
+    podman pull
+    {{ '--quiet' if podman_quiet_pull else '' }}
+    {{ '--arch ' ~ podman_platform if (podman_platform is defined and podman_platform | length > 0) else '' }}
+    {{ podman_image }}
+  when:
+    - podman_image is defined
+    - podman_pull != 'none'
+    - podman_state in ['present', 'restarted']
+  register: podman_pull_result
+  changed_when: "'Pulling' in podman_pull_result.stdout or 'Downloaded' in podman_pull_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle: Execute the Podman container state transition.
+# ---------------------------------------------------------------------
+- name: "Manage Podman container lifecycle"
+  containers.podman.podman_container:
+    name: "{{ podman_name }}"
+    image: "{{ podman_image }}"
+    state: "{{ podman_state }}"
+    detach: "{{ podman_detach }}"
+    restart_policy: "{{ podman_restart_policy }}"
+    env: "{{ podman_env }}"
+    env_file: "{{ podman_env_file }}"
+    volume: "{{ podman_volumes }}"
+    publish: "{{ podman_ports }}"
+    network: "{{ podman_networks }}"
+    label: "{{ podman_labels }}"
+    ulimit: "{{ podman_ulimits }}"
+    sysctl: "{{ podman_sysctls }}"
+    cap_add: "{{ podman_capabilities }}"
+    device: "{{ podman_devices }}"
+    security_opt: "{{ podman_security_opts }}"
+    user: "{{ podman_user }}"
+    workdir: "{{ podman_workdir }}"
+    entrypoint: "{{ podman_entrypoint }}"
+    command: "{{ podman_command }}"
+    log_driver: "{{ podman_log_driver }}"
+    log_options: "{{ podman_log_options }}"
+    force: "{{ podman_force_remove }}"
+    rm: "{{ podman_remove_volumes }}"
+    timeout: "{{ podman_timeout }}"
+  register: podman_result
+  become: "{{ become_enabled }}"

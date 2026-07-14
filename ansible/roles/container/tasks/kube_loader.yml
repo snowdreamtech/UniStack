@@ -1,0 +1,62 @@
+---
+# =====================================================================
+# roles/container/tasks/kube_loader.yml
+#
+# Purpose:
+#   Unified entry point for Kubernetes YAML manifest deployment.
+#   Routes to either Podman-native 'play kube' or generic 'kubectl apply'
+#   based on the detected engine and system capabilities.
+#
+# Simple Usage:
+#   - include_tasks: "kube_loader.yml"
+#     vars:
+#       kube_manifest: "/opt/myapp/k8s.yaml"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Identify the target engine for Kubernetes manifests.
+# ---------------------------------------------------------------------
+- name: "Detect container engine for kube"
+  ansible.builtin.set_fact:
+    detected_engine: >-
+      {{
+        container_engine 
+        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit') 
+        else (container_engine_detected | default('podman', true))
+      }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Capabilities: Check if kubectl is available as a fallback.
+# ---------------------------------------------------------------------
+- name: "Check kubectl availability"
+  ansible.builtin.command: >
+    /bin/sh -c "PATH={{ os_paths }} command -v kubectl 2>/dev/null || true"
+  register: check_kubectl
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Dispatch: Route to the appropriate loader.
+# ---------------------------------------------------------------------
+- name: "Dispatch to Podman kube loader"
+  ansible.builtin.include_tasks: "podman_kube_loader.yml"
+  when: 
+    - detected_engine == 'podman'
+
+- name: "Dispatch to kubectl loader"
+  ansible.builtin.include_tasks: "kubectl_loader.yml"
+  when: 
+    - detected_engine != 'podman'
+    - check_kubectl.rc == 0
+
+- name: "Fail if no kube-compliant engine is available"
+  ansible.builtin.fail:
+    msg: "No Kubernetes-compliant engine found. Either use Podman or install kubectl."
+  when:
+    - detected_engine != 'podman'
+    - check_kubectl.rc != 0
+  tags: ["always"]

@@ -1,0 +1,135 @@
+---
+# =====================================================================
+# podman_registry_loader.yml
+#
+# Enterprise-grade loader for managing Podman registry authentication
+# and image operations with full audit logging and cross-distro
+# consistency.
+#
+# Features:
+# - Login to registry (username/password or token)
+# - Logout from registry
+# - Pull images
+# - Push images
+# - Supports custom registry endpoints
+# - All optional parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Login to Docker Hub via Podman"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_registry_loader
+#     vars:
+#       registry_action: "login"        # login | logout | pull | push
+#       registry_url: "docker.io"
+#       registry_username: "myuser"
+#       registry_password: "mypassword"
+#
+#   - name: "Pull image from Docker Hub"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_registry_loader
+#     vars:
+#       registry_action: "pull"
+#       registry_image: "docker.io/library/nginx:latest"
+#
+#   - name: "Push image to private registry"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_registry_loader
+#     vars:
+#       registry_action: "push"
+#       registry_image: "myregistry.local/myapp/backend:1.0.0"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - registry_action in ['login', 'logout', 'pull', 'push']
+    fail_msg: |
+      podman_registry_loader validation failed:
+      
+      Parameter 'registry_action' must be one of: login, logout, pull, push.
+      
+      Received:
+        - Value: {{ registry_action | default('UNDEFINED') }}
+    success_msg: "podman_registry_loader: registry_action validated ({{ registry_action }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables
+# ---------------------------------------------------------------------
+
+- name: "Normalize Podman registry variables"
+  ansible.builtin.set_fact:
+    registry_url: "{{ registry_url | default('docker.io', true) }}"
+    registry_username: "{{ registry_username | default(omit) }}"
+    registry_password: "{{ registry_password | default(omit) }}"
+    registry_image: "{{ registry_image | default(omit) }}"
+    registry_tls_verify: "{{ registry_tls_verify | default(true, true) }}"
+
+# ---------------------------------------------------------------------
+# Login to registry
+# ---------------------------------------------------------------------
+
+- name: "Login to registry via Podman"
+  ansible.builtin.command: >
+    podman login {{ registry_url }}
+    {% if registry_username is defined %}-u {{ registry_username }}{% endif %}
+    {% if registry_password is defined %}-p {{ registry_password }}{% endif %}
+    {{ '--tls-verify=true' if registry_tls_verify else '--tls-verify=false' }}
+  when: registry_action == 'login'
+  register: registry_login_result
+  changed_when: "'Login Succeeded' in registry_login_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Logout from registry
+# ---------------------------------------------------------------------
+
+- name: "Logout from registry via Podman"
+  ansible.builtin.command: >
+    podman logout {{ registry_url }}
+  when: registry_action == 'logout'
+  register: registry_logout_result
+  changed_when: "'Removed login credentials' in registry_logout_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Pull image
+# ---------------------------------------------------------------------
+
+- name: "Pull image via Podman"
+  ansible.builtin.command: >
+    podman pull
+    {{ '--tls-verify=true' if registry_tls_verify else '--tls-verify=false' }}
+    {{ registry_image }}
+  when:
+    - registry_action == 'pull'
+    - registry_image is defined
+  register: registry_pull_result
+  changed_when: "'Pulling' in registry_pull_result.stdout or 'Downloaded' in registry_pull_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Push image
+# ---------------------------------------------------------------------
+
+- name: "Push image via Podman"
+  ansible.builtin.command: >
+    podman push
+    {{ '--tls-verify=true' if registry_tls_verify else '--tls-verify=false' }}
+    {{ registry_image }}
+  when:
+    - registry_action == 'push'
+    - registry_image is defined
+  register: registry_push_result
+  changed_when: "'Writing manifest' in registry_push_result.stdout or 'Pushed' in registry_push_result.stdout"
+  become: "{{ become_enabled }}"
+

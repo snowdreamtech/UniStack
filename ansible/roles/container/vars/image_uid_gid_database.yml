@@ -1,0 +1,168 @@
+---
+# =====================================================================
+# roles/container/vars/image_uid_gid_database.yml
+#
+# Purpose:
+#   Pre-defined UID/GID mappings for common container images.
+#   Reduces probing overhead and prevents initialization failures.
+#
+# Maintenance:
+#   UIDs are sourced from official Dockerfiles and documentation.
+#   Update when major image versions change defaults.
+#
+# Last Updated: 2026-01-24
+# =====================================================================
+
+# Exact match patterns (highest priority)
+# Format: "image:tag": { uid: "UID", gid: "GID", source: "documentation_url" }
+image_uid_gid_exact_match:
+  # MongoDB Images
+  "mongo:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
+  "mongo:7.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
+  "mongo:6.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
+  "mongo:5.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
+  "mongodb/mongodb-community-server:latest": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+  "mongodb/mongodb-community-server:8.0-ubuntu2204": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+  "mongodb/mongodb-community-server:7.0-ubuntu2204": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+
+  # PostgreSQL Images
+  "postgres:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
+  "postgres:16": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
+  "postgres:15": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
+  "postgres:14": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
+  "postgres:13": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
+
+  # MySQL Images
+  "mysql:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/mysql" }
+  "mysql:8.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mysql" }
+  "mysql:8": { uid: "999", gid: "999", source: "https://github.com/docker-library/mysql" }
+  "mysql:5.7": { uid: "999", gid: "999", source: "https://github.com/docker-library/mysql" }
+
+  # MariaDB Images
+  "mariadb:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/mariadb" }
+  "mariadb:11": { uid: "999", gid: "999", source: "https://github.com/docker-library/mariadb" }
+  "mariadb:10": { uid: "999", gid: "999", source: "https://github.com/docker-library/mariadb" }
+
+  # Redis Images (Debian-based)
+  "redis:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/redis" }
+  "redis:7": { uid: "999", gid: "999", source: "https://github.com/docker-library/redis" }
+  "redis:6": { uid: "999", gid: "999", source: "https://github.com/docker-library/redis" }
+
+  # Redis Images (Alpine-based)
+  "redis:alpine": { uid: "999", gid: "1000", source: "https://github.com/docker-library/redis" }
+  "redis:7-alpine": { uid: "999", gid: "1000", source: "https://github.com/docker-library/redis" }
+  "redis:6-alpine": { uid: "999", gid: "1000", source: "https://github.com/docker-library/redis" }
+
+  # Nginx Images
+  "nginx:latest": { uid: "101", gid: "101", source: "https://github.com/nginxinc/docker-nginx" }
+  "nginx:stable": { uid: "101", gid: "101", source: "https://github.com/nginxinc/docker-nginx" }
+  "nginx:mainline": { uid: "101", gid: "101", source: "https://github.com/nginxinc/docker-nginx" }
+  "nginx:alpine": { uid: "101", gid: "101", source: "https://github.com/nginxinc/docker-nginx" }
+
+  # Elasticsearch Images
+  "elasticsearch:8": { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
+  "elasticsearch:7": { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
+
+  # Snowdreamtech Base OS Images (Development/Testing)
+  "snowdreamtech/alpine:3.23.0": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/alpine" }
+  "snowdreamtech/alpine:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/alpine" }
+  "snowdreamtech/debian:13.1.0": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/debian" }
+  "snowdreamtech/debian:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/debian" }
+  "snowdreamtech/rocky:10.1": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/rocky" }
+  "snowdreamtech/rocky:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/rocky" }
+
+  # Snowdreamtech Python Images
+  "snowdreamtech/python:3.12.12-alpine3.22": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+  "snowdreamtech/python:3.13.5-trixie": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+  "snowdreamtech/python:3.12.11-rocky10.1": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+  "snowdreamtech/python:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+
+# Pattern-based matching (regex, lower priority)
+# Patterns are evaluated in order; first match wins
+image_uid_gid_patterns:
+  # MongoDB patterns
+  - regex: "^mongo(db)?:[0-9]+\\.[0-9]+"
+    uid: "999"
+    gid: "999"
+    description: "MongoDB official images (versioned)"
+
+  - regex: "^mongodb/mongodb-community-server:[0-9]+"
+    uid: "999"
+    gid: "999"
+    description: "MongoDB Community Server images"
+
+  # PostgreSQL patterns
+  - regex: "^postgres(ql)?:[0-9]+\\.?[0-9]*"
+    uid: "999"
+    gid: "999"
+    description: "PostgreSQL official images"
+
+  # MySQL patterns
+  - regex: "^mysql:[0-9]+\\.?[0-9]*"
+    uid: "999"
+    gid: "999"
+    description: "MySQL official images"
+
+  # MariaDB patterns
+  - regex: "^mariadb:[0-9]+\\.?[0-9]*"
+    uid: "999"
+    gid: "999"
+    description: "MariaDB official images"
+
+  # Redis patterns (Alpine)
+  - regex: "^redis:[0-9]+.*-alpine"
+    uid: "999"
+    gid: "1000"
+    description: "Redis Alpine-based images"
+
+  # Redis patterns (Debian)
+  - regex: "^redis:[0-9]+"
+    uid: "999"
+    gid: "999"
+    description: "Redis Debian-based images"
+
+  # Nginx patterns (Alpine)
+  - regex: "^nginx:.*alpine"
+    uid: "101"
+    gid: "101"
+    description: "Nginx Alpine images"
+
+  # Nginx patterns (general)
+  - regex: "^nginx:[0-9]+\\.[0-9]+"
+    uid: "101"
+    gid: "101"
+    description: "Nginx versioned images"
+
+  # Elasticsearch patterns
+  - regex: "^(docker\\.elastic\\.co/)?elasticsearch/elasticsearch:[0-9]+"
+    uid: "1000"
+    gid: "1000"
+    description: "Elasticsearch official images"
+
+  # Snowdreamtech patterns (Base OS and Language Runtimes)
+  - regex: "^snowdreamtech/(alpine|debian|ubuntu|rocky|centos|fedora):[0-9]+"
+    uid: "0"
+    gid: "0"
+    description: "Snowdreamtech base OS images (development/testing)"
+
+  - regex: "^snowdreamtech/python:[0-9]+\\.[0-9]+"
+    uid: "0"
+    gid: "0"
+    description: "Snowdreamtech Python runtime images"
+
+  - regex: "^snowdreamtech/node:[0-9]+"
+    uid: "0"
+    gid: "0"
+    description: "Snowdreamtech Node.js runtime images"
+
+  - regex: "^snowdreamtech/"
+    uid: "0"
+    gid: "0"
+    description: "Snowdreamtech images (catch-all for development images)"
+
+# Images that should skip container probing entirely
+# These images either don't have shells or have strict entrypoint requirements
+image_skip_probe_patterns:
+  - "gcr.io/distroless/"
+  - "scratch"
+  - "hello-world"

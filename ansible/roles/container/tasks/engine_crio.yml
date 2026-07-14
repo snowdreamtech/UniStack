@@ -1,0 +1,70 @@
+---
+# =====================================================================
+# engine_crio.yml
+#
+# Purpose:
+#   CRI-O-specific mapping layer.
+#   Transfers generic application variables (starting with 'container_app_')
+#   to internal 'container_' variables used by the CRI-O loader.
+#   Designed for Kubernetes-native container runtime operations.
+#
+# Features:
+#   - Kubernetes CRI (Container Runtime Interface) compliance
+#   - Lightweight OCI runtime
+#   - Optimized for Kubernetes workloads
+#   - Podman CLI compatibility
+#
+# Simple Usage:
+#   - ansible.builtin.include_tasks:
+#       file: engine_crio.yml
+#     vars:
+#       container_app_name: "redis"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_tasks:
+#       file: engine_crio.yml
+#     vars:
+#       container_app_name: "cache-server"
+#       container_app_image: "redis:7-alpine"
+#       container_app_state: "started"
+#       container_app_ports: ["6379:6379"]
+#       container_app_memory: "256m"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Variable Mapping: Bridge application-level inputs to the low-level
+# crio_loader variables. This decouples the public API from the
+# internal implementation.
+# ---------------------------------------------------------------------
+- name: "Deploy app using CRI-O"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: crio_loader
+  vars:
+    container_name: "{{ container_app_name | default('unknown', true) }}"
+    container_image: "{{ container_app_image | default(container_app_name, true) }}"
+    container_pull: "{{ container_app_pull | default(true, true) }}"
+    container_env: "{{ container_app_env | default(omit) }}"
+    container_env_file: "{{ container_app_env_file | default(omit) }}"
+    container_ports: "{{ container_app_ports | default(omit) }}"
+    container_volumes: "{{ container_app_volumes | default(omit) }}"
+    container_networks: "{{ container_app_networks | default(omit) }}"
+    container_command: "{{ container_app_command | default(omit) }}"
+    container_args: "{{ container_app_args | default(omit) }}"
+    container_labels: "{{ container_app_labels | default(omit) }}"
+    container_restart_policy: "{{ container_app_restart_policy | default('unless-stopped', true) }}"
+    container_resources: "{{ container_app_resources | default(omit) }}"
+    container_healthcheck: "{{ container_app_healthcheck | default(omit) }}"
+    container_state: "{{ container_app_state | default('present', true) }}"
+    container_ulimits: "{{ container_app_ulimits | default(omit) }}"
+    container_sysctls: "{{ container_app_sysctls | default(omit) }}"
+    container_capabilities: "{{ container_app_capabilities | default(omit) }}"
+    container_devices: "{{ container_app_devices | default(omit) }}"
+    container_security_opts: "{{ container_app_security_opts | default(omit) }}"
+    container_user: "{{ container_app_user | default(omit) }}"
+    container_workdir: "{{ container_app_workdir | default(omit) }}"
+    container_entrypoint: "{{ container_app_entrypoint | default(omit) }}"
+    container_log_driver: "{{ container_app_log_driver | default(omit) }}"
+    container_log_options: "{{ container_app_log_options | default(omit) }}"
+    container_detach: "{{ container_app_detach | default(true, true) }}"

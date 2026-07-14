@@ -1,0 +1,71 @@
+---
+# =====================================================================
+# roles/container/tasks/engine_podman.yml
+#
+# Purpose:
+#   Podman-specific mapping layer.
+#   Transfers generic application variables (starting with 'container_app_') 
+#   to internal 'container_' variables used by the Podman container loader.
+#   Ensures that Podman-specific nuances (like rootless execution) can 
+#   be handled downstream.
+#
+# Simple Usage:
+#   - include_tasks: "engine_podman.yml"
+#     vars:
+#       container_app_name: "myapp"
+#
+# Comprehensive Usage:
+#   - include_tasks: "engine_podman.yml"
+#     vars:
+#       container_app_name: "redis"
+#       container_app_image: "redis:alpine"
+#       container_app_memory: "256m"
+#       container_app_cpu_shares: 1024
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Variable Mapping: Bridge application-level inputs to the low-level 
+# podman_container_loader variables.
+# ---------------------------------------------------------------------
+- name: "Deploy app using Podman"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: "podman_container_loader"
+  vars:
+    container_name: "{{ container_app_name | default('unknown', true) }}"
+    container_image: "{{ container_app_image | default(container_app_name, true) }}"
+    container_pull: "{{ container_app_pull | default(true, true) }}"
+    container_env: "{{ container_app_env | default(omit) }}"
+    container_env_file: "{{ container_app_env_file | default(omit) }}"
+    container_ports: "{{ container_app_ports | default(omit) }}"
+    container_volumes: "{{ container_app_volumes | default(omit) }}"
+    container_networks: "{{ container_app_networks | default(omit) }}"
+    container_command: "{{ container_app_command | default(omit) }}"
+    container_args: "{{ container_app_args | default(omit) }}"
+    container_labels: "{{ container_app_labels | default(omit) }}"
+    container_restart_policy: "{{ container_app_restart_policy | default('unless-stopped', true) }}"
+    container_resources: "{{ container_app_resources | default(omit) }}"
+    container_healthcheck: "{{ container_app_healthcheck | default(omit) }}"
+    container_state: "{{ container_app_state | default('present', true) }}"
+    container_ulimits: "{{ container_app_ulimits | default(omit) }}"
+    container_sysctls: "{{ container_app_sysctls | default(omit) }}"
+    container_capabilities: "{{ container_app_capabilities | default(omit) }}"
+    container_devices: "{{ container_app_devices | default(omit) }}"
+    container_security_opts: "{{ container_app_security_opts | default(omit) }}"
+    container_user: "{{ container_app_user | default(omit) }}"
+    container_workdir: "{{ container_app_workdir | default(omit) }}"
+    container_entrypoint: "{{ container_app_entrypoint | default(omit) }}"
+    container_log_driver: "{{ container_app_log_driver | default(omit) }}"
+    container_log_options: "{{ container_app_log_options | default(omit) }}"
+    container_detach: "{{ container_app_detach | default(true, true) }}"
+    container_hostname: "{{ container_app_hostname | default(omit) }}"
+    container_read_only: "{{ container_app_read_only | default(false, true) }}"
+    container_tty: "{{ container_app_tty | default(false, true) }}"
+    container_interactive: "{{ container_app_interactive | default(false, true) }}"
+    container_privileged: "{{ container_app_privileged | default(false, true) }}"
+    container_memory: "{{ container_app_memory | default(omit) }}"
+    container_cpus: "{{ container_app_cpus | default(omit) }}"
+    container_cpu_shares: "{{ (container_app_cpu_shares | default(omit)) | int if container_app_cpu_shares is defined else omit }}"
+    container_stop_timeout: "{{ (container_app_stop_timeout | default(10, true)) | int }}"
+    container_shm_size: "{{ container_app_shm_size | default(omit) }}"

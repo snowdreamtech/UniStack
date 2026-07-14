@@ -1,0 +1,72 @@
+---
+# =====================================================================
+# roles/container/tasks/kubectl_loader.yml
+#
+# Purpose:
+#   Generic loader for managing Kubernetes workloads using kubectl.
+#   Provides standard apply/delete/restart operations.
+#
+# Simple Usage:
+#   - include_tasks: "kubectl_loader.yml"
+#     vars:
+#       kube_manifest: "/opt/myapp/k8s.yaml"
+#       kube_state: "present"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure manifest is provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - kube_manifest is defined
+      - kube_manifest is string
+      - (kube_manifest | length) > 0
+    fail_msg: |
+      kubectl_loader validation failed:
+      
+      Required parameter 'kube_manifest' must be a non-empty string.
+      
+      Received:
+        - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
+        - Value: {{ kube_manifest | default('UNDEFINED') }}
+    success_msg: "kubectl_loader: kube_manifest validated ({{ kube_manifest }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Manage Kubernetes resources (present/absent).
+# ---------------------------------------------------------------------
+- name: "Manage Kubernetes manifest"
+  kubernetes.core.k8s:
+    src: "{{ kube_manifest }}"
+    state: "{{ 'absent' if kube_state | default('present', true) == 'absent' else 'present' }}"
+    wait: true
+  register: k8s_module_result
+  become: "{{ become_enabled }}"
+  when: kube_state | default('present', true) != 'restarted'
+
+# ---------------------------------------------------------------------
+# Execution: Rollout restart (restarted)
+# Note: For 'restarted' state, we still use kubectl rollout restart 
+# as it is an imperative action not natively mapped to a simple state.
+# ---------------------------------------------------------------------
+- name: "Rollout restart Kubernetes workload"
+  ansible.builtin.command: "kubectl rollout restart -f {{ kube_manifest }}"
+  when: kube_state | default('present', true) == 'restarted'
+  changed_when: true
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Audit: Log the successful execution.
+# ---------------------------------------------------------------------
+- name: "Log Kubernetes operation"
+  ansible.builtin.include_role:
+    name: "container"
+    tasks_from: "log_loader"
+  vars:
+    label: "K8S_NATIVE_OP"
+    msg: |
+      action={{ kube_state | default('present', true) }}
+      manifest='{{ kube_manifest }}'
+      changed={{ k8s_module_result.changed | default(true, true) }}
+

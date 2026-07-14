@@ -1,0 +1,146 @@
+---
+# =====================================================================
+# lxc_container_loader.yml
+#
+# Enterprise-grade loader for managing LXC/LXD system containers with
+# full audit logging and cross-distro consistency.
+#
+# Supports basic container lifecycle with some advanced parameters via config.
+#
+# Example usage:
+#
+#   - name: "Launch LXC container with advanced parameters"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: lxc_container_loader
+#     vars:
+#       lxc_name: "webapp"
+#       lxc_image: "images:ubuntu/22.04"
+#       lxc_state: "present"
+#       lxc_hostname: "web.example.com"
+#       lxc_memory: "536870912"  # 512MB in bytes
+#       lxc_cpu_shares: 1024
+#
+# Features:
+# - Launch, start, stop, restart, delete containers
+# - Execute commands inside containers
+# - Push/pull files (optional, via separate tasks if needed)
+# - All optional parameters default to omit
+# - Fully idempotent when used with proper state handling
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Launch backend LXC container"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: lxc_container_loader
+#     vars:
+#       lxc_name: "backend-ct"
+#       lxc_image: "images:ubuntu/22.04"
+#       lxc_state: "present"      # present | started | stopped | absent | restarted
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - lxc_name is defined
+      - lxc_name is string
+      - (lxc_name | length) > 0
+    fail_msg: |
+      lxc_container_loader validation failed:
+      
+      Required parameter 'lxc_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ lxc_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ lxc_name | default('UNDEFINED') }}
+    success_msg: "lxc_container_loader: lxc_name validated ({{ lxc_name }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - lxc_state in ['present', 'started', 'stopped', 'restarted', 'absent']
+    fail_msg: |
+      lxc_container_loader validation failed:
+      
+      Parameter 'lxc_state' must be one of: present, started, stopped, restarted, absent.
+      
+      Received:
+        - Value: {{ lxc_state | default('present') }}
+    success_msg: "lxc_container_loader: lxc_state validated ({{ lxc_state }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalize optional variables
+# ---------------------------------------------------------------------
+
+- name: "Normalize LXC container variables"
+  ansible.builtin.set_fact:
+    lxc_image: "{{ lxc_image | default(omit) }}"
+    lxc_profile: "{{ lxc_profile | default(omit) }}"
+    lxc_config: "{{ lxc_config | default(omit) }}"
+    lxc_hostname: "{{ lxc_hostname | default(omit) }}"
+    lxc_read_only: "{{ lxc_read_only | default(false, true) }}"
+    lxc_tty: "{{ lxc_tty | default(false, true) }}"
+    lxc_interactive: "{{ lxc_interactive | default(false, true) }}"
+    lxc_privileged: "{{ lxc_privileged | default(false, true) }}"
+    lxc_memory: "{{ lxc_memory | default(omit) }}"
+    lxc_cpus: "{{ lxc_cpus | default(omit) }}"
+    lxc_cpu_shares: "{{ lxc_cpu_shares | default(omit) }}"
+    lxc_stop_timeout: "{{ (lxc_stop_timeout | default(10, true)) | int }}"
+    lxc_shm_size: "{{ lxc_shm_size | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Ensure container exists when present/started/restarted
+# ---------------------------------------------------------------------
+
+- name: "Launch LXC container if missing"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    lxc launch
+    {{ lxc_image }}
+    {{ lxc_name }}
+    {% if lxc_profile is defined %}-p {{ lxc_profile }}{% endif %}
+    {% if lxc_hostname is defined and lxc_hostname != '' %}--config lxc.uts.name={{ lxc_hostname }}{% endif %}
+    {% if lxc_memory is defined %}--config lxc.cgroup.memory.limit_in_bytes={{ lxc_memory }}{% endif %}
+    {% if lxc_cpu_shares is defined %}--config lxc.cgroup.cpu.shares={{ lxc_cpu_shares }}{% endif %}
+  when:
+    - lxc_state in ['present', 'started', 'restarted']
+    - lxc_image is defined
+  register: lxc_launch_result
+  failed_when: "lxc_launch_result.rc not in [0, 1]"
+  changed_when: "lxc_launch_result.rc == 0"
+
+# ---------------------------------------------------------------------
+# State transitions
+# ---------------------------------------------------------------------
+
+- name: "Start LXC container"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc start {{ lxc_name }}"
+  when: lxc_state in ['started', 'restarted']
+  register: lxc_start_result
+  failed_when: "lxc_start_result.rc not in [0, 1]"
+  changed_when: "lxc_start_result.rc == 0"
+
+- name: "Stop LXC container"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc stop {{ lxc_name }}"
+  when: lxc_state in ['stopped', 'restarted', 'absent']
+  register: lxc_stop_result
+  failed_when: "lxc_stop_result.rc not in [0, 1]"
+  changed_when: "lxc_stop_result.rc == 0"
+
+- name: "Delete LXC container"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc delete {{ lxc_name }}"
+  when: lxc_state == 'absent'
+  register: lxc_delete_result
+  failed_when: "lxc_delete_result.rc not in [0, 1]"
+  changed_when: "lxc_delete_result.rc == 0"

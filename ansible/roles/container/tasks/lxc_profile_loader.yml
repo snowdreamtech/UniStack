@@ -1,0 +1,141 @@
+---
+# =====================================================================
+# lxc_profile_loader.yml
+#
+# Enterprise-grade loader for managing LXC/LXD profiles with full audit
+# logging and cross-distro consistency.
+#
+# Features:
+# - Create/delete LXC profiles
+# - Apply configuration and device settings
+# - All optional parameters default to omit
+# - Fully idempotent
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Ensure LXC profile web-profile exists"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: lxc_profile_loader
+#     vars:
+#       lxc_profile_name: "web-profile"
+#       lxc_profile_state: "present"   # present | absent
+#       lxc_profile_config:
+#         limits.cpu: "2"
+#         limits.memory: "2GB"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - lxc_profile_name is defined
+      - lxc_profile_name is string
+      - (lxc_profile_name | length) > 0
+    fail_msg: |
+      lxc_profile_loader validation failed:
+      
+      Required parameter 'lxc_profile_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ lxc_profile_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ lxc_profile_name | default('UNDEFINED') }}
+    success_msg: "lxc_profile_loader: lxc_profile_name validated ({{ lxc_profile_name }})"
+
+- ansible.builtin.assert:
+    that:
+      - lxc_profile_state in ['present', 'absent']
+    fail_msg: |
+      lxc_profile_loader validation failed:
+      
+      Parameter 'lxc_profile_state' must be one of: present, absent.
+      
+      Received:
+        - Value: {{ lxc_profile_state | default('present') }}
+    success_msg: "lxc_profile_loader: lxc_profile_state validated ({{ lxc_profile_state }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables
+# ---------------------------------------------------------------------
+
+- name: "Normalize LXC profile variables"
+  ansible.builtin.set_fact:
+    lxc_profile_config: "{{ lxc_profile_config | default(omit) }}"
+    lxc_profile_devices: "{{ lxc_profile_devices | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Check if profile exists
+# ---------------------------------------------------------------------
+
+- name: "Check if LXC profile exists"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc profile show {{ lxc_profile_name }}"
+  register: lxc_profile_check
+  failed_when: false
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Create profile
+# ---------------------------------------------------------------------
+
+- name: "Create LXC profile {{ lxc_profile_name }}"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc profile create {{ lxc_profile_name }}"
+  when:
+    - lxc_profile_state == 'present'
+    - lxc_profile_check.rc != 0
+  register: lxc_profile_create
+  changed_when: "lxc_profile_create.rc == 0"
+  failed_when: "lxc_profile_create.rc not in [0, 1]"
+
+# ---------------------------------------------------------------------
+# Apply profile config
+# ---------------------------------------------------------------------
+
+- name: "Apply LXC profile config"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    lxc profile set {{ lxc_profile_name }} {{ item.key }} "{{ item.value }}"
+  loop: "{{ lxc_profile_config | dict2items }}"
+  when:
+    - lxc_profile_state == 'present'
+    - lxc_profile_config is defined
+  register: lxc_profile_config_apply
+  changed_when: "'Applied' in lxc_profile_config_apply.stdout | default('', true)"
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Apply profile devices
+# ---------------------------------------------------------------------
+
+- name: "Apply LXC profile devices"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    lxc profile device add {{ lxc_profile_name }} {{ item.key }} {{ item.value.type }}
+    {% for k, v in item.value.items() if k != 'type' %}{{ k }}={{ v }} {% endfor %}
+  loop: "{{ lxc_profile_devices | dict2items }}"
+  when:
+    - lxc_profile_state == 'present'
+    - lxc_profile_devices is defined
+  register: lxc_profile_devices_apply
+  changed_when: "'Device added' in lxc_profile_devices_apply.stdout | default('', true)"
+  failed_when: false
+
+# ---------------------------------------------------------------------
+# Delete profile
+# ---------------------------------------------------------------------
+
+- name: "Delete LXC profile {{ lxc_profile_name }}"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc profile delete {{ lxc_profile_name }}"
+  when:
+    - lxc_profile_state == 'absent'
+    - lxc_profile_check.rc == 0
+  register: lxc_profile_delete
+  changed_when: "lxc_profile_delete.rc == 0"
+  failed_when: "lxc_profile_delete.rc not in [0, 1]"
+

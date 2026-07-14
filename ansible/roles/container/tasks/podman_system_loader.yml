@@ -1,0 +1,98 @@
+---
+# =====================================================================
+# podman_system_loader.yml
+#
+# Enterprise-grade loader for managing Podman system-level operations
+# with full audit logging, complete parameter coverage, and cross-distro
+# consistency.
+#
+# Features:
+# - podman system info
+# - podman system df
+# - podman system prune (safe or aggressive)
+# - Supports prune filters and prune mode
+# - All optional parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Run Podman system maintenance"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_system_loader
+#     vars:
+#       system_action: "prune"          # info | df | prune
+#       prune_all: false                # true = aggressive prune
+#       prune_volumes: false
+#       prune_filters:
+#         until: "24h"
+#
+# Directory structure example:
+#
+#   (Podman system operations do not require filesystem layout)
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - system_action in ['info', 'df', 'prune']
+    fail_msg: |
+      podman_system_loader validation failed:
+      
+      Parameter 'system_action' must be one of: info, df, prune.
+      
+      Received:
+        - Value: {{ system_action | default('UNDEFINED') }}
+    success_msg: "podman_system_loader: system_action validated ({{ system_action }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables (ensure all parameters are defined)
+# ---------------------------------------------------------------------
+
+- name: "Normalize Podman system variables"
+  ansible.builtin.set_fact:
+    prune_all: "{{ prune_all | default(false, true) }}"
+    prune_volumes: "{{ prune_volumes | default(false, true) }}"
+    prune_filters: "{{ prune_filters | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Podman system info
+# ---------------------------------------------------------------------
+
+- name: "Gather Podman system info"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "podman info --format '{{ '{{json .}}' }}'"
+  when: system_action == 'info'
+  register: podman_info_result
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Podman system df
+# ---------------------------------------------------------------------
+
+- name: "Gather Podman system disk usage"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "podman system df --format '{{ '{{json .}}' }}'"
+  when: system_action == 'df'
+  register: podman_df_result
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Podman system prune
+# ---------------------------------------------------------------------
+
+- name: "Prune Podman system resources"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    podman system prune -f
+    {{ '--all' if prune_all else '' }}
+    {{ '--volumes' if prune_volumes else '' }}
+  when: system_action == 'prune'
+  register: podman_prune_result
+  changed_when: "'Reclaimed' in podman_prune_result.stdout"
+

@@ -1,0 +1,8 @@
+# =====================================================================
+# roles/container/defaults/main.yml (Deprecated Content)
+#
+# Purpose:
+#   Repository variables have been moved to 'roles/init/defaults/main.yml'
+#   for centralized infrastructure management.
+#
+# =====================================================================

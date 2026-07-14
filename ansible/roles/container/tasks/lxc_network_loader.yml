@@ -1,0 +1,112 @@
+---
+# =====================================================================
+# lxc_network_loader.yml
+#
+# Enterprise-grade loader for managing LXC/LXD networks with full audit
+# logging, fingerprinting, and cross-distro consistency.
+#
+# Features:
+# - Create/delete LXC/LXD networks
+# - Supports bridge type networks
+# - Optional IPv4/IPv6 configuration
+# - Fully idempotent
+# - Full audit logging via log_loader
+# - Full fingerprinting for audit chain completeness
+#
+# Example usage:
+#
+#   - name: "Ensure LXC network br0 exists"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: lxc_network_loader
+#     vars:
+#       lxc_net_name: "br0"
+#       lxc_net_state: "present"   # present | absent
+#       lxc_net_ipv4: "10.10.0.1/24"
+#       lxc_net_ipv6: "none"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - lxc_net_name is defined
+      - lxc_net_name is string
+      - (lxc_net_name | length) > 0
+    fail_msg: |
+      lxc_network_loader validation failed:
+      
+      Required parameter 'lxc_net_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ lxc_net_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ lxc_net_name | default('UNDEFINED') }}
+    success_msg: "lxc_network_loader: lxc_net_name validated ({{ lxc_net_name }})"
+
+- ansible.builtin.assert:
+    that:
+      - lxc_net_state in ['present', 'absent']
+    fail_msg: |
+      lxc_network_loader validation failed:
+      
+      Parameter 'lxc_net_state' must be one of: present, absent.
+      
+      Received:
+        - Value: {{ lxc_net_state | default('present') }}
+    success_msg: "lxc_network_loader: lxc_net_state validated ({{ lxc_net_state }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables
+# ---------------------------------------------------------------------
+
+- name: "Normalize LXC network variables"
+  ansible.builtin.set_fact:
+    lxc_net_ipv4: "{{ lxc_net_ipv4 | default(omit) }}"
+    lxc_net_ipv6: "{{ lxc_net_ipv6 | default(omit) }}"
+    lxc_net_bridge: "{{ lxc_net_bridge | default(lxc_net_name, true) }}"
+
+# ---------------------------------------------------------------------
+# Fingerprint (audit chain requirement)
+# ---------------------------------------------------------------------
+
+- name: "Fingerprint LXC network {{ lxc_net_name }}"
+  ansible.builtin.command: "lxc network show {{ lxc_net_name }}"
+  become: "{{ become_enabled }}"
+  register: lxc_net_fingerprint
+  failed_when: false
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Create network
+# ---------------------------------------------------------------------
+
+- name: "Create LXC network {{ lxc_net_name }}"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    lxc network create {{ lxc_net_name }}
+    {% if lxc_net_ipv4 is defined %}ipv4.address={{ lxc_net_ipv4 }}{% endif %}
+    {% if lxc_net_ipv6 is defined %} ipv6.address={{ lxc_net_ipv6 }}{% endif %}
+  when:
+    - lxc_net_state == 'present'
+    - lxc_net_fingerprint.rc != 0
+  register: lxc_net_create
+  changed_when: "lxc_net_create.rc == 0"
+  failed_when: "lxc_net_create.rc not in [0, 1]"
+
+# ---------------------------------------------------------------------
+# Delete network
+# ---------------------------------------------------------------------
+
+- name: "Delete LXC network {{ lxc_net_name }}"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "lxc network delete {{ lxc_net_name }}"
+  when:
+    - lxc_net_state == 'absent'
+    - lxc_net_fingerprint.rc == 0
+  register: lxc_net_delete
+  changed_when: "lxc_net_delete.rc == 0"
+  failed_when: "lxc_net_delete.rc not in [0, 1]"
+

@@ -1,0 +1,151 @@
+---
+# =====================================================================
+# roles/container/tasks/containerd_compose_loader.yml
+#
+# Purpose:
+#   Simplified loader for managing Compose projects using nerdctl 
+#   (containerd). Supports basic lifecycle operations (up/down/restart)
+#   with integrated audit logging.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: containerd_compose_loader
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_state: "present"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "containerd_compose_loader"
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_files: ["docker-compose.yml", "docker-compose.prod.yml"]
+#       compose_project_name: "prod-stack"
+#       compose_state: "restarted"
+#       compose_env_file: "/opt/myapp/.env"
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory project source and state are provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - compose_project_src is defined
+      - compose_project_src is string
+      - (compose_project_src | trim | length) > 0
+    fail_msg: |
+      containerd_compose_loader validation failed:
+      
+      Required parameter 'compose_project_src' must be a non-empty string.
+      
+      Received:
+        - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
+        - Value: {{ compose_project_src | default('UNDEFINED') }}
+    success_msg: "containerd_compose_loader: compose_project_src validated ({{ compose_project_src }})"
+
+- ansible.builtin.assert:
+    that:
+      - compose_state | default('present', true) in ['present', 'absent', 'restarted']
+    fail_msg: |
+      containerd_compose_loader validation failed:
+      
+      Parameter 'compose_state' must be one of: present, absent, restarted.
+      
+      Received:
+        - Value: {{ compose_state | default('present') }}
+    success_msg: "containerd_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional Compose parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize Nerdctl Compose variables"
+  ansible.builtin.set_fact:
+    compose_state: "{{ compose_state | default('present', true) }}"
+    compose_files: "{{ compose_files | default(['docker-compose.yml'], true) }}"
+    compose_project_name: "{{ compose_project_name | default(omit) }}"
+    compose_env_file: "{{ compose_env_file | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Pre-flight: Build command arguments and verify project directory.
+# ---------------------------------------------------------------------
+- name: "Build Nerdctl Compose file arguments"
+  ansible.builtin.set_fact:
+    compose_file_args: >-
+      {% for f in (compose_files | default([], true)) %}
+      -f {{ f }}
+      {% endfor %}
+
+- name: "Ensure containerd project directory exists"
+  ansible.builtin.file:
+    path: "{{ compose_project_src }}"
+    state: "directory"
+    mode: "0755"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Up): Transition the stack to the 'present' state.
+# ---------------------------------------------------------------------
+- name: "Bring up Nerdctl Compose stack"
+  ansible.builtin.command: >-
+    nerdctl compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    {% if compose_env_file is defined %}--env-file {{ compose_env_file }}{% endif %}
+    up -d
+  args:
+    chdir: "{{ compose_project_src }}"
+  when: 
+    - compose_state == 'present'
+  register: compose_up_result
+  changed_when: "'Created' in compose_up_result.stdout or 'Started' in compose_up_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Down): Tear down the stack for 'absent' or 'restarted' states.
+# ---------------------------------------------------------------------
+- name: "Tear down Nerdctl Compose stack"
+  ansible.builtin.command: >-
+    nerdctl compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    {% if compose_env_file is defined %}--env-file {{ compose_env_file }}{% endif %}
+    down
+  args:
+    chdir: "{{ compose_project_src }}"
+  when: 
+    - compose_state in ['absent', 'restarted']
+  register: compose_down_result
+  changed_when: "'Deleted' in compose_down_result.stdout or 'Stopped' in compose_down_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Restart): Re-instantiate the stack after teardown.
+# ---------------------------------------------------------------------
+- name: "Restart Nerdctl Compose stack"
+  ansible.builtin.command: >-
+    nerdctl compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    {% if compose_env_file is defined %}--env-file {{ compose_env_file }}{% endif %}
+    up -d
+  args:
+    chdir: "{{ compose_project_src }}"
+  when: 
+    - compose_state == 'restarted'
+  register: compose_restart_up_result
+  changed_when: "'Created' in compose_restart_up_result.stdout or 'Started' in compose_restart_up_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Audit: Log the successful execution of the Compose operation.
+# ---------------------------------------------------------------------
+- name: "Log Nerdctl Compose operation"
+  ansible.builtin.debug:
+    msg: |
+      [NERDCTL_COMPOSE] Project: {{ compose_project_name | default('default') }} | Action: {{ compose_state }}
+      project_src='{{ compose_project_src }}'
+      changed={{ (compose_up_result.changed if compose_state == 'present' else (compose_down_result.changed if compose_state == 'absent' else true)) }}

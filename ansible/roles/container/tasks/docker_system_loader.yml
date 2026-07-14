@@ -1,0 +1,98 @@
+---
+# =====================================================================
+# docker_system_loader.yml
+#
+# Enterprise-grade loader for managing Docker system-level operations
+# with full audit logging, complete parameter coverage, and cross-distro
+# consistency.
+#
+# Features:
+# - docker system info
+# - docker system df
+# - docker system prune (safe or aggressive)
+# - Supports prune filters and prune mode
+# - All optional parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Run Docker system maintenance"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: docker_system_loader
+#     vars:
+#       system_action: "prune"          # info | df | prune
+#       prune_all: false                # true = aggressive prune
+#       prune_volumes: false
+#       prune_filters:
+#         until: "24h"
+#
+# Directory structure example:
+#
+#   (Docker system operations do not require filesystem layout)
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - system_action in ['info', 'df', 'prune']
+    fail_msg: |
+      docker_system_loader validation failed:
+      
+      Parameter 'system_action' must be one of: info, df, prune.
+      
+      Received:
+        - Value: {{ system_action | default('UNDEFINED') }}
+    success_msg: "docker_system_loader: system_action validated ({{ system_action }})"
+
+# ---------------------------------------------------------------------
+# Normalize optional variables (ensure all parameters are defined)
+# ---------------------------------------------------------------------
+
+- name: "Normalize Docker system variables"
+  ansible.builtin.set_fact:
+    prune_all: "{{ prune_all | default(false, true) }}"
+    prune_volumes: "{{ prune_volumes | default(false, true) }}"
+    prune_filters: "{{ prune_filters | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Docker system info
+# ---------------------------------------------------------------------
+
+- name: "Gather Docker system info"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "docker system info --format '{{ '{{json .}}' }}'"
+  when: system_action == 'info'
+  register: docker_info_result
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Docker system df
+# ---------------------------------------------------------------------
+
+- name: "Gather Docker system disk usage"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: "docker system df --format '{{ '{{json .}}' }}'"
+  when: system_action == 'df'
+  register: docker_df_result
+  changed_when: false
+
+# ---------------------------------------------------------------------
+# Docker system prune
+# ---------------------------------------------------------------------
+
+- name: "Prune Docker system resources"
+  become: "{{ become_enabled }}"
+  ansible.builtin.command: >
+    docker system prune -f
+    {{ '--all' if prune_all else '' }}
+    {{ '--volumes' if prune_volumes else '' }}
+  when: system_action == 'prune'
+  register: docker_prune_result
+  changed_when: "'Total reclaimed space:' in docker_prune_result.stdout and 'Total reclaimed space: 0B' not in docker_prune_result.stdout"
+

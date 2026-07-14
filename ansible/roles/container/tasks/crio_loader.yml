@@ -1,0 +1,183 @@
+---
+# =====================================================================
+# roles/container/tasks/crio_loader.yml
+#
+# Purpose:
+#   Enterprise-grade loader for managing CRI-O runtime resources using 
+#   crictl on Kubernetes worker/control-plane nodes.
+#   Supports diagnostic and maintenance operations including pull, 
+#   ps, images, stop, rm, inspect, and run.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: crio_loader
+#     vars:
+#       crio_action: "ps"
+#
+# Comprehensive Usage (Pull Image):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "crio_loader"
+#     vars:
+#       crio_action: "pull"
+#       crio_image: "registry.k8s.io/pause:3.9"
+#       become_enabled: true
+#
+# Comprehensive Usage (Run Container):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "crio_loader"
+#     vars:
+#       crio_action: "run"
+#       crio_image: "docker.io/library/nginx:alpine"
+#       crio_name: "test-nginx"
+#       crio_memory: "512m"
+#       crio_cpus: 1.0
+#       crio_env:
+#         NGINX_PORT: "8080"
+#       become_enabled: true
+#
+# Comprehensive Usage (Inspect):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "crio_loader"
+#     vars:
+#       crio_action: "inspect"
+#       crio_container_id: "abc123def456"
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure a valid CRI-O action is requested.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - crio_action in ['pull', 'ps', 'images', 'stop', 'rm', 'inspect', 'run']
+    fail_msg: |
+      crio_loader parameter validation failed:
+      
+      Parameter 'crio_action' must be one of: pull, ps, images, stop, rm, inspect, run.
+      
+      Received:
+        - Value: {{ crio_action | default('UNDEFINED') }}
+      
+      Action descriptions:
+        - pull: Pull container image
+        - ps: List containers
+        - images: List images
+        - stop: Stop container
+        - rm: Remove container
+        - inspect: Inspect container/image
+        - run: Run new container
+    success_msg: "crio_loader: crio_action validated ({{ crio_action }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional CRI-O parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize CRI-O variables"
+  ansible.builtin.set_fact:
+    crio_image: "{{ crio_image | default(omit) }}"
+    crio_container_id: "{{ crio_container_id | default(omit) }}"
+    crio_hostname: "{{ crio_hostname | default(omit) }}"
+    crio_read_only: "{{ crio_read_only | default(false, true) }}"
+    crio_tty: "{{ crio_tty | default(false, true) }}"
+    crio_interactive: "{{ crio_interactive | default(false, true) }}"
+    crio_privileged: "{{ crio_privileged | default(false, true) }}"
+    crio_memory: "{{ crio_memory | default(omit) }}"
+    crio_cpus: "{{ crio_cpus | default(omit) }}"
+    crio_cpu_shares: "{{ crio_cpu_shares | default(omit) }}"
+    crio_stop_timeout: "{{ (crio_stop_timeout | default(10, true)) | int }}"
+    crio_shm_size: "{{ crio_shm_size | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Verify that the 'crictl' binary is available and functional.
+# ---------------------------------------------------------------------
+- name: "Check crictl availability"
+  ansible.builtin.command: "crictl --version"
+  register: crictl_check
+  failed_when: crictl_check.rc != 0
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Actions: Execute the requested CRI-O runtime operation.
+# ---------------------------------------------------------------------
+- name: "CRI-O pull image"
+  ansible.builtin.command: "crictl pull {{ crio_image }}"
+  when:
+    - crio_action == 'pull'
+    - crio_image is defined
+  register: crio_pull_result
+  changed_when: true
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O list containers"
+  ansible.builtin.command: "crictl ps -a"
+  when: 
+    - crio_action == 'ps'
+  register: crio_ps_result
+  changed_when: false
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O list images"
+  ansible.builtin.command: "crictl images"
+  when: 
+    - crio_action == 'images'
+  register: crio_images_result
+  changed_when: false
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O stop container"
+  ansible.builtin.command: "crictl stop {{ crio_container_id }}"
+  when:
+    - crio_action == 'stop'
+    - crio_container_id is defined
+  register: crio_stop_result
+  changed_when: "crio_stop_result.rc == 0"
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O remove container"
+  ansible.builtin.command: "crictl rm {{ crio_container_id }}"
+  when:
+    - crio_action == 'rm'
+    - crio_container_id is defined
+  register: crio_rm_result
+  changed_when: "crio_rm_result.rc == 0"
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O inspect container/image"
+  ansible.builtin.command: >-
+    crictl inspect {{ crio_container_id 
+                      if (crio_container_id is defined and crio_container_id | length > 0)
+                      else (crio_image | default('', true)) }}
+  when: 
+    - crio_action == 'inspect'
+  register: crio_inspect_result
+  changed_when: false
+  become: "{{ become_enabled }}"
+
+- name: "CRI-O run container"
+  ansible.builtin.command: >-
+    crictl run
+    {% if crio_hostname is defined and crio_hostname | length > 0 %}--hostname {{ crio_hostname }}{% endif %}
+    {% if crio_read_only %}--read-only{% endif %}
+    {% if crio_tty %}--tty{% endif %}
+    {% if crio_interactive %}--interactive{% endif %}
+    {% if crio_privileged %}--privileged{% endif %}
+    {% if crio_memory is defined and crio_memory | length > 0 %}--memory {{ crio_memory }}{% endif %}
+    {% if crio_cpus is defined %}--cpus {{ crio_cpus }}{% endif %}
+    {% if crio_cpu_shares is defined %}--cpu-shares {{ crio_cpu_shares }}{% endif %}
+    {% if crio_stop_timeout is defined %}--stop-timeout {{ crio_stop_timeout }}{% endif %}
+    {% if crio_shm_size is defined and crio_shm_size | length > 0 %}--shm-size {{ crio_shm_size }}{% endif %}
+    {{ crio_image | default('', true) }}
+  when:
+    - crio_action == 'run'
+    - crio_image is defined
+  register: crio_run_result
+  changed_when: true
+  become: "{{ become_enabled }}"

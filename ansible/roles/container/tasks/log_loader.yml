@@ -1,0 +1,40 @@
+---
+# =====================================================================
+# roles/container/tasks/log_loader.yml
+#
+# Purpose:
+#   Unified audit log engine for container operations.
+#   Provides structured, labeled output for container deployment 
+#   auditing, ensuring visibility into lifecycle events on the 
+#   Ansible controller.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: log_loader
+#     vars:
+#       label: "CONTAINER"
+#       msg: "Started nginx container"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: log_loader
+#     vars:
+#       label: "DOCKER_RUN"
+#       msg: "name=web image=nginx:latest state=present"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Audit: Output structured container-specific audit logs to the console.
+# ---------------------------------------------------------------------
+- name: "Container audit log output"
+  ansible.builtin.debug:
+    msg: |
+      {% if label is defined %}[{{ label }}] {% endif -%}
+      {{ msg | default('', true) | trim }}
+      {%- if fingerprint is defined %} fingerprint={{ fingerprint }}{% endif %}
+  delegate_to: "localhost"
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"

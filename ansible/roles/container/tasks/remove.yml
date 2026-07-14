@@ -1,0 +1,48 @@
+---
+# =====================================================================
+# roles/container/tasks/remove.yml
+#
+# Purpose:
+#   Simplified interface for removing application containers.
+#   Uses the engine-specific loader (Docker, Podman, Crio, LXC) to 
+#   ensure clean termination and removal of managed containers.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: remove
+#     vars:
+#       container_app_name: "myapp"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: remove
+#     vars:
+#       container_app_name: "myapp"
+#       container_engine: "podman"
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Resolve the target container engine for the removal operation.
+# ---------------------------------------------------------------------
+- name: "Set target container engine"
+  ansible.builtin.set_fact:
+    detected_engine: "{{ container_engine | default('docker', true) }}"
+
+# ---------------------------------------------------------------------
+# Orchestration: Dispatch the removal task to the engine-specific logic.
+# ---------------------------------------------------------------------
+- name: "Dispatch container removal to engine_{{ detected_engine }}"
+  ansible.builtin.include_tasks: "engine_{{ detected_engine }}.yml"
+  vars:
+    container_state: "absent"
+
+# ---------------------------------------------------------------------
+# Audit: Log the successful removal of the application container.
+# ---------------------------------------------------------------------
+- name: "Log container removal"
+- ansible.builtin.debug:
+    msg: "[CONTAINER_REMOVE] name={{ container_app_name | default('unknown', true) }} | engine={{ detected_engine }} | state=absent"

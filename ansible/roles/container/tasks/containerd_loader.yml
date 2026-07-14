@@ -1,0 +1,212 @@
+---
+# =====================================================================
+# roles/container/tasks/containerd_loader.yml
+#
+# Purpose:
+#   Enterprise-grade universal loader for managing containers on a 
+#   containerd-based environment using nerdctl (Docker-compatible CLI).
+#   Supports advanced container parameters including hostname, memory 
+#   limits, CPU constraints, and security options.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: containerd_loader
+#     vars:
+#       ctr_name: "myapp"
+#       ctr_image: "nginx:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "containerd_loader"
+#     vars:
+#       ctr_name: "api-backend"
+#       ctr_image: "myapp/api:2.1.0"
+#       ctr_state: "present"
+#       ctr_pull: "always"
+#       ctr_env:
+#         APP_ENV: "production"
+#         DB_HOST: "db.local"
+#       ctr_volumes:
+#         - "/data/logs:/app/logs:rw"
+#         - "/etc/myapp/config.yaml:/app/config.yaml:ro"
+#       ctr_ports:
+#         - "8080:80"
+#       ctr_memory: "1g"
+#       ctr_cpus: 2.0
+#       ctr_hostname: "api.internal"
+#       ctr_read_only: true
+#       ctr_privileged: false
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory container identity and state are provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - ctr_name is defined
+      - ctr_name is string
+      - (ctr_name | trim | length) > 0
+    fail_msg: |
+      containerd_loader parameter validation failed:
+      
+      Required parameter 'ctr_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ ctr_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ ctr_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "container"
+            tasks_from: "containerd_loader"
+          vars:
+            ctr_name: "web-server"
+            ctr_image: "nginx:latest"
+    success_msg: "containerd_loader: ctr_name validated ({{ ctr_name }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - ctr_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
+    fail_msg: |
+      containerd_loader parameter validation failed:
+      
+      Parameter 'ctr_state' must be one of: present, absent, restarted, stopped.
+      
+      Received:
+        - Value: {{ ctr_state | default('present') }}
+      
+      State descriptions:
+        - present: Create and start container
+        - absent: Remove container
+        - restarted: Restart existing container
+        - stopped: Stop running container
+    success_msg: "containerd_loader: ctr_state validated ({{ ctr_state | default('present') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional container parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize containerd/nerdctl container variables"
+  ansible.builtin.set_fact:
+    ctr_state: "{{ ctr_state | default('present', true) }}"
+    ctr_image: "{{ ctr_image | default(omit) }}"
+    ctr_detach: "{{ ctr_detach | default(true, true) }}"
+    ctr_env: "{{ ctr_env | default(omit) }}"
+    ctr_volumes: "{{ ctr_volumes | default(omit) }}"
+    ctr_ports: "{{ ctr_ports | default(omit) }}"
+    ctr_labels: "{{ ctr_labels | default(omit) }}"
+    ctr_pull: "{{ ctr_pull | default('missing', true) }}"
+    ctr_quiet_pull: "{{ ctr_quiet_pull | default(false, true) }}"
+    ctr_platform: "{{ ctr_platform | default(omit) }}"
+    ctr_force_remove: "{{ ctr_force_remove | default(false, true) }}"
+    ctr_hostname: "{{ ctr_hostname | default(omit) }}"
+    ctr_read_only: "{{ ctr_read_only | default(false, true) }}"
+    ctr_tty: "{{ ctr_tty | default(false, true) }}"
+    ctr_interactive: "{{ ctr_interactive | default(false, true) }}"
+    ctr_privileged: "{{ ctr_privileged | default(false, true) }}"
+    ctr_memory: "{{ ctr_memory | default(omit) }}"
+    ctr_cpus: "{{ ctr_cpus | default(omit) }}"
+    ctr_cpu_shares: "{{ ctr_cpu_shares | default(omit) }}"
+    ctr_stop_timeout: "{{ (ctr_stop_timeout | default(10, true)) | int }}"
+    ctr_shm_size: "{{ ctr_shm_size | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Verify that the 'nerdctl' binary is available and functional.
+# ---------------------------------------------------------------------
+- name: "Check nerdctl availability"
+  ansible.builtin.command: "nerdctl --version"
+  register: nerdctl_check
+  failed_when: nerdctl_check.rc != 0
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Image Management: Pull the required container image if requested.
+# ---------------------------------------------------------------------
+- name: "Pull image via nerdctl"
+  ansible.builtin.command: >-
+    nerdctl pull
+    {{ '--quiet' if ctr_quiet_pull else '' }}
+    {{ '--platform ' ~ ctr_platform if (ctr_platform is defined and ctr_platform | length > 0) else '' }}
+    {{ ctr_image }}
+  when:
+    - ctr_image is defined
+    - ctr_pull != 'none'
+    - ctr_state in ['present', 'restarted']
+  register: ctr_pull_result
+  changed_when: "'Pulling' in ctr_pull_result.stdout or 'Downloaded' in ctr_pull_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Build the nerdctl run command string from normalized variables.
+# ---------------------------------------------------------------------
+- name: "Build nerdctl run arguments"
+  ansible.builtin.set_fact:
+    ctr_run_args: >-
+      run
+      {{ '-d' if ctr_detach else '' }}
+      --name {{ ctr_name }}
+      {% if ctr_hostname is defined and ctr_hostname != '' %}--hostname {{ ctr_hostname }}{% endif %}
+      {% if ctr_read_only %}--read-only{% endif %}
+      {% if ctr_tty %}--tty{% endif %}
+      {% if ctr_interactive %}--interactive{% endif %}
+      {% if ctr_privileged %}--privileged{% endif %}
+      {% if ctr_memory is defined %}--memory {{ ctr_memory }}{% endif %}
+      {% if ctr_cpus is defined %}--cpus {{ ctr_cpus }}{% endif %}
+      {% if ctr_cpu_shares is defined %}--cpu-shares {{ ctr_cpu_shares }}{% endif %}
+      {% if ctr_stop_timeout is defined %}--stop-timeout {{ ctr_stop_timeout }}{% endif %}
+      {% if ctr_shm_size is defined %}--shm-size {{ ctr_shm_size }}{% endif %}
+      {% for k, v in (ctr_env | default({}, true)).items() %}
+      -e {{ k }}={{ v }}
+      {% endfor %}
+      {% for v in (ctr_volumes | default([], true)) %}
+      -v {{ v }}
+      {% endfor %}
+      {% for p in (ctr_ports | default([], true)) %}
+      -p {{ p }}
+      {% endfor %}
+      {% for k, v in (ctr_labels | default({}, true)).items() %}
+      --label {{ k }}={{ v }}
+      {% endfor %}
+      {{ ctr_image | default('', true) }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Lifecycle: Perform termination or cleanup before starting new containers.
+# ---------------------------------------------------------------------
+- name: "Stop container via nerdctl"
+  ansible.builtin.command: "nerdctl stop {{ ctr_name }}"
+  when: 
+    - ctr_state in ['absent', 'restarted', 'stopped']
+  register: ctr_stop_result
+  failed_when: "ctr_stop_result.rc not in [0, 1]"
+  changed_when: "ctr_stop_result.rc == 0"
+  become: "{{ become_enabled }}"
+
+- name: "Remove container via nerdctl"
+  ansible.builtin.command: >-
+    nerdctl rm {{ '--force' if ctr_force_remove else '' }} {{ ctr_name }}
+  when: 
+    - ctr_state == 'absent' or ctr_state == 'restarted'
+  register: ctr_rm_result
+  failed_when: "ctr_rm_result.rc not in [0, 1]"
+  changed_when: "ctr_rm_result.rc == 0"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle: Instantiate or restart the target container.
+# ---------------------------------------------------------------------
+- name: "Run container via nerdctl"
+  ansible.builtin.command: "nerdctl {{ ctr_run_args }}"
+  when: 
+    - ctr_state in ['present', 'restarted']
+  register: ctr_run_result
+  changed_when: true
+  become: "{{ become_enabled }}"

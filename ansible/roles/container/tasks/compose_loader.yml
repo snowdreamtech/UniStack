@@ -1,0 +1,42 @@
+---
+# =====================================================================
+# roles/container/tasks/compose_loader.yml
+#
+# Purpose:
+#   Unified entry point for Compose project management.
+#   Identifies the target container engine (Docker, Podman, etc.) and
+#   dispatches to the corresponding engine-specific compose loader.
+#
+# Simple Usage:
+#   - include_tasks: "compose_loader.yml"
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#
+# Comprehensive Usage:
+#   - include_tasks: "compose_loader.yml"
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       container_engine: "podman"
+#       compose_state: "present"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Identify which container engine to use for this host.
+# Defaults to 'docker' if no explicit engine is specified.
+# ---------------------------------------------------------------------
+- name: "Detect container engine for compose"
+  ansible.builtin.set_fact:
+    detected_engine: >-
+      {{
+        container_engine 
+        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit') 
+        else (container_engine_detected | default('docker', true))
+      }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Dispatch: Load the engine-specific compose tasks.
+# ---------------------------------------------------------------------
+- name: "Dispatch to {{ detected_engine }} compose loader"
+  ansible.builtin.include_tasks: "{{ detected_engine }}_compose_loader.yml"

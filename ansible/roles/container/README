@@ -1,0 +1,163 @@
+# container Role
+Application Deployment Layer (Implementation Layer)
+
+The `container` role is responsible for deploying applications using the
+unified application API defined by the `app` role. It does not contain
+any engine-specific logic. Instead, it dispatches to engine-specific
+implementation files such as:
+
+- engine_docker.yml
+- engine_podman.yml
+- engine_containerd.yml
+- engine_crio.yml
+- engine_lxc.yml
+
+This role forms the middle layer of the three‑layer container platform:
+
+app (Application API Layer)
+        ↓
+container (Application Deployment Layer)
+        ↓
+engine_xxx (Engine Adapter Layer)
+        ↓
+templates/*_container_loader (Low‑level Loader Layer)
+
+---
+
+## Responsibilities
+
+### 1. Route application state
+The role decides whether to deploy or remove an application based on:
+
+- present
+- started
+- restarted
+- stopped
+- absent
+
+### 2. Forward normalized API fields
+All normalized variables from the `app` role are passed through without modification:
+
+- container_app_name
+- container_app_state
+- container_app_image
+- container_app_env
+- container_app_ports
+- container_app_volumes
+- container_app_networks
+- container_app_command
+- container_app_args
+- container_app_labels
+- container_app_restart_policy
+- container_app_resources
+- container_app_healthcheck
+
+### 3. Dispatch to engine-specific implementation
+The role automatically selects the correct engine adapter based on:
+
+container_engine: docker | podman | containerd | crio | lxc
+
+### 4. Auto-detect container image UID/GID (OCI runtimes only)
+
+For Docker, Podman, and nerdctl, the role can automatically detect the UID/GID
+of the user inside container images to ensure correct file ownership for volumes.
+
+**Supported detection runtimes:**
+
+- ✅ Docker (default)
+- ✅ Podman (rootless mode supported)
+- ✅ nerdctl (containerd CLI)
+- ⚠️ LXC/CRI-O (gracefully skipped, uses default ownership)
+
+### 5. Provide audit logging
+All operations are logged using the shared `log_loader` from the `templates` role.
+
+---
+
+## File Structure
+
+tasks/
+  main.yml
+  container_loader.yml
+  remove.yml
+  engine_docker.yml
+  engine_podman.yml
+  engine_containerd.yml
+  engine_crio.yml
+  engine_lxc.yml
+
+---
+
+## Design Principles
+
+- No engine logic inside this role
+- No container CLI inside this role
+- Pure dispatch layer
+- Fully engine‑agnostic
+- Fully auditable
+- Fully maintainable
+- Strict separation of concerns
+
+This role ensures that applications can be deployed consistently across
+multiple container engines without modifying application playbooks.
+
+---
+
+## Supported Container Runtimes
+
+### OCI-Compatible Runtimes (with UID/GID auto-detection)
+
+#### Docker (default)
+
+```yaml
+- include_role:
+    name: container
+    tasks_from: container_loader
+  vars:
+    container_app_name: nginx
+    container_app_image: nginx:alpine
+    container_engine: docker  # Optional, this is the default
+```
+
+#### Podman (rootless mode supported)
+
+```yaml
+- include_role:
+    name: container
+    tasks_from: container_loader
+  vars:
+    container_app_name: nginx
+    container_app_image: nginx:alpine
+    container_engine: podman
+```
+
+#### nerdctl (containerd CLI)
+
+```yaml
+- include_role:
+    name: container
+    tasks_from: container_loader
+  vars:
+    container_app_name: nginx
+    container_app_image: nginx:alpine
+    container_engine: nerdctl
+```
+
+### Other Runtimes (no UID/GID auto-detection)
+
+For LXC, CRI-O, and other non-OCI runtimes, UID/GID detection is gracefully
+skipped and default ownership settings are used.
+
+---
+
+## Example Usage
+
+```yaml
+- include_role:
+    name: app
+  vars:
+    app_name: nginx
+    app_image: nginx:1.25
+    app_ports:
+      - "80:80"
+    app_state: started

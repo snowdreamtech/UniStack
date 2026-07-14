@@ -1,0 +1,167 @@
+---
+# =====================================================================
+# roles/container/tasks/podman_compose_loader.yml
+#
+# Purpose:
+#   Enterprise-grade loader for managing Podman Compose projects using 
+#   podman-compose. Supports stack orchestration (up/down/restart) with 
+#   integrated audit logging and cross-distribution consistency.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_compose_loader
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_state: "present"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "podman_compose_loader"
+#     vars:
+#       compose_project_src: "/opt/myapp"
+#       compose_files: ["podman-compose.yml", "podman-compose.override.yml"]
+#       compose_project_name: "backend-orch"
+#       compose_state: "restarted"
+#       compose_env_file: "/opt/myapp/.env"
+#       compose_env:
+#         PORT: "8080"
+#         DEBUG: "false"
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure mandatory project source and state are provided.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - compose_project_src is defined
+      - compose_project_src is string
+      - (compose_project_src | trim | length) > 0
+    fail_msg: |
+      podman_compose_loader validation failed:
+      
+      Required parameter 'compose_project_src' must be a non-empty string.
+      
+      Received:
+        - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
+        - Value: {{ compose_project_src | default('UNDEFINED') }}
+    success_msg: "podman_compose_loader: compose_project_src validated ({{ compose_project_src }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - compose_state | default('present', true) in ['present', 'absent', 'restarted']
+    fail_msg: |
+      podman_compose_loader validation failed:
+      
+      Parameter 'compose_state' must be one of: present, absent, restarted.
+      
+      Received:
+        - Value: {{ compose_state | default('present') }}
+    success_msg: "podman_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Provide default values for optional Podman Compose parameters.
+# ---------------------------------------------------------------------
+- name: "Normalize Podman Compose variables"
+  ansible.builtin.set_fact:
+    compose_state: "{{ compose_state | default('present', true) }}"
+    compose_files: "{{ compose_files | default(['podman-compose.yml'], true) }}"
+    compose_project_name: "{{ compose_project_name | default(omit) }}"
+    compose_env_file: "{{ compose_env_file | default(omit) }}"
+    compose_env: "{{ compose_env | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Build command arguments and verify project directory.
+# ---------------------------------------------------------------------
+- name: "Build Podman Compose file arguments"
+  ansible.builtin.set_fact:
+    compose_file_args: >-
+      {% for f in (compose_files | default([], true)) %}
+      -f {{ f }}
+      {% endfor %}
+  tags: ["always"]
+
+- name: "Ensure Podman Compose project directory exists"
+  ansible.builtin.file:
+    path: "{{ compose_project_src }}"
+    state: "directory"
+    mode: "0755"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Up): Transition the stack to the 'present' state.
+# ---------------------------------------------------------------------
+- name: "Bring up Podman Compose stack"
+  ansible.builtin.command: >-
+    podman-compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    up -d
+  args:
+    chdir: "{{ compose_project_src }}"
+  environment: >-
+    {{
+      (compose_env | default({}, true)) |
+      combine(
+        {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
+      )
+    }}
+  when: 
+    - compose_state == 'present'
+  register: compose_up_result
+  changed_when: "'Creating' in compose_up_result.stdout or 'Recreating' in compose_up_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Down): Tear down the stack for 'absent' or 'restarted' states.
+# ---------------------------------------------------------------------
+- name: "Tear down Podman Compose stack"
+  ansible.builtin.command: >-
+    podman-compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    down
+  args:
+    chdir: "{{ compose_project_src }}"
+  environment: >-
+    {{
+      (compose_env | default({}, true)) |
+      combine(
+        {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
+      )
+    }}
+  when: 
+    - compose_state in ['absent', 'restarted']
+  register: compose_down_result
+  changed_when: "'Stopping' in compose_down_result.stdout or 'Removing' in compose_down_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Lifecycle (Restart): Re-instantiate the stack after teardown.
+# ---------------------------------------------------------------------
+- name: "Restart Podman Compose stack"
+  ansible.builtin.command: >-
+    podman-compose
+    {{ compose_file_args }}
+    {% if compose_project_name is defined %}-p {{ compose_project_name }}{% endif %}
+    up -d
+  args:
+    chdir: "{{ compose_project_src }}"
+  environment: >-
+    {{
+      (compose_env | default({}, true)) |
+      combine(
+        {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
+      )
+    }}
+  when: 
+    - compose_state == 'restarted'
+  register: compose_restart_up_result
+  changed_when: "'Creating' in compose_restart_up_result.stdout or 'Recreating' in compose_restart_up_result.stdout"
+  become: "{{ become_enabled }}"

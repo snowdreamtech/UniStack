@@ -1,0 +1,100 @@
+---
+# =====================================================================
+# roles/container/tasks/containerd_system_loader.yml
+#
+# Purpose:
+#   Enterprise-grade loader for managing containerd system-level 
+#   operations using nerdctl and containerd CLI.
+#   Provides utilities for auditing (info, df) and maintenance (prune) 
+#   of the containerd runtime.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: containerd_system_loader
+#     vars:
+#       ctr_sys_action: "info"
+#
+# Comprehensive Usage (System Info):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "containerd_system_loader"
+#     vars:
+#       ctr_sys_action: "info"
+#       become_enabled: true
+#
+# Comprehensive Usage (Disk Usage):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "containerd_system_loader"
+#     vars:
+#       ctr_sys_action: "df"
+#       become_enabled: true
+#
+# Comprehensive Usage (Prune Resources):
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "containerd_system_loader"
+#     vars:
+#       ctr_sys_action: "prune"
+#       ctr_prune_all: true
+#       ctr_prune_volumes: false
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure a valid system action is requested.
+# ---------------------------------------------------------------------
+- ansible.builtin.assert:
+    that:
+      - ctr_sys_action in ['info', 'df', 'prune']
+    fail_msg: |
+      containerd_system_loader validation failed:
+      
+      Parameter 'ctr_sys_action' must be one of: info, df, prune.
+      
+      Received:
+        - Value: {{ ctr_sys_action | default('UNDEFINED') }}
+    success_msg: "containerd_system_loader: ctr_sys_action validated ({{ ctr_sys_action }})"
+
+# ---------------------------------------------------------------------
+# Normalization: Provide defaults for maintenance flags.
+# ---------------------------------------------------------------------
+- name: "Normalize containerd system variables"
+  ansible.builtin.set_fact:
+    ctr_prune_all: "{{ ctr_prune_all | default(false, true) }}"
+
+# ---------------------------------------------------------------------
+# Audit: Gather general runtime information and status.
+# ---------------------------------------------------------------------
+- name: "Gather containerd/nerdctl info"
+  ansible.builtin.command: "nerdctl info"
+  when: 
+    - ctr_sys_action == 'info'
+  register: ctr_info_result
+  changed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Audit: Calculate disk space usage for containers, images, and volumes.
+# ---------------------------------------------------------------------
+- name: "Gather containerd/nerdctl disk usage"
+  ansible.builtin.command: "nerdctl system df"
+  when: 
+    - ctr_sys_action == 'df'
+  register: ctr_df_result
+  changed_when: false
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Maintenance: Reclaim disk space by pruning unused resources.
+# ---------------------------------------------------------------------
+- name: "Prune containerd/nerdctl resources"
+  ansible.builtin.command: >-
+    nerdctl system prune -f {{ '--all' if ctr_prune_all else '' }}
+  when: 
+    - ctr_sys_action == 'prune'
+  register: ctr_prune_result
+  changed_when: "'Reclaimed' in ctr_prune_result.stdout"
+  become: "{{ become_enabled }}"

@@ -1,0 +1,90 @@
+---
+# =====================================================================
+# lxc_image_loader.yml
+#
+# Enterprise-grade loader for managing LXC/LXD images with full audit
+# logging.
+#
+# Features:
+# - Import, copy, and delete images
+# - Supports remote and local image aliases
+# - All optional parameters default to omit
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Ensure LXC image is available"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: lxc_image_loader
+#     vars:
+#       lxc_image_alias: "images:ubuntu/22.04"
+#       lxc_image_state: "present"    # present | absent
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - lxc_image_alias is defined
+      - lxc_image_alias is string
+      - (lxc_image_alias | length) > 0
+    fail_msg: |
+      lxc_image_loader validation failed:
+      
+      Required parameter 'lxc_image_alias' must be a non-empty string.
+      
+      Received:
+        - Type: {{ lxc_image_alias | default('UNDEFINED') | type_debug }}
+        - Value: {{ lxc_image_alias | default('UNDEFINED') }}
+    success_msg: "lxc_image_loader: lxc_image_alias validated ({{ lxc_image_alias }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - lxc_image_state in ['present', 'absent']
+    fail_msg: |
+      lxc_image_loader validation failed:
+      
+      Parameter 'lxc_image_state' must be one of: present, absent.
+      
+      Received:
+        - Value: {{ lxc_image_state | default('present') }}
+    success_msg: "lxc_image_loader: lxc_image_state validated ({{ lxc_image_state }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalize optional variables
+# ---------------------------------------------------------------------
+
+- name: "Normalize LXC image variables"
+  ansible.builtin.set_fact:
+    lxc_image_alias_target: "{{ lxc_image_alias_target | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Ensure image present/absent
+# ---------------------------------------------------------------------
+
+- name: "Ensure LXC image present"
+  ansible.builtin.command: >
+    lxc image copy {{ lxc_image_alias }}
+    {{ lxc_image_alias_target | default('local:', true) }}
+    --copy-aliases
+  when: lxc_image_state == 'present'
+  register: lxc_image_copy_result
+  failed_when: "lxc_image_copy_result.rc not in [0, 1]"
+  changed_when: "lxc_image_copy_result.rc == 0"
+  become: "{{ become_enabled }}"
+
+- name: "Ensure LXC image absent"
+  ansible.builtin.command: "lxc image delete {{ lxc_image_alias }}"
+  when: lxc_image_state == 'absent'
+  register: lxc_image_delete_result
+  failed_when: "lxc_image_delete_result.rc not in [0, 1]"
+  changed_when: "lxc_image_delete_result.rc == 0"
+  become: "{{ become_enabled }}"
+

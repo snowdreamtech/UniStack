@@ -3,14 +3,43 @@
 # roles/container/tasks/main.yml
 #
 # Purpose:
-#   L2 Execution Engine for Container Orchestration.
-#   Provides a unified abstraction over Docker and Docker Compose.
+#   Entry point for the containerized deployment layer. 
+#   This file routes the application state to the container_loader 
+#   for execution and logs the routing event for audit purposes.
 #
-# Inputs:
-#   - unistack_action: The standardized verb (install/up, remove/down, etc.)
-#   - unistack_container_spec: Definition of the container or compose stack.
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#     vars:
+#       container_app_name: "helloworld"
+#       container_app_image: "nginx:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#     vars:
+#       container_app_name: "web-server"
+#       container_app_image: "nginx:alpine"
+#       container_app_state: "started"
+#       container_app_ports: ["80:80"]
+#       container_app_volumes: ["/data:/usr/share/nginx/html"]
+#
 # =====================================================================
 
-- name: "Container Engine: Route action '{{ unistack_action | default('unknown') }}'"
-  ansible.builtin.include_tasks: "{{ unistack_action }}.yml"
-  when: unistack_action is defined
+# ---------------------------------------------------------------------
+# Route the application state to the container_loader to handle
+# the actual deployment or removal logic.
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "container_loader.yml"
+
+# ---------------------------------------------------------------------
+# Audit Trail: Log the container routing operation with key parameters.
+# ---------------------------------------------------------------------
+- name: "Log container main routing"
+  ansible.builtin.debug:
+    msg: "[CONTAINER] {{ trail_item }}"
+  loop: "{{ orchestrator_audit_trail | default([], true) }}"
+  loop_control:
+    label: "Log: {{ trail_item }}"
+    loop_var: trail_item
+  when: orchestrator_debug_enabled | default(false, true) | bool

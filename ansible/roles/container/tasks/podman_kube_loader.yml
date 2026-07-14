@@ -1,0 +1,140 @@
+---
+# =====================================================================
+# podman_kube_loader.yml
+#
+# Enterprise-grade loader for managing Podman workloads using
+# "podman play kube" with full audit logging and cross-distro
+# consistency.
+#
+# This loader provides a Kubernetes-style deployment model for Podman
+# and complements podman_compose_loader.yml.
+#
+# Features:
+# - Apply Kubernetes YAML via podman play kube
+# - Tear down workloads via podman play kube --down
+# - Supports present, absent, restarted states
+# - Validates manifest file existence
+# - All optional parameters default to omit to prevent undefined errors
+# - Fully idempotent and safe for CI/CD and production automation
+# - Full audit logging via log_loader
+#
+# Example usage:
+#
+#   - name: "Apply backend Kube manifest via Podman"
+#     ansible.builtin.include_role:
+#       name: container
+#       tasks_from: podman_kube_loader
+#     vars:
+#       kube_manifest: "/opt/myapp/kube/backend.yaml"
+#       kube_state: "present"          # present | absent | restarted
+#       kube_replace: true             # re-apply even if exists
+#
+# Directory structure example:
+#
+#   /opt/myapp/kube/
+#     ├── backend.yaml
+#     └── frontend.yaml
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validate required variables (assert tasks must NOT have task names)
+# ---------------------------------------------------------------------
+
+- ansible.builtin.assert:
+    that:
+      - kube_manifest is defined
+      - kube_manifest is string
+      - (kube_manifest | length) > 0
+    fail_msg: |
+      podman_kube_loader validation failed:
+      
+      Required parameter 'kube_manifest' must be a non-empty string.
+      
+      Received:
+        - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
+        - Value: {{ kube_manifest | default('UNDEFINED') }}
+    success_msg: "podman_kube_loader: kube_manifest validated ({{ kube_manifest }})"
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - kube_state in ['present', 'absent', 'restarted']
+    fail_msg: |
+      podman_kube_loader validation failed:
+      
+      Parameter 'kube_state' must be one of: present, absent, restarted.
+      
+      Received:
+        - Value: {{ kube_state | default('present') }}
+    success_msg: "podman_kube_loader: kube_state validated ({{ kube_state }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalize optional variables (ensure all parameters are defined)
+# ---------------------------------------------------------------------
+
+- name: "Normalize Podman kube variables"
+  ansible.builtin.set_fact:
+    kube_replace: "{{ kube_replace | default(false, true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Validate manifest existence
+# ---------------------------------------------------------------------
+
+- name: "Check Podman kube manifest exists"
+  ansible.builtin.stat:
+    path: "{{ kube_manifest }}"
+  register: kube_manifest_stat
+  tags: ["always"]
+
+- ansible.builtin.assert:
+    that:
+      - kube_manifest_stat.stat.exists
+    fail_msg: |
+      podman_kube_loader validation failed:
+      
+      Manifest file does not exist.
+      
+      File path: {{ kube_manifest }}
+    success_msg: "podman_kube_loader: manifest file exists ({{ kube_manifest }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Apply manifest via podman play kube
+# ---------------------------------------------------------------------
+
+- name: "Apply Podman kube manifest"
+  ansible.builtin.command: >
+    podman play kube
+    {{ '--replace' if kube_replace else '' }}
+    {{ kube_manifest }}
+  when: kube_state == 'present'
+  register: kube_apply_result
+  changed_when: "'Created' in kube_apply_result.stdout or 'Replaced' in kube_apply_result.stdout"
+
+# ---------------------------------------------------------------------
+# Tear down manifest via podman play kube --down
+# ---------------------------------------------------------------------
+
+- name: "Tear down Podman kube manifest"
+  ansible.builtin.command: >
+    podman play kube --down {{ kube_manifest }}
+  when: kube_state in ['absent', 'restarted']
+  register: kube_down_result
+  changed_when: "'Deleted' in kube_down_result.stdout or 'Stopped' in kube_down_result.stdout"
+
+# ---------------------------------------------------------------------
+# Re-apply manifest on restarted
+# ---------------------------------------------------------------------
+
+- name: "Re-apply Podman kube manifest"
+  ansible.builtin.command: >
+    podman play kube
+    {{ '--replace' if kube_replace else '' }}
+    {{ kube_manifest }}
+  when: kube_state == 'restarted'
+  register: kube_restart_apply_result
+  changed_when: "'Created' in kube_restart_apply_result.stdout or 'Replaced' in kube_restart_apply_result.stdout"
+

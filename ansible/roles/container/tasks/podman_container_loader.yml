@@ -1,0 +1,138 @@
+---
+# =====================================================================
+# roles/container/tasks/podman_container_loader.yml
+#
+# Purpose:
+#   Podman container lifecycle management engine.
+#   Provides a robust interface to the 'containers.podman.podman_container' 
+#   module, supporting extensive configuration parameters for 
+#   production-grade containerized workloads.
+#
+# Simple Usage:
+#   - include_tasks: "podman_container_loader.yml"
+#     vars:
+#       container_name: "helloworld"
+#       container_image: "nginx:alpine"
+#
+# Comprehensive Usage:
+#   - include_tasks: "podman_container_loader.yml"
+#     vars:
+#       container_name: "webapp"
+#       container_image: "nginx:alpine"
+#       container_state: "started"
+#       container_ports: ["8080:80"]
+#       container_memory: "512m"
+#       container_restart_policy: "always"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure that the minimum required parameters are 
+# provided before attempting deployment.
+# ---------------------------------------------------------------------
+- name: "Assert container_name for Podman"
+  ansible.builtin.assert:
+    that:
+      - container_name is defined
+      - container_name is string
+      - (container_name | length) > 0
+    fail_msg: |
+      podman_container_loader parameter validation failed:
+      
+      Required parameter 'container_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ container_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ container_name | default('UNDEFINED') }}
+    success_msg: "podman_container_loader: container_name validated ({{ container_name }})"
+
+- name: "Assert container_state for Podman"
+  ansible.builtin.assert:
+    that:
+      - container_state | default('present', true) in ['present', 'started', 'stopped', 'restarted', 'absent']
+    fail_msg: |
+      podman_container_loader parameter validation failed:
+      
+      Parameter 'container_state' must be one of: present, started, stopped, restarted, absent.
+      
+      Received:
+        - Value: {{ container_state | default('present') }}
+    success_msg: "podman_container_loader: container_state validated ({{ container_state | default('present') }})"
+
+# ---------------------------------------------------------------------
+# Normalization: Aggregate and sanitize container parameters to ensure 
+# they conform to the expectations of the Podman module.
+# ---------------------------------------------------------------------
+- name: "Normalize Podman container variables"
+  ansible.builtin.set_fact:
+    container_image: "{{ container_image | default(omit) }}"
+    container_env: "{{ container_env | default(omit) }}"
+    container_env_file: "{{ container_env_file | default(omit) }}"
+    container_volumes: "{{ container_volumes | default(omit) }}"
+    container_ports: "{{ container_ports | default(omit) }}"
+    container_networks: "{{ container_networks | default(omit) }}"
+    container_labels: "{{ container_labels | default(omit) }}"
+    container_ulimits: "{{ container_ulimits | default(omit) }}"
+    container_sysctls: "{{ container_sysctls | default(omit) }}"
+    container_capabilities: "{{ container_capabilities | default(omit) }}"
+    container_devices: "{{ container_devices | default(omit) }}"
+    container_security_opts: "{{ container_security_opts | default(omit) }}"
+    container_user: "{{ container_user | default(omit) }}"
+    container_workdir: "{{ container_workdir | default(omit) }}"
+    container_entrypoint: "{{ container_entrypoint | default(omit) }}"
+    container_command: "{{ container_command | default(omit) }}"
+    container_log_driver: "{{ container_log_driver | default(omit) }}"
+    container_log_options: "{{ container_log_options | default(omit) }}"
+    container_restart_policy: "{{ container_restart_policy | default(omit) }}"
+    container_detach: "{{ container_detach | default(true, true) }}"
+    container_hostname: "{{ container_hostname | default(omit) }}"
+    container_read_only: "{{ container_read_only | default(false, true) }}"
+    container_tty: "{{ container_tty | default(false, true) }}"
+    container_interactive: "{{ container_interactive | default(false, true) }}"
+    container_privileged: "{{ container_privileged | default(false, true) }}"
+    container_memory: "{{ container_memory | default(omit) }}"
+    container_cpus: "{{ container_cpus | default(omit) }}"
+    container_cpu_shares: "{{ container_cpu_shares | default(omit) }}"
+    container_stop_timeout: "{{ (container_stop_timeout | default(10, true)) | int }}"
+    container_shm_size: "{{ container_shm_size | default(omit) }}"
+
+# ---------------------------------------------------------------------
+# Execution: Perform the actual Podman container operation. 
+# This handles the full lifecycle from image pull to container start.
+# ---------------------------------------------------------------------
+- name: "Manage Podman container"
+  containers.podman.podman_container:
+    name: "{{ container_name }}"
+    image: "{{ container_image }}"
+    state: "{{ container_state | default('present', true) }}"
+    detach: "{{ container_detach }}"
+    restart_policy: "{{ container_restart_policy }}"
+    env: "{{ container_env }}"
+    env_file: "{{ container_env_file }}"
+    volume: "{{ container_volumes }}"
+    publish: "{{ container_ports }}"
+    network: "{{ container_networks }}"
+    label: "{{ container_labels }}"
+    ulimit: "{{ container_ulimits }}"
+    sysctl: "{{ container_sysctls }}"
+    cap_add: "{{ container_capabilities }}"
+    device: "{{ container_devices }}"
+    security_opt: "{{ container_security_opts }}"
+    user: "{{ container_user }}"
+    workdir: "{{ container_workdir }}"
+    entrypoint: "{{ container_entrypoint }}"
+    command: "{{ container_command }}"
+    log_driver: "{{ container_log_driver }}"
+    log_options: "{{ container_log_options }}"
+    hostname: "{{ container_hostname }}"
+    read_only: "{{ container_read_only }}"
+    tty: "{{ container_tty }}"
+    interactive: "{{ container_interactive }}"
+    privileged: "{{ container_privileged }}"
+    memory: "{{ container_memory }}"
+    cpus: "{{ container_cpus }}"
+    cpu_shares: "{{ container_cpu_shares }}"
+    stop_timeout: "{{ container_stop_timeout }}"
+    shm_size: "{{ container_shm_size }}"
+  become: "{{ become_enabled }}"
+  register: container_result

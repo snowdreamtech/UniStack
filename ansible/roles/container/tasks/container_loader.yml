@@ -1,0 +1,180 @@
+---
+# =====================================================================
+# roles/container/tasks/container_loader.yml
+#
+# Purpose:
+#   Abstract deployment layer for containerized applications.
+#   Identifies the target container engine (Docker, Podman, etc.) and 
+#   dispatches execution to the corresponding engine-specific loader.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: container_loader
+#     vars:
+#       container_app_name: "helloworld"
+#       container_app_image: "nginx:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: container
+#       tasks_from: container_loader
+#     vars:
+#       container_app_name: "web-server"
+#       container_app_image: "nginx:alpine"
+#       container_engine: "docker"
+#       container_app_ports: ["80:80"]
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# 1. Reset Loader & API State
+#    Prevent fact leakage from previous calls on the same host.
+# ---------------------------------------------------------------------
+- name: "Container: Load variable schema"
+  ansible.builtin.include_vars:
+    file: "../vars/container_loader_schema.yml"
+  tags: ["always"]
+
+- ansible.builtin.set_fact:
+    "{{ item }}": null
+  loop: "{{ container_loader_internal_vars }}"
+  loop_control:
+    label: "reset {{ item }} (null)"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 0. Validation: Ensure minimum required parameters
+# ---------------------------------------------------------------------
+- name: "Container: Validate required parameters"
+  ansible.builtin.assert:
+    that:
+      - container_app_name is defined
+      - container_app_name is string
+      - (container_app_name | length) > 0
+    fail_msg: |
+      container_loader parameter validation failed:
+      
+      Required parameter 'container_app_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ container_app_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ container_app_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "container"
+          vars:
+            container_app_name: "web-server"
+            container_app_image: "nginx:latest"
+            container_app_state: "started"
+    success_msg: "container_loader: container_app_name validated ({{ container_app_name | default('UNDEFINED') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 2. Detection: Identify which container engine to use for this host.
+#    Defaults to 'docker' if no explicit engine is specified.
+# ---------------------------------------------------------------------
+- name: "Detect container engine"
+  ansible.builtin.set_fact:
+    detected_engine: >-
+      {{
+        container_engine 
+        if (container_engine is defined and container_engine | default('', true) | length > 0 and container_engine != 'omit') 
+        else (container_engine_detected | default('docker', true))
+      }}
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# 3. Prepare: Ensure container volumes base directory exists
+# ---------------------------------------------------------------------
+- name: "Container: Ensure volumes base directory exists"
+  ansible.builtin.file:
+    path: "{{ docker_data_base_dir }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ container_app_volume_owner | default(docker_volume_default_owner) }}"
+    group: "{{ container_app_volume_group | default(docker_volume_default_group) }}"
+  become: "{{ become_enabled }}"
+  when: 
+    - docker_data_base_dir is defined
+    - docker_data_base_dir | default('', true) | length > 0
+  tags: ["container", "volumes"]
+
+# ---------------------------------------------------------------------
+# 3.5 Auto-detect: Determine UID/GID of image user if not provided
+# ---------------------------------------------------------------------
+- name: "Container: Auto-detect image UID/GID"
+  ansible.builtin.include_tasks: "detect_image_id.yml"
+  when:
+    - (container_app_volume_owner | default('', true) | string == '') or (container_app_volume_owner | default('') == 'None')
+    - container_app_image is defined
+    - container_app_image | length > 0
+    - container_app_state | default('started') != 'absent'
+    - detected_engine in ['docker', 'podman', 'nerdctl'] # 支持 OCI 兼容的容器运行时
+  tags: ["container", "volumes"]
+
+
+- name: "Container: Ensure application bind-mount directories exist"
+  ansible.builtin.file:
+    path: "{{ item.split(':')[0] }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ container_app_volume_owner | default(docker_volume_default_owner) }}"
+    group: "{{ container_app_volume_group | default(docker_volume_default_group) }}"
+  loop: "{{ container_volumes | default([], true) }}"
+  loop_control:
+    label: "{{ item.split(':')[0] }}"
+  become: "{{ become_enabled }}"
+  when:
+    - container_volumes is defined
+    - item is string
+    - item | length > 0
+    - (item.startswith('/') or (item | length > 1 and item[1] == ':')) # Matches unix paths (/) and windows paths (C:)
+  tags: ["container", "volumes"]
+
+# ---------------------------------------------------------------------
+# 4. SELinux: Configure security context for RHEL-based systems
+#    Required for Docker/Podman to access bind-mounted volumes
+# ---------------------------------------------------------------------
+- name: "Container: Set SELinux file context for volumes"
+  community.general.sefcontext:
+    target: "{{ docker_data_base_dir }}(/.*)?"
+    setype: container_file_t
+    state: present
+  become: "{{ become_enabled }}"
+  when:
+    - docker_data_base_dir is defined
+    - docker_data_base_dir | default('', true) | length > 0
+    - os_family == 'redhat'
+    - ansible_selinux is defined
+    - ansible_selinux.status is defined
+    - ansible_selinux.status == 'enabled'
+  tags: ["container", "volumes", "selinux"]
+
+- name: "Container: Apply SELinux context to volume directory"
+  ansible.builtin.command:
+    cmd: restorecon -Rv {{ docker_data_base_dir }}
+  become: "{{ become_enabled }}"
+  changed_when: false
+  when:
+    - docker_data_base_dir is defined
+    - docker_data_base_dir | default('', true) | length > 0
+    - os_family == 'redhat'
+    - ansible_selinux is defined
+    - ansible_selinux.status is defined
+    - ansible_selinux.status == 'enabled'
+  tags: ["container", "volumes", "selinux"]
+
+
+
+# ---------------------------------------------------------------------
+# Dispatch: Load the specialized engine tasks (engine_docker.yml, etc.).
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "engine_{{ detected_engine }}.yml"
+
+# ---------------------------------------------------------------------
+# Logging: Record the deployment attempt for auditing and monitoring.
+# ---------------------------------------------------------------------
+- ansible.builtin.debug:
+    msg: "[CONTAINER_LOADER] {{ container_app_name }} -> Engine: {{ _runtime_target }} | Action: {{ container_app_state }} mode=container"

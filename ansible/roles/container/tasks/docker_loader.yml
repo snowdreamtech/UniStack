@@ -1,0 +1,222 @@
+---
+# =====================================================================
+# roles/container/tasks/docker_loader.yml
+#
+# Purpose:
+#   Advanced Docker container lifecycle management engine.
+#   Provides a high-performance interface to 'community.docker.docker_container' 
+#   with pre-flight availability checks, explicit CLI image pulling, 
+#   and comprehensive parameter mapping for enterprise environments.
+#
+# Simple Usage:
+#   - include_tasks: "docker_loader.yml"
+#     vars:
+#       docker_name: "backend"
+#       docker_image: "myapp/backend:latest"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: "container"
+#       tasks_from: "docker_loader"
+#     vars:
+#       docker_name: "web-server"
+#       docker_image: "nginx:latest"
+#       docker_state: "started"
+#       docker_ports:
+#         - "80:80"
+#         - "443:443"
+#       docker_volumes:
+#         - "/opt/web/html:/usr/share/nginx/html:ro"
+#       docker_env:
+#         PORT: "80"
+#       docker_networks:
+#         - name: "frontend"
+#       docker_restart_policy: "unless-stopped"
+#       docker_pull: "always"
+#       docker_platform: "linux/amd64"
+#       docker_log_driver: "json-file"
+#       docker_log_options:
+#         max-size: "10m"
+#         max-file: "3"
+#       become_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Validation: Ensure that the minimum required parameters are 
+# provided before attempting deployment.
+# ---------------------------------------------------------------------
+- name: "Assert docker_name for Docker"
+  ansible.builtin.assert:
+    that:
+      - docker_name is defined
+      - docker_name is string
+      - (docker_name | length) > 0
+    fail_msg: |
+      docker_loader parameter validation failed:
+      
+      Required parameter 'docker_name' must be a non-empty string.
+      
+      Received:
+        - Type: {{ docker_name | default('UNDEFINED') | type_debug }}
+        - Value: {{ docker_name | default('UNDEFINED') }}
+      
+      Example usage:
+        - ansible.builtin.include_role:
+            name: "container"
+            tasks_from: "docker_loader"
+          vars:
+            docker_name: "web-server"
+            docker_image: "nginx:latest"
+            docker_state: "started"
+    success_msg: "docker_loader: docker_name validated ({{ docker_name }})"
+  tags: ["always"]
+
+- name: "Assert docker_state for Docker"
+  ansible.builtin.assert:
+    that:
+      - docker_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
+    fail_msg: |
+      docker_loader parameter validation failed:
+      
+      Parameter 'docker_state' must be one of: present, absent, restarted, stopped.
+      
+      Received:
+        - Value: {{ docker_state | default('present') }}
+      
+      State descriptions:
+        - present: Create and start container
+        - absent: Remove container
+        - restarted: Restart existing container
+        - stopped: Stop running container
+    success_msg: "docker_loader: docker_state validated ({{ docker_state | default('present') }})"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Normalization: Aggregate and sanitize container parameters to ensure 
+# they conform to the expectations of the Docker module.
+# ---------------------------------------------------------------------
+- name: "Reset Docker Engine variables"
+  ansible.builtin.set_fact:
+    docker_image: null
+    docker_detach: null
+    docker_restart_policy: null
+    docker_env: null
+    docker_env_file: null
+    docker_volumes: null
+    docker_ports: null
+    docker_networks: null
+    docker_labels: null
+    docker_ulimits: null
+    docker_sysctls: null
+    docker_capabilities: null
+    docker_devices: null
+    docker_security_opts: null
+    docker_user: null
+    docker_workdir: null
+    docker_entrypoint: null
+    docker_command: null
+    docker_log_driver: null
+    docker_log_options: null
+    docker_pull: null
+    docker_quiet_pull: null
+    docker_platform: null
+    docker_force_remove: null
+    docker_remove_volumes: null
+    docker_timeout: null
+  tags: ["always"]
+
+- name: "Normalize Docker Engine variables"
+  ansible.builtin.set_fact:
+    docker_image: "{{ docker_image | default(omit) }}"
+    docker_detach: "{{ docker_detach | default(true, true) }}"
+    docker_restart_policy: "{{ docker_restart_policy | default(omit) }}"
+    docker_env: "{{ docker_env | default(omit) }}"
+    docker_env_file: "{{ docker_env_file | default(omit) }}"
+    docker_volumes: "{{ docker_volumes | default(omit) }}"
+    docker_ports: "{{ docker_ports | default(omit) }}"
+    docker_networks: "{{ docker_networks | default(omit) }}"
+    docker_labels: "{{ docker_labels | default(omit) }}"
+    docker_ulimits: "{{ docker_ulimits | default(omit) }}"
+    docker_sysctls: "{{ docker_sysctls | default(omit) }}"
+    docker_capabilities: "{{ docker_capabilities | default(omit) }}"
+    docker_devices: "{{ docker_devices | default(omit) }}"
+    docker_security_opts: "{{ docker_security_opts | default(omit) }}"
+    docker_user: "{{ docker_user | default(omit) }}"
+    docker_workdir: "{{ docker_workdir | default(omit) }}"
+    docker_entrypoint: "{{ docker_entrypoint | default(omit) }}"
+    docker_command: "{{ docker_command | default(omit) }}"
+    docker_log_driver: "{{ docker_log_driver | default(omit) }}"
+    docker_log_options: "{{ docker_log_options | default(omit) }}"
+    docker_pull: "{{ docker_pull | default(omit) }}"
+    docker_quiet_pull: "{{ docker_quiet_pull | default(false, true) }}"
+    docker_platform: "{{ docker_platform | default(omit) }}"
+    docker_force_remove: "{{ docker_force_remove | default(false, true) }}"
+    docker_remove_volumes: "{{ docker_remove_volumes | default(false, true) }}"
+    docker_timeout: "{{ docker_timeout | default(omit) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Pre-flight: Verify that the Docker Engine is active and responding 
+# on the target host.
+# ---------------------------------------------------------------------
+- name: "Check Docker Engine availability"
+  ansible.builtin.command: "docker version --format '{{ '{{.Server.Version}}' }}'"
+  register: docker_check
+  failed_when: 
+    - docker_check.rc != 0
+  changed_when: false
+  become: "{{ become_enabled }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Dependency: Pull the requested Docker image using the CLI to 
+# ensure precise control over platform and output.
+# ---------------------------------------------------------------------
+- name: "Pull Docker image"
+  ansible.builtin.command: >
+    docker pull
+    {{ '--quiet' if docker_quiet_pull else '' }}
+    {{ '--platform ' ~ docker_platform if docker_platform is defined else '' }}
+    {{ docker_image }}
+  when:
+    - docker_image is defined
+    - docker_pull is defined
+    - docker_pull != 'none'
+  register: docker_pull_result
+  changed_when: "'Downloaded' in docker_pull_result.stdout"
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
+# Execution: Perform the actual Docker container operation. 
+# This handles the full lifecycle using the community.docker collection.
+# ---------------------------------------------------------------------
+- name: "Manage Docker container"
+  community.docker.docker_container:
+    name: "{{ docker_name }}"
+    image: "{{ docker_image }}"
+    state: "{{ docker_state | default('present', true) }}"
+    detach: "{{ docker_detach }}"
+    restart_policy: "{{ docker_restart_policy }}"
+    env: "{{ docker_env }}"
+    env_file: "{{ docker_env_file }}"
+    volumes: "{{ docker_volumes }}"
+    ports: "{{ docker_ports }}"
+    networks: "{{ docker_networks }}"
+    labels: "{{ docker_labels }}"
+    ulimits: "{{ docker_ulimits }}"
+    sysctls: "{{ docker_sysctls }}"
+    capabilities: "{{ docker_capabilities }}"
+    devices: "{{ docker_devices }}"
+    security_opts: "{{ docker_security_opts }}"
+    user: "{{ docker_user }}"
+    working_dir: "{{ docker_workdir }}"
+    entrypoint: "{{ docker_entrypoint }}"
+    command: "{{ docker_command }}"
+    log_driver: "{{ docker_log_driver }}"
+    log_options: "{{ docker_log_options }}"
+    force_kill: "{{ docker_force_remove }}"
+    remove_volumes: "{{ docker_remove_volumes }}"
+    timeout: "{{ docker_timeout }}"
+  register: docker_result
+  become: "{{ become_enabled }}"
