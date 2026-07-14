@@ -1,0 +1,22 @@
+---
+foundation_packages:
+  - ca-certificates
+  - curl
+  - file
+  - fzf
+  - git
+  - gnupg2
+  - htop
+  - jq
+  - openssh
+  - openssl
+  - patch
+  - procps-ng
+  - rsync
+  - sudo
+  - tmux
+  - tzdata
+  - unzip
+  - vim
+  - wget
+  - xz

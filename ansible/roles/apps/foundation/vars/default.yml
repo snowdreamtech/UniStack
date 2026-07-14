@@ -1,0 +1,22 @@
+---
+foundation_packages:
+  - bzip2
+  - ca-certificates
+  - curl
+  - file
+  - git
+  - gnupg
+  - gzip
+  - jq
+  - lsof
+  - openssh-clients
+  - openssh-server
+  - openssl
+  - procps
+  - sudo
+  - tzdata
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip

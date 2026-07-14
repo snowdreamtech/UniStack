@@ -1,0 +1,26 @@
+---
+foundation_packages:
+  - bash-completion
+  - bzip2
+  - ca-certificates
+  - curl
+  - file
+  - fzf
+  - git
+  - gpg2
+  - gzip
+  - htop
+  - jq
+  - openssh
+  - openssl
+  - patch
+  - procps
+  - rsync
+  - sudo
+  - timezone
+  - tmux
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip

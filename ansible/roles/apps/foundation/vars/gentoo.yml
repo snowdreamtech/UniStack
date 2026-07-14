@@ -1,0 +1,20 @@
+---
+foundation_packages:
+  - app-admin/sudo
+  - app-arch/bzip2
+  - app-arch/unzip
+  - app-arch/xz-utils
+  - app-arch/zip
+  - app-crypt/gnupg
+  - app-editors/vim
+  - app-misc/ca-certificates
+  - dev-libs/openssl
+  - dev-vcs/git
+  - net-misc/curl
+  - net-misc/openssh
+  - net-misc/rsync
+  - net-misc/wget
+  - sys-apps/file
+  - sys-libs/timezone-data
+  - sys-process/htop
+  - sys-process/procps

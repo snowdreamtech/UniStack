@@ -1,0 +1,24 @@
+---
+# =====================================================================
+# roles/apps/foundation/tasks/main.yml
+#
+# Purpose:
+#   Application Definition for "Foundation" (System Baseline).
+#   Uses os_loader to load environment variables, then delegates
+#   installation to the L2 native engine.
+# =====================================================================
+
+- name: "Foundation: Load OS-specific variables"
+  ansible.builtin.include_role:
+    name: core
+    tasks_from: os_loader
+  vars:
+    core_loader_type: "vars"
+    core_loader_path: "vars"
+
+- name: "Foundation: Ensure base packages are installed via Native Engine"
+  ansible.builtin.include_role:
+    name: native
+  vars:
+    unistack_action: install
+    unistack_packages: "{{ foundation_packages | default([]) }}"

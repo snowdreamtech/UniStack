@@ -1,0 +1,17 @@
+---
+# =====================================================================
+# roles/app/tasks/main.yml
+#
+# Purpose:
+#   Unified Application Dispatcher (L3 Gateway).
+#   Receives `unistack_app_name` and routes execution to the specific
+#   app's definition in the apps/ directory.
+#
+# Inputs:
+#   - unistack_app_name: The name of the application (e.g., 'foundation', 'nginx')
+# =====================================================================
+
+- name: "App Dispatcher: Execute '{{ unistack_app_name }}'"
+  ansible.builtin.include_role:
+    name: "apps/{{ unistack_app_name }}"
+  when: unistack_app_name is defined
