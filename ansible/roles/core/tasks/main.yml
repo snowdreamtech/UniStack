@@ -3,7 +3,9 @@
 # roles/core/tasks/main.yml
 #
 # Purpose:
-#   The core role provides foundational tools like os_loader.
-#   It does not execute anything by default.
-#   Include specific tasks using `tasks_from: os_loader`.
+#   The core role provides foundational tools like os_loader and probes.
+#   Executing this role directly initializes global environment facts.
 # =====================================================================
+
+- ansible.builtin.include_tasks: "sudo_loader.yml"
+- ansible.builtin.include_tasks: "runtime_probe.yml"

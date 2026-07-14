@@ -1,0 +1,54 @@
+# =====================================================================
+# roles/core/tasks/sudo_loader.yml
+#
+# Purpose:
+#   Detection for the 'sudo' utility on managed hosts.
+#   Exposing the 'sudo_available' boolean fact for use in privilege 
+#   escalation logic and conditional tasks.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: core
+#       tasks_from: sudo_loader
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: core
+#       tasks_from: sudo_loader
+#   - ansible.builtin.debug:
+#       msg: "Sudo is available"
+#     when: sudo_available | default(false, true)
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Execute a POSIX-compliant check for the sudo binary 
+# on the target host.
+# ---------------------------------------------------------------------
+- name: "Detect sudo availability"
+  ansible.builtin.shell: "PATH={{ os_paths | default('/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', true) }} command -v sudo 2>/dev/null || true"
+  register: sudo_check
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled | default(false, true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Logic: Convert the command return code into a clean boolean fact.
+# ---------------------------------------------------------------------
+- name: "Set fact: sudo_available"
+  ansible.builtin.set_fact:
+    sudo_available: "{{ sudo_check.rc == 0 and (sudo_check.stdout | default('', true) != '') }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Validation: Ensure the fact was correctly initialized to prevent 
+# undefined variable errors in downstream tasks.
+# ---------------------------------------------------------------------
+- name: "Validate sudo_available"
+  ansible.builtin.assert:
+    that:
+      - sudo_available is defined
+    fail_msg: "'sudo_available' must be defined after running sudo_loader."
+  tags: ["always"]

@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/core/tasks/runtime_probe.yml
+#
+# Purpose:
+#   Detection for container runtimes (Docker/Podman) on managed hosts.
+#   Exposing the 'container_engine_available' boolean fact for use in 
+#   the 'auto' app delivery mode dispatch logic.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: core
+#       tasks_from: runtime_probe
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Detection: Check for docker or podman binary
+# ---------------------------------------------------------------------
+- name: "Detect container runtime availability"
+  ansible.builtin.shell: "PATH={{ os_paths | default('/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', true) }} command -v docker podman 2>/dev/null || true"
+  register: runtime_check
+  ignore_errors: true
+  changed_when: false
+  failed_when: false
+  become: "{{ become_enabled | default(false, true) }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Logic: Set boolean fact
+# ---------------------------------------------------------------------
+- name: "Set fact: container_engine_available"
+  ansible.builtin.set_fact:
+    container_engine_available: "{{ runtime_check.rc == 0 and (runtime_check.stdout | default('', true) != '') }}"
+  tags: ["always"]
