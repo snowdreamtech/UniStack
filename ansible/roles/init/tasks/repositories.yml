@@ -39,5 +39,3 @@
     - os_family == 'redhat'
     - os_distribution not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"
-
-

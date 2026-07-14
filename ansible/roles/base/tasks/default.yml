@@ -15,8 +15,6 @@
 #
 # =====================================================================
 
-
-
 # Preparation: resolve known curl conflicts during package manager
 # initialization (RedHat only).
 # Inlined from Uniloader's native/curl_conflict_loader.

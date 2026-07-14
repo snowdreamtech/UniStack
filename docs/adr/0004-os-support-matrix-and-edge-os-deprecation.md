@@ -14,7 +14,9 @@
 根据红帽（Ansible 母公司）的官方定义，Ansible 对操作系统的支持被划分为明显的两个层级：
 
 #### 1. 核心级 / 企业级支持 (Core & Enterprise Supported)
+
 这些是 Ansible 官方核心团队投入重金进行完整 CI/CD 自动化测试，甚至提供商业级 SLA 保证的系统。Ansible 的内置模块（如 `ansible.builtin.package`, `service`, `user` 等）在这些系统上的表现可以说是完美无缺。
+
 * **Red Hat 家族**：RHEL (红帽企业版), Fedora, CentOS (以及其继任者 Rocky Linux, AlmaLinux)。
 * **Debian 家族**：Ubuntu (LTS 及非 LTS), Debian。
 * **SUSE 家族**：SLES (SUSE Linux Enterprise Server), openSUSE (Leap, Tumbleweed)。
@@ -23,14 +25,18 @@
 > 💡 **架构启示**：这也就是为什么我们的脚本在这三大派系上运行得如丝般顺滑，根本不需要加任何 Workaround 补丁。
 
 #### 2. 社区级支持 (Community Supported)
+
 这些系统 Ansible 官方不做商业担保，但是因为用户群体庞大，社区开发者积极维护了大量的对应模块。官方通常会合并这些代码，但如果有 Bug，需要社区自己修。
+
 * **极简/容器系**：Alpine Linux (由于 Docker 的流行，支持度极高，几乎等同于核心支持)。
 * **激进/极客系**：Arch Linux (`pacman`)、Gentoo (`portage`/`emerge`)、Void Linux。
 * **BSD 家族**：FreeBSD, OpenBSD, macOS。
 * **网络设备**：Cisco, Juniper 等（专门的网络模块）。
 
 #### 3. 未正式支持 / 随缘支持 (现已弃用)
+
 它们连社区模块（Community Collections）都很少或者年久失修。
+
 * **Mageia (`urpmi`)**：曾经有模块，但维护者跑路，模块经常报错，连 Python 数组处理都有 Bug。
 * **VMware Photon OS (`tdnf`)**：极小众的闭源生态产物，Ansible 在判断其类型时常引发逻辑混乱。
 * **NixOS**：纯声明式系统，它从根基上就否定了 Ansible 这种“渐进式修改状态”的运维哲学，两者水火不容。
