@@ -6,28 +6,12 @@
 #   Install and secure the OpenSSH daemon.
 # =====================================================================
 
-- name: "Install OpenSSH packages (dnf/dnf5 workaround)"
-  ansible.builtin.shell: |
-    if command -v dnf > /dev/null 2>&1; then
-      dnf install -y {{ init_openssh_packages | join(' ') }}
-    fi
-  become: "{{ become_enabled }}"
-  when:
-    - "(os_family | default('') | lower) not in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
-    - "ansible_pkg_mgr in ['dnf', 'dnf5']"
-    - "init_openssh_packages | length > 0"
-  changed_when: false
-
-- name: "Install OpenSSH packages"
-  ansible.builtin.package:
-    name: "{{ item }}"
-    state: present
-  loop: "{{ init_openssh_packages }}"
-  become: "{{ become_enabled }}"
-  when:
-    - "(os_family | default('') | lower) not in ['darwin', 'freebsd', 'openbsd', 'netbsd', 'dragonfly']"
-    - "ansible_pkg_mgr not in ['dnf', 'dnf5']"
-    - "(ansible_pkg_mgr | default('unknown')) != 'unknown'"
+- name: "Install OpenSSH Packages via Native Engine"
+  ansible.builtin.include_role:
+    name: native
+  vars:
+    native_app_name: "openssh"
+    native_packages: "{{ init_openssh_packages | default([], true) }}"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
@@ -91,21 +75,12 @@
   when: "(os_family | default('') | lower) != 'darwin'"
   notify: restart_sshd
 
-- name: "Ensure OpenSSH service is enabled and started (Native)"
-  ansible.builtin.service:
-    name: "{{ init_sshd_service | default('sshd', true) }}"
-    state: started
-    enabled: true
-  become: "{{ become_enabled }}"
-  when:
-    - "not is_container | bool"
-    - "(os_family | default('') | lower) != 'darwin'"
-
-- name: "Ensure OpenSSH service is enabled and started (Container)"
-  ansible.builtin.command: "/usr/sbin/sshd"
-  changed_when: false
-  failed_when: false
-  become: "{{ become_enabled }}"
-  when:
-    - "is_container | bool"
-    - "(os_family | default('') | lower) != 'darwin'"
+- name: "Manage OpenSSH Service via Native Engine"
+  ansible.builtin.include_role:
+    name: native
+  vars:
+    native_app_name: "openssh"
+    native_services:
+      - name: "{{ init_sshd_service | default('sshd', true) }}"
+        state: "started"
+        enabled: true
