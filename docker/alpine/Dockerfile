@@ -46,7 +46,7 @@ LABEL org.opencontainers.image.authors="Snowdream Tech" \
     org.opencontainers.image.url="https://github.com/snowdreamtech/unigo"
 
 # x-release-please-start-version
-LABEL org.opencontainers.image.version="${VERSION:-0.0.5}"
+LABEL org.opencontainers.image.version="${VERSION:-0.0.6}"
 # x-release-please-end
 
 # Runtime Environment Configuration
