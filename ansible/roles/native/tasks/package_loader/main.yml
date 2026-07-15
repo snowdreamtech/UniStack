@@ -224,7 +224,6 @@
 # ---------------------------------------------------------------------
 
 ---
-
 - name: "Package: Initialize cache tracking dictionary"
   ansible.builtin.set_fact:
     package_caches_updated: "{{ package_caches_updated | default({}, true) }}"
