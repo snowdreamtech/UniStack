@@ -4,7 +4,7 @@
     ".": {}
   },
   "release-type": "go",
-  "release-as": "0.0.5",
+  "release-as": "0.0.6",
   "changelog-path": "CHANGELOG.md",
   "include-v-in-tag": true,
   "extra-files": [
