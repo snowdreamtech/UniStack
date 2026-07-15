@@ -376,5 +376,5 @@
 # ---------------------------------------------------------------------
 - name: "Package: Consolidate result fact"
   ansible.builtin.set_fact:
-    package_result: "{{ package_result | default(omit) }}"
+    package_result: "{{ package_result | default({}) }}"
   tags: ["always"]
