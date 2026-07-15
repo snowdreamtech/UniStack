@@ -220,24 +220,8 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# 0. Reset & Initialization
+# (Unified schema and resets are handled by native_loader.yml)
 # ---------------------------------------------------------------------
-
-# WHY: Resetting temporary facts prevents leakage from previous calls.
-# package_caches_updated is persistent across calls to avoid redundant updates.
-
----
-- name: "Package: Load variable schema"
-  ansible.builtin.include_vars:
-    file: "../../vars/package_loader_schema.yml"
-  tags: ["always"]
-
-- ansible.builtin.set_fact:
-    "{{ item }}": null
-  loop: "{{ package_loader_api_vars }}"
-  loop_control:
-    label: "reset {{ item }} (null)"
-  tags: ["always"]
 
 - name: "Package: Initialize cache tracking dictionary"
   ansible.builtin.set_fact:
