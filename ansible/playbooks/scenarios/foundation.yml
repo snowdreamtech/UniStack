@@ -17,6 +17,10 @@
       ansible.builtin.include_role:
         name: bootstrap
 
+    - name: Load infrastructure context
+      ansible.builtin.include_role:
+        name: context
+
     - name: "Scenario: Execute Foundation via App Dispatcher"
       ansible.builtin.include_role:
         name: app
