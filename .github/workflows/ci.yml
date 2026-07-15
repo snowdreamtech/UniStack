@@ -235,6 +235,40 @@ jobs:
         if: always()
         run: docker rm -f unistack-target
 
+  test-ubuntu-e2e:
+    name: "🐧 Ubuntu E2E: ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    needs: [test]
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    permissions:
+      contents: read
+    steps:
+      - name: "📥 Checkout Repository"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: "⚙️ Setup Go"
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+
+      - name: "📦 Install Native Ansible & Build UniStack"
+        run: |
+          pipx install ansible ansible-core ansible-lint
+          if [ -f requirements.txt ]; then pipx inject ansible -r requirements.txt; fi
+          if [ -f ansible/requirements.yml ]; then ansible-galaxy install -r ansible/requirements.yml; fi
+          go build -o unistack main.go
+
+      - name: "📥 Run Init Playbook"
+        run: ./unistack apply -i "localhost," -c local ansible/playbooks/scenarios/foundation.yml
+
+      - name: "🔁 Verify Idempotency"
+        run: |
+          ./unistack apply -i "localhost," -c local ansible/playbooks/scenarios/foundation.yml > ansible_output.txt
+          cat ansible_output.txt
+          grep -q 'changed=0.*unreachable=0.*failed=0' ansible_output.txt || (echo "❌ Idempotence test failed" && exit 1)
+
   test-macos-e2e:
     name: "🍏 macOS E2E: ${{ matrix.os }}"
     runs-on: ${{ matrix.os }}
