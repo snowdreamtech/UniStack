@@ -17,5 +17,5 @@
       ansible.builtin.include_role:
         name: app
       vars:
-        unistack_app_name: "foundation"
-        unistack_deploy_type: "native"
+        app_name: "foundation"
+        app_delivery_mode: "native"
