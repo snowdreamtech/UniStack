@@ -10,6 +10,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Standard pacman installation for repository packages.
+
+---
 - name: "Package (ArchLinux): Repository installation"
   community.general.pacman:
     name: "{{ (pkg_repo_list + pkg_file_list) }}"

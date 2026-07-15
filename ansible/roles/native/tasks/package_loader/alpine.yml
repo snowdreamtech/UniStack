@@ -21,12 +21,13 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
 # Execution: APK Binary Branch
 # ---------------------------------------------------------------------
 
 # WHY: Standard APK repository installation.
+
+---
 - name: "Package (Alpine): Repository installation"
   ansible.builtin.apk:
     name: "{{ pkg_repo_list }}"
@@ -43,7 +44,7 @@
   vars:
     fingerprint: "package_apk_repo_exec_{{ package_name | default('unknown', true) }}"
 
-# WHY: Direct 'apk add' command supports URLs and local files with 
+# WHY: Direct 'apk add' command supports URLs and local files with
 # '--allow-untrusted' flag, which is essential for custom APKs.
 - name: "Package (Alpine): Local/URL .apk installation"
   ansible.builtin.command: "apk add --allow-untrusted {{ pkg_item }}"

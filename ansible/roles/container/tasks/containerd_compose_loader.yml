@@ -3,7 +3,7 @@
 # roles/container/tasks/containerd_compose_loader.yml
 #
 # Purpose:
-#   Simplified loader for managing Compose projects using nerdctl 
+#   Simplified loader for managing Compose projects using nerdctl
 #   (containerd). Supports basic lifecycle operations (up/down/restart)
 #   with integrated audit logging.
 #
@@ -39,9 +39,9 @@
       - (compose_project_src | trim | length) > 0
     fail_msg: |
       containerd_compose_loader validation failed:
-      
+
       Required parameter 'compose_project_src' must be a non-empty string.
-      
+
       Received:
         - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
         - Value: {{ compose_project_src | default('UNDEFINED') }}
@@ -52,9 +52,9 @@
       - compose_state | default('present', true) in ['present', 'absent', 'restarted']
     fail_msg: |
       containerd_compose_loader validation failed:
-      
+
       Parameter 'compose_state' must be one of: present, absent, restarted.
-      
+
       Received:
         - Value: {{ compose_state | default('present') }}
     success_msg: "containerd_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
@@ -98,7 +98,7 @@
     up -d
   args:
     chdir: "{{ compose_project_src }}"
-  when: 
+  when:
     - compose_state == 'present'
   register: compose_up_result
   changed_when: "'Created' in compose_up_result.stdout or 'Started' in compose_up_result.stdout"
@@ -116,7 +116,7 @@
     down
   args:
     chdir: "{{ compose_project_src }}"
-  when: 
+  when:
     - compose_state in ['absent', 'restarted']
   register: compose_down_result
   changed_when: "'Deleted' in compose_down_result.stdout or 'Stopped' in compose_down_result.stdout"
@@ -134,7 +134,7 @@
     up -d
   args:
     chdir: "{{ compose_project_src }}"
-  when: 
+  when:
     - compose_state == 'restarted'
   register: compose_restart_up_result
   changed_when: "'Created' in compose_restart_up_result.stdout or 'Started' in compose_restart_up_result.stdout"

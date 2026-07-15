@@ -20,6 +20,7 @@
 #       become_enabled: true
 # =====================================================================
 
+---
 - name: "Import GPG key (rpm)"
   ansible.builtin.rpm_key:
     key: "{{ gpg_key_url }}"

@@ -1,10 +1,3 @@
-
----
-
-# 🇨🇳 **container/README_zh-CN.md（中文版）**
-
-```markdown
-
 # container 角色
 
 应用部署层（实现层）
@@ -172,3 +165,4 @@ tasks/
     app_ports:
       - "80:80"
     app_state: started
+```

@@ -45,9 +45,9 @@
       - (network_name | length) > 0
     fail_msg: |
       podman_network_loader validation failed:
-      
+
       Required parameter 'network_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ network_name | default('UNDEFINED') | type_debug }}
         - Value: {{ network_name | default('UNDEFINED') }}
@@ -58,9 +58,9 @@
       - network_state in ['present', 'absent']
     fail_msg: |
       podman_network_loader validation failed:
-      
+
       Parameter 'network_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ network_state | default('present') }}
     success_msg: "podman_network_loader: network_state validated ({{ network_state }})"
@@ -88,4 +88,3 @@
     labels: "{{ network_labels }}"
   register: network_result
   become: "{{ become_enabled }}"
-

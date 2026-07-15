@@ -5,6 +5,7 @@
 #   Definition of the Native Loader variable schema.
 # =====================================================================
 
+---
 native_loader_api_vars:
   # Core Parameters
   - native_app_name
@@ -76,14 +77,14 @@ native_loader_internal_vars:
   - native_package_dylib_name
   - native_package_kext_name
   - native_package_is_cask
-  
+
   # Normalized service variables (computed from native_app_service_*)
   - native_service_name
   - native_service_enabled
   - native_service_shell
   - native_service_restart_policy
   - native_service_stop_timeout
-  
+
   # Normalized script variables (computed from native_app_install_*)
   - native_install_cmd
   - native_install_creates

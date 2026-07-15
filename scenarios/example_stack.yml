@@ -1,8 +1,9 @@
+---
 name: "example_stack"
 description: "A complete stack example"
 apps:
   - name: "foundation"
-    
+
   - name: "postgresql"
     depends_on: ["foundation"]
     vars:

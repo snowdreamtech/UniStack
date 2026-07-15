@@ -27,8 +27,10 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: SLES and openSUSE have converged on systemd. Using the router 
+# WHY: SLES and openSUSE have converged on systemd. Using the router
 # ensures consistent tracing and future-proofing.
+
+---
 - ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
   vars:
     fingerprint: "service_route_suse_{{ os_service_mgr | default('systemd', true) }}"

@@ -10,8 +10,10 @@
 # Execution: Native Binary Branch
 # ---------------------------------------------------------------------
 
-# WHY: OpenBSD is renowned for security. Its package manager 'pkg_add' 
+# WHY: OpenBSD is renowned for security. Its package manager 'pkg_add'
 # is handled by the openbsd_pkg module.
+
+---
 - name: "Package (OpenBSD): pkg_add execution"
   community.general.openbsd_pkg:
     name: "{{ pkg_item }}"

@@ -31,6 +31,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert (Auto-install Rust is too heavy, we assert only)
+
+---
 - name: "Package (Cargo): Verify Cargo presence"
   ansible.builtin.assert:
     that: "is_cargo_installed | bool"

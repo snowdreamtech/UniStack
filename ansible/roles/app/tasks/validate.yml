@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Validate the unified application API.
-#   This file performs strict type and existence checks on all input 
-#   variables to ensure that the deployment process fails early with 
+#   This file performs strict type and existence checks on all input
+#   variables to ensure that the deployment process fails early with
 #   clear error messages if the configuration is invalid.
 #
 # Simple Usage:
@@ -28,7 +28,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Core Validation: Ensure mandatory fields (name, state, delivery mode) 
+# Core Validation: Ensure mandatory fields (name, state, delivery mode)
 # are present and contain allowed values.
 # ---------------------------------------------------------------------
 - name: "Validate app_name"
@@ -202,7 +202,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Type Enforcement: Validate data types for all optional shared fields 
+# Type Enforcement: Validate data types for all optional shared fields
 # (e.g., env must be a mapping, ports must be iterable).
 # ---------------------------------------------------------------------
 - name: "Validate optional fields"

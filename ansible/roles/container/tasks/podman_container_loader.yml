@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Podman container lifecycle management engine.
-#   Provides a robust interface to the 'containers.podman.podman_container' 
-#   module, supporting extensive configuration parameters for 
+#   Provides a robust interface to the 'containers.podman.podman_container'
+#   module, supporting extensive configuration parameters for
 #   production-grade containerized workloads.
 #
 # Simple Usage:
@@ -27,7 +27,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Validation: Ensure that the minimum required parameters are 
+# Validation: Ensure that the minimum required parameters are
 # provided before attempting deployment.
 # ---------------------------------------------------------------------
 - name: "Assert container_name for Podman"
@@ -38,9 +38,9 @@
       - (container_name | length) > 0
     fail_msg: |
       podman_container_loader parameter validation failed:
-      
+
       Required parameter 'container_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ container_name | default('UNDEFINED') | type_debug }}
         - Value: {{ container_name | default('UNDEFINED') }}
@@ -52,15 +52,15 @@
       - container_state | default('present', true) in ['present', 'started', 'stopped', 'restarted', 'absent']
     fail_msg: |
       podman_container_loader parameter validation failed:
-      
+
       Parameter 'container_state' must be one of: present, started, stopped, restarted, absent.
-      
+
       Received:
         - Value: {{ container_state | default('present') }}
     success_msg: "podman_container_loader: container_state validated ({{ container_state | default('present') }})"
 
 # ---------------------------------------------------------------------
-# Normalization: Aggregate and sanitize container parameters to ensure 
+# Normalization: Aggregate and sanitize container parameters to ensure
 # they conform to the expectations of the Podman module.
 # ---------------------------------------------------------------------
 - name: "Normalize Podman container variables"
@@ -97,7 +97,7 @@
     container_shm_size: "{{ container_shm_size | default(omit) }}"
 
 # ---------------------------------------------------------------------
-# Execution: Perform the actual Podman container operation. 
+# Execution: Perform the actual Podman container operation.
 # This handles the full lifecycle from image pull to container start.
 # ---------------------------------------------------------------------
 - name: "Manage Podman container"

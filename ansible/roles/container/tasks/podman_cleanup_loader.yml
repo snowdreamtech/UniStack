@@ -70,4 +70,3 @@
   register: podman_cleanup_cni
   changed_when: podman_cleanup_cni.stdout | trim | length > 0
   failed_when: false
-

@@ -3,7 +3,7 @@
 #
 # Purpose:
 #   Generic service management fallback.
-#   Used when the specific OS/manager is not explicitly handled or 
+#   Used when the specific OS/manager is not explicitly handled or
 #   as a universal wrapper for simple service actions.
 #
 # Simple Usage:
@@ -28,10 +28,12 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: We attempts to dispatch to a more specific loader if os_service_mgr 
+# WHY: We attempts to dispatch to a more specific loader if os_service_mgr
 # is available, ensuring specialized logic is used where possible.
+
+---
 - ansible.builtin.include_tasks: "{{ os_service_mgr | default('service', true) }}.yml"
-  when: 
+  when:
     - os_service_mgr is defined
     - os_service_mgr | length > 0
     - os_service_mgr != 'service'
@@ -42,8 +44,8 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: Use the universal ansible.builtin.service module if no specific 
-# manager was found or if dispatch failed. This module auto-detects 
+# WHY: Use the universal ansible.builtin.service module if no specific
+# manager was found or if dispatch failed. This module auto-detects
 # the underlying system manager.
 - name: "Service (Default): Universal service fallback"
   ansible.builtin.service:

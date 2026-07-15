@@ -4,9 +4,9 @@
 #
 # Purpose:
 #   Application API routing engine.
-#   Forwards normalized application deployment parameters to the 
-#   appropriate technology-specific role (native or container). 
-#   Acts as an abstract bridge between the high-level API and the 
+#   Forwards normalized application deployment parameters to the
+#   appropriate technology-specific role (native or container).
+#   Acts as an abstract bridge between the high-level API and the
 #   low-level implementation.
 # =====================================================================
 
@@ -31,7 +31,7 @@
     native_app_service_shell: "{{ app_service_shell | default(omit) }}"
     native_app_service_restart_policy: "{{ app_service_restart_policy | default(omit) }}"
     native_app_service_stop_timeout: "{{ app_service_stop_timeout | default(omit) }}"
-    
+
     # Script-based Installation
     native_app_install_cmd: "{{ app_install_cmd | default(omit) }}"
     native_app_install_creates: "{{ app_install_creates | default(omit) }}"
@@ -42,7 +42,7 @@
     native_app_uninstall_cmd: "{{ app_uninstall_cmd | default(omit) }}"
     native_app_uninstall_changed_when: "{{ app_uninstall_changed_when | default(omit) }}"
     native_app_uninstall_failed_when: "{{ app_uninstall_failed_when | default(omit) }}"
-    
+
     # macOS Specialized Meta
     native_app_dmg_app_name: "{{ app_dmg_app_name | default(omit) }}"
     native_app_pkg_id: "{{ app_pkg_id | default(omit) }}"
@@ -52,7 +52,7 @@
     native_app_dylib_name: "{{ app_dylib_name | default(omit) }}"
     native_app_kext_name: "{{ app_kext_name | default(omit) }}"
     native_app_is_cask: "{{ app_is_cask | default(false, true) }}"
-  when: 
+  when:
     - app_delivery_mode == 'native'
 
 # Routing (Container):
@@ -88,7 +88,7 @@
     container_app_cpu_shares: "{{ app_cpu_shares | default(omit) }}"
     container_app_stop_timeout: "{{ (app_stop_timeout | default(10, true)) | int }}"
     container_app_shm_size: "{{ app_shm_size | default(omit) }}"
-  when: 
+  when:
     - app_delivery_mode == 'container'
 
 # Routing (Compose):
@@ -105,7 +105,7 @@
     compose_pull: "{{ 'always' if app_pull | default(true, true) else 'missing' }}"
     compose_env_file: "{{ app_env_file | default(omit) }}"
     compose_environment: "{{ app_env | default(omit) }}"
-  when: 
+  when:
     - app_delivery_mode == 'compose'
 
 # Routing (Kube):
@@ -117,7 +117,7 @@
     container_engine: "{{ app_engine | default(omit) }}"
     kube_manifest: "{{ app_kube_manifest }}"
     kube_state: "{{ app_state }}"
-  when: 
+  when:
     - app_delivery_mode == 'kube'
 
 # ---------------------------------------------------------------------

@@ -9,6 +9,8 @@
 # ---------------------------------------------------------------------
 # Execution: Native Binary Branch
 # ---------------------------------------------------------------------
+
+---
 - name: "Package (Void): XBPS execution"
   community.general.xbps:
     name: "{{ pkg_repo_list }}"

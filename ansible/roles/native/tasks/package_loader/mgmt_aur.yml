@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (AUR): Auto-install yay if requested"
   block:
     - name: "Package (AUR): Install base-devel and git"

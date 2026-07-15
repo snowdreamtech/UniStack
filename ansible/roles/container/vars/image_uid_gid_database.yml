@@ -21,9 +21,12 @@ image_uid_gid_exact_match:
   "mongo:7.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
   "mongo:6.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
   "mongo:5.0": { uid: "999", gid: "999", source: "https://github.com/docker-library/mongo" }
-  "mongodb/mongodb-community-server:latest": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
-  "mongodb/mongodb-community-server:8.0-ubuntu2204": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
-  "mongodb/mongodb-community-server:7.0-ubuntu2204": { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+  "mongodb/mongodb-community-server:latest":
+    { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+  "mongodb/mongodb-community-server:8.0-ubuntu2204":
+    { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
+  "mongodb/mongodb-community-server:7.0-ubuntu2204":
+    { uid: "999", gid: "999", source: "https://hub.docker.com/r/mongodb/mongodb-community-server" }
 
   # PostgreSQL Images
   "postgres:latest": { uid: "999", gid: "999", source: "https://github.com/docker-library/postgres" }
@@ -60,8 +63,10 @@ image_uid_gid_exact_match:
   "nginx:alpine": { uid: "101", gid: "101", source: "https://github.com/nginxinc/docker-nginx" }
 
   # Elasticsearch Images
-  "elasticsearch:8": { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
-  "elasticsearch:7": { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
+  "elasticsearch:8":
+    { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
+  "elasticsearch:7":
+    { uid: "1000", gid: "1000", source: "https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html" }
 
   # Snowdreamtech Base OS Images (Development/Testing)
   "snowdreamtech/alpine:3.23.0": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/alpine" }
@@ -72,9 +77,11 @@ image_uid_gid_exact_match:
   "snowdreamtech/rocky:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/rocky" }
 
   # Snowdreamtech Python Images
-  "snowdreamtech/python:3.12.12-alpine3.22": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+  "snowdreamtech/python:3.12.12-alpine3.22":
+    { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
   "snowdreamtech/python:3.13.5-trixie": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
-  "snowdreamtech/python:3.12.11-rocky10.1": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
+  "snowdreamtech/python:3.12.11-rocky10.1":
+    { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
   "snowdreamtech/python:latest": { uid: "0", gid: "0", source: "https://hub.docker.com/r/snowdreamtech/python" }
 
 # Pattern-based matching (regex, lower priority)

@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   Abstract deployment layer for containerized applications.
-#   Identifies the target container engine (Docker, Podman, etc.) and 
+#   Identifies the target container engine (Docker, Podman, etc.) and
 #   dispatches execution to the corresponding engine-specific loader.
 #
 # Simple Usage:
@@ -54,13 +54,13 @@
       - (container_app_name | length) > 0
     fail_msg: |
       container_loader parameter validation failed:
-      
+
       Required parameter 'container_app_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ container_app_name | default('UNDEFINED') | type_debug }}
         - Value: {{ container_app_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "container"
@@ -79,8 +79,8 @@
   ansible.builtin.set_fact:
     detected_engine: >-
       {{
-        container_engine 
-        if (container_engine is defined and container_engine | default('', true) | length > 0 and container_engine != 'omit') 
+        container_engine
+        if (container_engine is defined and container_engine | default('', true) | length > 0 and container_engine != 'omit')
         else (container_engine_detected | default('docker', true))
       }}
   tags: ["always"]
@@ -92,11 +92,11 @@
   ansible.builtin.file:
     path: "{{ docker_data_base_dir }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
     owner: "{{ container_app_volume_owner | default(docker_volume_default_owner) }}"
     group: "{{ container_app_volume_group | default(docker_volume_default_group) }}"
   become: "{{ become_enabled }}"
-  when: 
+  when:
     - docker_data_base_dir is defined
     - docker_data_base_dir | default('', true) | length > 0
   tags: ["container", "volumes"]
@@ -114,12 +114,11 @@
     - detected_engine in ['docker', 'podman', 'nerdctl'] # 支持 OCI 兼容的容器运行时
   tags: ["container", "volumes"]
 
-
 - name: "Container: Ensure application bind-mount directories exist"
   ansible.builtin.file:
     path: "{{ item.split(':')[0] }}"
     state: directory
-    mode: '0755'
+    mode: "0755"
     owner: "{{ container_app_volume_owner | default(docker_volume_default_owner) }}"
     group: "{{ container_app_volume_group | default(docker_volume_default_group) }}"
   loop: "{{ container_volumes | default([], true) }}"
@@ -165,8 +164,6 @@
     - ansible_selinux.status is defined
     - ansible_selinux.status == 'enabled'
   tags: ["container", "volumes", "selinux"]
-
-
 
 # ---------------------------------------------------------------------
 # Dispatch: Load the specialized engine tasks (engine_docker.yml, etc.).

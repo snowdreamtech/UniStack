@@ -28,4 +28,6 @@
 # ---------------------------------------------------------------------
 
 # WHY: FreeBSD uses the standard BSD rc.d / service framework.
+
+---
 - ansible.builtin.include_tasks: "bsd.yml"

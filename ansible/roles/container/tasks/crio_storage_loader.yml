@@ -29,7 +29,6 @@
   become: "{{ become_enabled }}"
   ansible.builtin.lineinfile:
     path: /etc/containers/storage.conf
-    regexp: '^driver ='
+    regexp: "^driver ="
     line: 'driver = "{{ crio_storage_driver }}"'
   register: crio_storage_write
-

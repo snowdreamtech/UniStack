@@ -32,12 +32,11 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
 # Environment Detection: Probe for available managers
 # ---------------------------------------------------------------------
 
-# WHY: We cache these facts to avoid redundant checks and gracefully 
+# WHY: We cache these facts to avoid redundant checks and gracefully
 # handle missing managers for specific prefixes.
 - name: "Package (Windows): Detect Winget availability"
   ansible.windows.win_command: "winget --version"
@@ -106,13 +105,13 @@
 - name: "Package (Windows): Re-verify manager availability after installation"
   ansible.windows.win_command: "{{ item.cmd }}"
   loop:
-    - { name: 'winget', cmd: 'winget --version' }
-    - { name: 'choco', cmd: 'choco --version' }
-    - { name: 'scoop', cmd: 'scoop --version' }
+    - { name: "winget", cmd: "winget --version" }
+    - { name: "choco", cmd: "choco --version" }
+    - { name: "scoop", cmd: "scoop --version" }
   register: _win_mgr_recheck
   changed_when: false
   failed_when: false
-  when: 
+  when:
     - (_winget_install_result is defined and _winget_install_result is changed) or
       (_choco_install_result is defined and _choco_install_result is changed) or
       (_scoop_install_result is defined and _scoop_install_result is changed)
@@ -149,7 +148,7 @@
 # Resolver: Smart Manager Selection
 # ---------------------------------------------------------------------
 
-# WHY: If a package list has no prefix, we default to winget 
+# WHY: If a package list has no prefix, we default to winget
 # unless overridden by package_manager variable.
 - name: "Package (Windows): Resolve default manager for raw repository list"
   ansible.builtin.set_fact:
@@ -161,7 +160,7 @@
 - name: "Package (Windows): Merge raw packages into resolved manager list"
   ansible.builtin.set_fact:
     pkg_winget_list: "{{ pkg_winget_list | default([], true) + pkg_repo_list }}"
-  when: 
+  when:
     - pkg_repo_list | length > 0
     - _win_pkg_manager_default == 'winget'
   tags: ["always"]
@@ -169,7 +168,7 @@
 - name: "Package (Windows): Merge raw packages into choco list"
   ansible.builtin.set_fact:
     pkg_choco_list: "{{ pkg_choco_list | default([], true) + pkg_repo_list }}"
-  when: 
+  when:
     - pkg_repo_list | length > 0
     - _win_pkg_manager_default == 'choco'
   tags: ["always"]
@@ -177,7 +176,7 @@
 - name: "Package (Windows): Merge raw packages into scoop list"
   ansible.builtin.set_fact:
     pkg_scoop_list: "{{ pkg_scoop_list | default([], true) + pkg_repo_list }}"
-  when: 
+  when:
     - pkg_repo_list | length > 0
     - _win_pkg_manager_default == 'scoop'
   tags: ["always"]
@@ -207,7 +206,7 @@
     name: "{{ item }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_winget_list | default([], true) }}"
-  when: 
+  when:
     - pkg_winget_list | length > 0
     - is_winget_installed | bool
   register: package_result
@@ -218,7 +217,7 @@
     state: "{{ package_state | default('present', true) }}"
     source: msstore
   loop: "{{ pkg_msstore_list | default([], true) }}"
-  when: 
+  when:
     - pkg_msstore_list | length > 0
     - is_winget_installed | bool
   register: msstore_result
@@ -235,7 +234,7 @@
     name: "{{ item }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_choco_list | default([], true) }}"
-  when: 
+  when:
     - pkg_choco_list | length > 0
     - is_choco_installed | bool
   register: choco_result
@@ -274,7 +273,7 @@
     name: "{{ item }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_scoop_list | default([], true) }}"
-  when: 
+  when:
     - pkg_scoop_list | length > 0
     - is_scoop_installed | bool
   register: scoop_result

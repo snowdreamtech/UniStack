@@ -42,9 +42,9 @@
       - podman_registry_mirrors is defined
     fail_msg: |
       podman_mirror_loader validation failed:
-      
+
       Required parameter 'podman_registry_mirrors' must be defined.
-      
+
       Received:
         - Type: {{ podman_registry_mirrors | default('UNDEFINED') | type_debug }}
         - Value: {{ podman_registry_mirrors | default('UNDEFINED') }}
@@ -72,7 +72,7 @@
   ansible.builtin.file:
     path: /etc/containers
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Write registries.conf
@@ -82,7 +82,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/registries.conf
-    mode: '0644'
+    mode: "0644"
     content: |
       unqualified-search-registries = ["docker.io"]
 
@@ -95,4 +95,3 @@
       location = "{{ m }}"
       {% endfor %}
   register: podman_mirror_write
-

@@ -219,13 +219,14 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
 # 0. Reset & Initialization
 # ---------------------------------------------------------------------
 
 # WHY: Resetting temporary facts prevents leakage from previous calls.
 # package_caches_updated is persistent across calls to avoid redundant updates.
+
+---
 - name: "Package: Load variable schema"
   ansible.builtin.include_vars:
     file: "../../vars/package_loader_schema.yml"
@@ -247,8 +248,8 @@
 # Normalization: Multi-Mode Classification
 # ---------------------------------------------------------------------
 
-# WHY: We automate the detection of package types to provide a 
-# unified API for the user. They simply pass a list, and we route 
+# WHY: We automate the detection of package types to provide a
+# unified API for the user. They simply pass a list, and we route
 # and handle the low-level complexities.
 # Adding tags: ["always"] ensures this normalization runs even with filters.
 - name: "Package: Normalization and Classification"
@@ -271,13 +272,13 @@
     pkg_src_list: "{{ _pkg_input_list | select('match', '^.*\\.(tar\\.gz|tar\\.xz|tar\\.bz2|tgz)$') | list }}"
     # WHY: macOS-specific formats - comprehensive support for all package types
     pkg_dmg_list: >-
-      {{ 
+      {{
         (_pkg_input_list | select('match', '^.*\\.dmg$') | list)
         +
         (_pkg_input_list | select('match', '^dmg:.*$') | map('regex_replace', '^dmg:', '') | list)
       }}
     pkg_pkg_list: >-
-      {{ 
+      {{
         (_pkg_input_list | select('match', '^.*\\.pkg$') | list)
         +
         (_pkg_input_list | select('match', '^pkg:.*$') | map('regex_replace', '^pkg:', '') | list)
@@ -326,9 +327,9 @@
     pkg_gem_list: "{{ _pkg_input_list | select('match', '^gem:.*$') | map('regex_replace', '^gem:', '') | list }}"
     pkg_repo_list: >-
       {{
-        _pkg_input_list 
-        | reject('match', '^(/|\\./|\\.\\./).*') 
-        | reject('match', '^https?://.*') 
+        _pkg_input_list
+        | reject('match', '^(/|\\./|\\.\\./).*')
+        | reject('match', '^https?://.*')
         | reject('match', '^.*\\.(tar\\.gz|tar\\.xz|tar\\.bz2|tgz)$')
         | reject('match', '^.*\\.(dmg|pkg|mpkg|app|zip|framework|dylib|kext)$')
         | reject('match', '^mas:.*$')
@@ -346,39 +347,39 @@
 # Dispatch: Universal Linux Managers (Snap/Flatpak)
 # ---------------------------------------------------------------------
 
-# WHY: Some package managers (Snap, Flatpak, Nix, Guix, AUR, PIP) are cross-platform or 
+# WHY: Some package managers (Snap, Flatpak, Nix, Guix, AUR, PIP) are cross-platform or
 # need specialized handlers. We handle them centrally if requested.
 - name: "Package: Universal managers execution"
   ansible.builtin.include_tasks: "universal_managers.yml"
   when:
     - ( (pkg_snap_list | default([], true) | length > 0) or
-        (pkg_flatpak_list | default([], true) | length > 0) or
-        (pkg_nix_list | default([], true) | length > 0) or
-        (pkg_guix_list | default([], true) | length > 0) or
-        (pkg_aur_list | default([], true) | length > 0) or
-        (pkg_pip_list | default([], true) | length > 0) or
-        (pkg_go_list | default([], true) | length > 0) or
-        (pkg_npm_list | default([], true) | length > 0) or
-        (pkg_yarn_list | default([], true) | length > 0) or
-        (pkg_pnpm_list | default([], true) | length > 0) or
-        (pkg_cargo_list | default([], true) | length > 0) or
-        (pkg_deno_list | default([], true) | length > 0) or
-        (pkg_composer_list | default([], true) | length > 0) or
-        (pkg_dart_list | default([], true) | length > 0) or
-        (pkg_nim_list | default([], true) | length > 0) or
-        (pkg_pipx_list | default([], true) | length > 0) or
-        (pkg_dotnet_list | default([], true) | length > 0) or
-        (pkg_bun_list | default([], true) | length > 0) or
-        (pkg_cs_list | default([], true) | length > 0) or
-        (pkg_sdk_list | default([], true) | length > 0) or
-        (pkg_conda_list | default([], true) | length > 0) or
-        (pkg_gem_list | default([], true) | length > 0) )
+      (pkg_flatpak_list | default([], true) | length > 0) or
+      (pkg_nix_list | default([], true) | length > 0) or
+      (pkg_guix_list | default([], true) | length > 0) or
+      (pkg_aur_list | default([], true) | length > 0) or
+      (pkg_pip_list | default([], true) | length > 0) or
+      (pkg_go_list | default([], true) | length > 0) or
+      (pkg_npm_list | default([], true) | length > 0) or
+      (pkg_yarn_list | default([], true) | length > 0) or
+      (pkg_pnpm_list | default([], true) | length > 0) or
+      (pkg_cargo_list | default([], true) | length > 0) or
+      (pkg_deno_list | default([], true) | length > 0) or
+      (pkg_composer_list | default([], true) | length > 0) or
+      (pkg_dart_list | default([], true) | length > 0) or
+      (pkg_nim_list | default([], true) | length > 0) or
+      (pkg_pipx_list | default([], true) | length > 0) or
+      (pkg_dotnet_list | default([], true) | length > 0) or
+      (pkg_bun_list | default([], true) | length > 0) or
+      (pkg_cs_list | default([], true) | length > 0) or
+      (pkg_sdk_list | default([], true) | length > 0) or
+      (pkg_conda_list | default([], true) | length > 0) or
+      (pkg_gem_list | default([], true) | length > 0) )
 
 # ---------------------------------------------------------------------
 # Dispatch: Invoke the OS Loader
 # ---------------------------------------------------------------------
 
-# WHY: Delegate to distribution-specific logic while keeping the 
+# WHY: Delegate to distribution-specific logic while keeping the
 # interface generic and lean.
 - ansible.builtin.include_role:
     name: "core"

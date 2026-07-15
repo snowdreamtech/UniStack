@@ -27,8 +27,10 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: Arch Linux is purely systemd-based in modern installations, 
+# WHY: Arch Linux is purely systemd-based in modern installations,
 # but routing ensures consistency across the service_loader ecosystem.
+
+---
 - ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
   vars:
     fingerprint: "service_route_arch_{{ os_service_mgr | default('systemd', true) }}"

@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Enterprise-grade loader for managing Docker Compose V2 projects.
-#   Supports multi-file projects, service-level control, and advanced 
-#   Compose V2 features like recreate strategies, profiles, and 
+#   Supports multi-file projects, service-level control, and advanced
+#   Compose V2 features like recreate strategies, profiles, and
 #   scaling with integrated audit logging.
 #
 # Simple Usage:
@@ -47,9 +47,9 @@
       - (compose_project_src | trim | length) > 0
     fail_msg: |
       docker_compose_loader validation failed:
-      
+
       Required parameter 'compose_project_src' must be a non-empty string.
-      
+
       Received:
         - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
         - Value: {{ compose_project_src | default('UNDEFINED') }}
@@ -61,9 +61,9 @@
       - compose_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
     fail_msg: |
       docker_compose_loader validation failed:
-      
+
       Parameter 'compose_state' must be one of: present, absent, restarted, stopped.
-      
+
       Received:
         - Value: {{ compose_state | default('present') }}
     success_msg: "docker_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
@@ -95,9 +95,9 @@
       - compose_src_stat.stat.exists and compose_src_stat.stat.isdir
     fail_msg: |
       docker_compose_loader validation failed:
-      
+
       Project source directory does not exist or is not a directory.
-      
+
       Path: {{ compose_project_src }}
     success_msg: "docker_compose_loader: project directory exists ({{ compose_project_src }})"
   tags: ["always"]

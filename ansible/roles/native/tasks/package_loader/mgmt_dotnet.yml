@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (.NET): Verify .NET presence"
   ansible.builtin.assert:
     that: "is_dotnet_installed | bool"

@@ -29,8 +29,8 @@
   ansible.builtin.set_fact:
     detected_engine: >-
       {{
-        container_engine 
-        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit') 
+        container_engine
+        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit')
         else (container_engine_detected | default('docker', true))
       }}
   tags: ["always"]

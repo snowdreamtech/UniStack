@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Flatpak): Auto-install Flatpak if requested"
   ansible.builtin.package:
     name: "flatpak"

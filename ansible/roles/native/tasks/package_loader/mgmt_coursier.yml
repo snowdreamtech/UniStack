@@ -6,6 +6,7 @@
 #   - Focuses on "Strong Binary" installation/uninstallation.
 # =====================================================================
 
+---
 - name: "Package (Coursier): Assert environment presence"
   ansible.builtin.assert:
     that: is_cs_installed
@@ -17,4 +18,4 @@
   register: _cs_install_res
   changed_when: "'already installed' not in _cs_install_res.stdout"
   when: pkg_cs_list | length > 0
-  become: false  # Usually installs to platform-specific user bin
+  become: false # Usually installs to platform-specific user bin

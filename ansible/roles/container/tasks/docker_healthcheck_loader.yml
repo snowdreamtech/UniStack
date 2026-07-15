@@ -86,4 +86,3 @@
   register: docker_mirror_check
   changed_when: false
   failed_when: false
-

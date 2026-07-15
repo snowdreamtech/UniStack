@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   High-level application observability engine.
-#   Provides a standardized mechanism for logging abstract deployment 
+#   Provides a standardized mechanism for logging abstract deployment
 #   events and architectural state transitions to the controller console.
 #
 # Simple Usage:
@@ -23,7 +23,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Output: Emit a structured audit log message to localhost. 
+# Output: Emit a structured audit log message to localhost.
 # Includes optional labels and unique execution fingerprints.
 # ---------------------------------------------------------------------
 - name: "App audit log output"

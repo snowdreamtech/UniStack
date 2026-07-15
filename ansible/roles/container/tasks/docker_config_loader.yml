@@ -59,7 +59,7 @@
   ansible.builtin.file:
     path: /etc/docker
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Write daemon.json
@@ -69,7 +69,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "registry-mirrors": [
@@ -103,4 +103,3 @@
     name: "docker"
     state: restarted
   when: docker_daemon_write.changed
-

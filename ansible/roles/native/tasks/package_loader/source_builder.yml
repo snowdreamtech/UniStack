@@ -5,8 +5,8 @@
 #   Generic multi-platform source code builder.
 #   Handles download, extraction, compilation, and installation.
 #
-# WHY: When binary packages are unavailable, compiling from source 
-# provides ultimate flexibility. This builder automates the repetitive 
+# WHY: When binary packages are unavailable, compiling from source
+# provides ultimate flexibility. This builder automates the repetitive
 # tasks while allowing override of build steps.
 # =====================================================================
 
@@ -14,8 +14,10 @@
 # Preparation: Ensure Build Toolchain (OS-Specific)
 # ---------------------------------------------------------------------
 
-# WHY: We must ensure common compilers and utilities exist before 
+# WHY: We must ensure common compilers and utilities exist before
 # attempting to build. We use standard package names for each family.
+
+---
 - name: "Source Build: Ensure toolchain exists"
   ansible.builtin.package:
     name: >-
@@ -40,9 +42,6 @@
     state: "present"
   become: "{{ become_enabled }}"
   when: (pkg_src_list | length) > 0
-
-
-
 
 # ---------------------------------------------------------------------
 # Execution: Build Loop

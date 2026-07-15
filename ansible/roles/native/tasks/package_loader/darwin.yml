@@ -42,11 +42,11 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
 # 1. Environment Detection
 # ---------------------------------------------------------------------
 
+---
 - name: "Package (Darwin): Detect Homebrew and MacPorts presence"
   ansible.builtin.shell: "PATH={{ os_paths }} command -v {{ item }}"
   loop: ["brew", "port"]
@@ -91,7 +91,7 @@
   ansible.builtin.assert:
     that: "is_homebrew_installed | bool"
     fail_msg: "Homebrew is required but not installed. Set 'package_auto_install_managers: true' to enable auto-installation."
-  when: 
+  when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'homebrew'
 
@@ -100,7 +100,7 @@
   ansible.builtin.assert:
     that: "is_macports_installed | bool"
     fail_msg: "MacPorts is required but not installed. Please install it manually from https://www.macports.org/install.php"
-  when: 
+  when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'macports'
 
@@ -112,7 +112,7 @@
 # Use community.general.homebrew_cask for casks, homebrew for formulas.
 
 - name: "Package (Darwin): Install implicit packages (Homebrew Primary)"
-  when: 
+  when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'homebrew'
   block:
@@ -144,7 +144,7 @@
       loop: "{{ pkg_repo_list }}"
       loop_control:
         loop_var: pkg_item
-      when: 
+      when:
         - is_macports_installed | bool
         - not (package_is_cask | default(false, true) | bool) # MacPorts doesn't support Casks explicitly
       register: _port_fallback_result
@@ -155,12 +155,12 @@
     - name: "Package (Darwin): Fail if primary and fallback both failed"
       ansible.builtin.fail:
         msg: "Failed to install packages using Homebrew (Primary) and MacPorts (Fallback)."
-      when: 
+      when:
         - is_macports_installed | bool
         - _port_fallback_result is failed
 
 - name: "Package (Darwin): Install implicit packages (MacPorts Primary)"
-  when: 
+  when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'macports'
   block:
@@ -190,7 +190,7 @@
     - name: "Package (Darwin): Fail if primary and fallback both failed"
       ansible.builtin.fail:
         msg: "Failed to install packages using MacPorts (Primary) and Homebrew (Fallback)."
-      when: 
+      when:
         - is_homebrew_installed | bool
         - _brew_fallback_result is failed
 
@@ -205,7 +205,7 @@
         (not (package_caches_updated.homebrew | default(false, true)))
       }}
   register: package_result_brew_explicit
-  when: 
+  when:
     - (pkg_brew_list | length) > 0
     - is_homebrew_installed | bool
   become: false
@@ -226,7 +226,7 @@
   until: package_result_brew_explicit is succeeded
   retries: 3
   delay: 5
-  when: 
+  when:
     - (pkg_brew_list | length) > 0
     - is_homebrew_installed | bool
   become: false
@@ -241,7 +241,7 @@
   until: package_result_brew_cask_explicit is succeeded
   retries: 3
   delay: 5
-  when: 
+  when:
     - (pkg_cask_list | length) > 0
     - is_homebrew_installed | bool
   become: false
@@ -268,7 +268,7 @@
   loop_control:
     loop_var: pkg_item
   register: package_result_port
-  when: 
+  when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'macports'
   become: "{{ become_enabled }}"
@@ -283,7 +283,7 @@
   loop_control:
     loop_var: pkg_item
   register: package_result_port_explicit
-  when: 
+  when:
     - (pkg_port_list | length) > 0
     - is_macports_installed | bool
   become: "{{ become_enabled }}"
@@ -301,7 +301,7 @@
   until: package_result_port_explicit is succeeded
   retries: 3
   delay: 5
-  when: 
+  when:
     - (pkg_port_list | length) > 0
     - os_pkg_mgr == 'macports' or os_pkg_mgr == 'homebrew' # Allow cross-manager usage if installed
   become: "{{ become_enabled }}"
@@ -351,7 +351,7 @@
       ansible.builtin.get_url:
         url: "{{ dmg_url_item }}"
         dest: "/tmp/ansible_pkg_{{ dmg_url_item | hash('sha1') }}.dmg"
-        mode: '0644'
+        mode: "0644"
         force: false
         timeout: 60
       loop: "{{ pkg_dmg_list | select('match', '^https?://') | list }}"
@@ -370,10 +370,10 @@
           {%- set resolved = [] -%}
           {%- for item in pkg_dmg_list -%}
             {%- if item is match('^https?://') -%}
-               {%- set download = _dmg_downloads.results | selectattr('dmg_url_item', 'equalto', item) | first -%}
-               {%- set _ = resolved.append(download.dest) -%}
+              {%- set download = _dmg_downloads.results | selectattr('dmg_url_item', 'equalto', item) | first -%}
+              {%- set _ = resolved.append(download.dest) -%}
             {%- else -%}
-               {%- set _ = resolved.append(item) -%}
+              {%- set _ = resolved.append(item) -%}
             {%- endif -%}
           {%- endfor -%}
           {{ resolved }}
@@ -395,7 +395,7 @@
         - name: "Package (Darwin): Find content in DMG"
           ansible.builtin.find:
             paths: "/Volumes"
-            patterns: 
+            patterns:
               - "{{ package_dmg_app_name }}.app"
               - "*.pkg"
               - "*.mpkg"
@@ -476,7 +476,7 @@
       ansible.builtin.get_url:
         url: "{{ pkg_url_item }}"
         dest: "/tmp/ansible_pkg_{{ pkg_url_item | hash('sha1') }}.pkg"
-        mode: '0644'
+        mode: "0644"
         force: false
         timeout: 60
       loop: "{{ pkg_pkg_list | select('match', '^https?://') | list }}"
@@ -495,10 +495,10 @@
           {%- set resolved = [] -%}
           {%- for item in pkg_pkg_list -%}
             {%- if item is match('^https?://') -%}
-               {%- set download = _pkg_downloads.results | selectattr('pkg_url_item', 'equalto', item) | first -%}
-               {%- set _ = resolved.append(download.dest) -%}
+              {%- set download = _pkg_downloads.results | selectattr('pkg_url_item', 'equalto', item) | first -%}
+              {%- set _ = resolved.append(download.dest) -%}
             {%- else -%}
-               {%- set _ = resolved.append(item) -%}
+              {%- set _ = resolved.append(item) -%}
             {%- endif -%}
           {%- endfor -%}
           {{ resolved }}
@@ -761,7 +761,7 @@
       ansible.builtin.copy:
         src: "{{ dylib_item }}"
         dest: "/usr/local/lib/"
-        mode: '0755'
+        mode: "0755"
       loop: "{{ pkg_dylib_list }}"
       loop_control:
         loop_var: dylib_item
@@ -817,7 +817,7 @@
             path: "/Library/Extensions/{{ package_kext_name }}.kext"
             owner: root
             group: wheel
-            mode: '0755'
+            mode: "0755"
             recurse: true
           become: "{{ become_enabled }}"
 

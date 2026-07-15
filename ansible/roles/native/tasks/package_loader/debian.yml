@@ -24,13 +24,14 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
 # Execution: Repository + URL + File Branch
 # ---------------------------------------------------------------------
 
-# WHY: We process standard repository packages first as they are 
+# WHY: We process standard repository packages first as they are
 # the most stable source. Cache update is handled globally.
+
+---
 - name: "Package (Debian): Repository execution"
   ansible.builtin.apt:
     name: "{{ pkg_repo_list }}"
@@ -49,7 +50,7 @@
   vars:
     fingerprint: "package_deb_repo_exec_{{ package_name | default('unknown', true) }}"
 
-# WHY: URL and local file based .deb packages are handled via the 
+# WHY: URL and local file based .deb packages are handled via the
 # 'deb:' parameter which resolves dependencies automatically.
 - name: "Package (Debian): Local/URL .deb installation"
   ansible.builtin.apt:
@@ -68,7 +69,7 @@
 # Execution: Source Branch
 # ---------------------------------------------------------------------
 
-# WHY: If source archives are detected, we dispatch to the common 
+# WHY: If source archives are detected, we dispatch to the common
 # source builder for compilation.
 - ansible.builtin.include_tasks: "source_builder.yml"
   when: (pkg_src_list | length) > 0

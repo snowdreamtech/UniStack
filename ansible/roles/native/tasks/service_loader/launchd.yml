@@ -27,6 +27,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Ensure mandatory service identity is provided before proceeding.
+
+---
 - ansible.builtin.assert:
     that:
       - service_name is defined
@@ -83,9 +85,9 @@
     enabled: "{{ service_enabled | default(true, true) | bool }}"
   register: _launchd_result
   become: "{{ become_enabled | default(false, true) | bool }}"
-  when: 
+  when:
     - (_service_exists_check.rc | default(1) == 0) or (service_state | default('started', true) not in ['stopped'])
-  failed_when: 
+  failed_when:
     - _launchd_result.failed | default(false)
     - not (service_state | default('started', true) == 'stopped' and "Unable to find the plist file" in (_launchd_result.msg | default('')))
   vars:

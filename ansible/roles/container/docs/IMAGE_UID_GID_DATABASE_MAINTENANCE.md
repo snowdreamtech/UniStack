@@ -26,6 +26,7 @@ The knowledge database consists of three main sections:
 1. **Exact Match** (`image_uid_gid_exact_match`)
    - For specific image:tag combinations
    - Highest priority, fastest lookup
+
    ```yaml
    "mongo:7.0": { uid: "999", gid: "999", source: "..." }
    ```
@@ -33,6 +34,7 @@ The knowledge database consists of three main sections:
 2. **Pattern Match** (`image_uid_gid_patterns`)
    - For matching a series of similar images
    - Supports version wildcards
+
    ```yaml
    - regex: "^mongo(db)?:[0-9]+\\.[0-9]+"
      uid: "999"
@@ -337,11 +339,13 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # Only matches literal dot
 **Internal team workflow**:
 
 1. **Create branch**
+
    ```bash
    git checkout -b add-kb-entry-kafka
    ```
 
 2. **Add entry**
+
    ```bash
    # Use automation tool
    ./scripts/detect_image_uid.sh confluentinc/cp-kafka:latest
@@ -351,11 +355,13 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # Only matches literal dot
    ```
 
 3. **Validate entry**
+
    ```bash
    ./scripts/validate_image_database.sh
    ```
 
 4. **Submit PR**
+
    ```bash
    git add roles/container/vars/image_uid_gid_database.yml
    git commit -m "feat: add Kafka image UID/GID mapping"
@@ -384,16 +390,19 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # Only matches literal dot
 ### Useful Tools
 
 - **Docker Inspect**: View image metadata
+
   ```bash
   docker inspect -f '{{.Config.User}}' IMAGE:TAG
   ```
 
 - **Dive**: Explore image layers
+
   ```bash
   dive IMAGE:TAG
   ```
 
 - **Skopeo**: Inspect images without pulling
+
   ```bash
   skopeo inspect docker://IMAGE:TAG
   ```

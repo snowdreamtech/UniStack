@@ -34,9 +34,9 @@
       - (lxc_image_alias | length) > 0
     fail_msg: |
       lxc_image_loader validation failed:
-      
+
       Required parameter 'lxc_image_alias' must be a non-empty string.
-      
+
       Received:
         - Type: {{ lxc_image_alias | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_image_alias | default('UNDEFINED') }}
@@ -48,9 +48,9 @@
       - lxc_image_state in ['present', 'absent']
     fail_msg: |
       lxc_image_loader validation failed:
-      
+
       Parameter 'lxc_image_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ lxc_image_state | default('present') }}
     success_msg: "lxc_image_loader: lxc_image_state validated ({{ lxc_image_state }})"
@@ -87,4 +87,3 @@
   failed_when: "lxc_image_delete_result.rc not in [0, 1]"
   changed_when: "lxc_image_delete_result.rc == 0"
   become: "{{ become_enabled }}"
-

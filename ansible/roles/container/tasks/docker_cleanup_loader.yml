@@ -71,4 +71,3 @@
   register: docker_cleanup_build
   changed_when: "'Reclaimed' in docker_cleanup_build.stdout"
   failed_when: false
-

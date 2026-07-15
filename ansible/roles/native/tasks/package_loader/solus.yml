@@ -9,6 +9,8 @@
 # ---------------------------------------------------------------------
 # Execution: Native Binary Branch
 # ---------------------------------------------------------------------
+
+---
 - name: "Package (Solus): EOPKG execution"
   community.general.eopkg:
     name: "{{ pkg_repo_list }}"

@@ -27,6 +27,8 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: OpenWrt uses the Procd init system. We delegate to the 
+# WHY: OpenWrt uses the Procd init system. We delegate to the
 # dedicated procd handler within the same directory.
+
+---
 - ansible.builtin.include_tasks: "procd.yml"

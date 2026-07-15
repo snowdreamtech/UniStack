@@ -11,9 +11,34 @@
 # 1. Collective Environment Detection
 # ---------------------------------------------------------------------
 
+---
 - name: "Package (Universal): Detect all available managers"
   ansible.builtin.command: "command -v {{ item }} >/dev/null 2>&1"
-  loop: ["snap", "flatpak", "nix", "guix", "yay", "pip3", "pipx", "conda", "go", "npm", "yarn", "pnpm", "cargo", "deno", "composer", "dart", "nimble", "dotnet", "bun", "cs", "sdk", "gem"]
+  loop:
+    [
+      "snap",
+      "flatpak",
+      "nix",
+      "guix",
+      "yay",
+      "pip3",
+      "pipx",
+      "conda",
+      "go",
+      "npm",
+      "yarn",
+      "pnpm",
+      "cargo",
+      "deno",
+      "composer",
+      "dart",
+      "nimble",
+      "dotnet",
+      "bun",
+      "cs",
+      "sdk",
+      "gem",
+    ]
   register: _universal_mgr_collect
   failed_when: false
   changed_when: false

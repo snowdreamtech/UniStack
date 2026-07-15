@@ -21,6 +21,7 @@
 #       gpg_key_file: "myrepo.gpg"
 # =====================================================================
 
+---
 - name: "Derive GPG key filename from URL"
   ansible.builtin.set_fact:
     gpg_key_file: "{{ gpg_key_url | basename }}"

@@ -6,7 +6,7 @@
 #   Handles 'pkg' or 'apt' logic in Android-based environments.
 #
 # WHY: On Android/Termux, Ansible identifies the system as 'Android'.
-# We provide a tailored loader that respects the single-user nature 
+# We provide a tailored loader that respects the single-user nature
 # of the environment and uses the recommended 'pkg' wrapper.
 # =====================================================================
 
@@ -14,8 +14,10 @@
 # Execution: Android Binary Branch
 # ---------------------------------------------------------------------
 
-# WHY: 'pkg' is the standard wrapper for Termux on Android. 
+# WHY: 'pkg' is the standard wrapper for Termux on Android.
 # It automates environment sync and repository selection.
+
+---
 - name: "Package (Android): pkg execution"
 
   ansible.builtin.shell: |

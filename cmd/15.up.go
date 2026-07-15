@@ -1,3 +1,6 @@
+// Copyright (c) 2026 SnowdreamTech. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
 package cmd
 
 import (
@@ -36,7 +39,7 @@ var upCmd = &cobra.Command{
 
 		// Since UniStack utilizes the unified 'app' engine, we just need a minimal playbook
 		// to include that role. In real usage, you'd generate or point to a valid playbook.
-		playbookPath := "ansible/roles/app/tasks/main.yml" 
+		playbookPath := "ansible/roles/app/tasks/main.yml"
 		if _, err := os.Stat(playbookPath); os.IsNotExist(err) {
 			playbookPath = "run_app.yml"
 		}
@@ -48,7 +51,7 @@ var upCmd = &cobra.Command{
 
 		for i, app := range sortedApps {
 			fmt.Printf("[%d/%d] 🟢 Deploying app: %s\n", i+1, len(sortedApps), app.Name)
-			
+
 			res, err := engRunner.RunApp(ctx, app.Name, app.Vars)
 			if err != nil {
 				fmt.Printf("❌ Failed to deploy %s: %v\n", app.Name, err)

@@ -49,9 +49,9 @@
       - (volume_name | length) > 0
     fail_msg: |
       docker_volume_loader validation failed:
-      
+
       Required parameter 'volume_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ volume_name | default('UNDEFINED') | type_debug }}
         - Value: {{ volume_name | default('UNDEFINED') }}
@@ -62,9 +62,9 @@
       - volume_state in ['present', 'absent']
     fail_msg: |
       docker_volume_loader validation failed:
-      
+
       Parameter 'volume_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ volume_state | default('present') }}
     success_msg: "docker_volume_loader: volume_state validated ({{ volume_state }})"
@@ -92,4 +92,3 @@
     labels: "{{ volume_labels }}"
   register: volume_result
   become: "{{ become_enabled }}"
-

@@ -1,56 +1,57 @@
+---
 init_openssh_packages:
-- openssh
+  - openssh
 init_sshd_service: com.openssh.sshd
-_darwin_pkg_gnupg: '{{ ''gnupg2'' if (os_pkg_mgr | default('''', true) == ''macports'')
-  else ''gnupg'' }}'
-_darwin_pkg_sed: '{{ ''gsed'' if (os_pkg_mgr | default('''', true) == ''macports'')
-  else ''gnu-sed'' }}'
-_darwin_pkg_ca: '{{ ''curl-ca-bundle'' if (os_pkg_mgr | default('''', true) == ''macports'')
-  else ''ca-certificates'' }}'
+_darwin_pkg_gnupg: "{{ 'gnupg2' if (os_pkg_mgr | default('', true) == 'macports')
+  else 'gnupg' }}"
+_darwin_pkg_sed: "{{ 'gsed' if (os_pkg_mgr | default('', true) == 'macports')
+  else 'gnu-sed' }}"
+_darwin_pkg_ca: "{{ 'curl-ca-bundle' if (os_pkg_mgr | default('', true) == 'macports')
+  else 'ca-certificates' }}"
 _darwin_pkg_patch: gpatch
-_darwin_pkg_make: '{{ ''gmake'' if (os_pkg_mgr | default('''', true) == ''macports'')
-  else ''make'' }}'
+_darwin_pkg_make: "{{ 'gmake' if (os_pkg_mgr | default('', true) == 'macports')
+  else 'make' }}"
 base_dev_packages: []
 foundation_packages:
-- aria2
-- bat
-- bzip2
-- coreutils
-- curl
-- diffutils
-- fd
-- file
-- findutils
-- fzf
-- gawk
-- git
-- grep
-- gzip
-- htop
-- ipcalc
-- iperf3
-- jq
-- mtr
-- openssl
-- p7zip
-- parallel
-- pinentry-mac
-- pstree
-- ripgrep
-- rsync
-- socat
-- tcpdump
-- tmux
-- trash
-- tree
-- unzip
-- vim
-- wget
-- xz
-- zip
-- zstd
-- '{{ _darwin_pkg_ca }}'
-- '{{ _darwin_pkg_gnupg }}'
-- '{{ _darwin_pkg_make }}'
-- '{{ _darwin_pkg_patch }}'
-- '{{ _darwin_pkg_sed }}'
+  - aria2
+  - bat
+  - bzip2
+  - coreutils
+  - curl
+  - diffutils
+  - fd
+  - file
+  - findutils
+  - fzf
+  - gawk
+  - git
+  - grep
+  - gzip
+  - htop
+  - ipcalc
+  - iperf3
+  - jq
+  - mtr
+  - openssl
+  - p7zip
+  - parallel
+  - pinentry-mac
+  - pstree
+  - ripgrep
+  - rsync
+  - socat
+  - tcpdump
+  - tmux
+  - trash
+  - tree
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip
+  - zstd
+  - "{{ _darwin_pkg_ca }}"
+  - "{{ _darwin_pkg_gnupg }}"
+  - "{{ _darwin_pkg_make }}"
+  - "{{ _darwin_pkg_patch }}"
+  - "{{ _darwin_pkg_sed }}"

@@ -55,9 +55,9 @@
       - registry_action in ['login', 'logout', 'pull', 'push']
     fail_msg: |
       podman_registry_loader validation failed:
-      
+
       Parameter 'registry_action' must be one of: login, logout, pull, push.
-      
+
       Received:
         - Value: {{ registry_action | default('UNDEFINED') }}
     success_msg: "podman_registry_loader: registry_action validated ({{ registry_action }})"
@@ -132,4 +132,3 @@
   register: registry_push_result
   changed_when: "'Writing manifest' in registry_push_result.stdout or 'Pushed' in registry_push_result.stdout"
   become: "{{ become_enabled }}"
-

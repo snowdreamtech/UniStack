@@ -27,6 +27,8 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: Alpine Linux exclusively uses OpenRC. 
+# WHY: Alpine Linux exclusively uses OpenRC.
 # We include the specialized OpenRC handler from the same directory.
+
+---
 - ansible.builtin.include_tasks: "openrc.yml"

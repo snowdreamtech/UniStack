@@ -61,6 +61,8 @@
 
 # WHY: Specific tasks (assert) must not have names per .aiconfig.
 # Adding tags: ["always"] to ensure validation runs even when using filters.
+
+---
 - ansible.builtin.assert:
     that:
       - native_app_name is defined
@@ -68,13 +70,13 @@
       - (native_app_name | length) > 0
     fail_msg: |
       native_loader parameter validation failed:
-      
+
       Required parameter 'native_app_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ native_app_name | default('UNDEFINED') | type_debug }}
         - Value: {{ native_app_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "native"
@@ -90,12 +92,12 @@
       - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted', 'absent', 'purged']
     fail_msg: |
       native_loader parameter validation failed:
-      
+
       Parameter 'native_app_state' must be one of: present, latest, started, stopped, restarted, absent, purged.
-      
+
       Received:
         - Value: {{ native_app_state | default('present') }}
-      
+
       State descriptions:
         - present: Install package (if not already installed)
         - latest: Install/upgrade to latest version
@@ -167,7 +169,7 @@
   vars:
     package_name: "{{ 'curl' if 'curl' in (native_install_cmd | default('', true) | string) else ('wget' if 'wget' in (native_install_cmd | default('', true) | string) else omit) }}"
     package_state: "present"
-  when: 
+  when:
     - (native_install_cmd | default('', true) | length > 0)
     - ("curl" in (native_install_cmd | default('', true) | string) or "wget" in (native_install_cmd | default('', true) | string))
 
@@ -178,7 +180,7 @@
 # WHY: Audit the decision for script-based installation.
 - ansible.builtin.debug:
     msg: "[NATIVE_INSTALL_SCRIPT] Executing script-based installation for {{ native_app_name }}"
-  when: 
+  when:
     - (native_install_cmd | default('', true) | length > 0)
     - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted']
 
@@ -198,7 +200,7 @@
   changed_when: "{{ native_install_changed_when if native_install_changed_when != omit else true }}"
   failed_when: "{{ native_install_failed_when if native_install_failed_when != omit else (_native_script_install_result.rc != 0) }}"
   register: _native_script_install_result
-  when: 
+  when:
     - (native_install_cmd | default('', true) | length > 0)
     - (native_app_state | default('present', true)) in ['present', 'latest', 'started', 'stopped', 'restarted']
   vars:
@@ -221,7 +223,7 @@
     package_dylib_name: "{{ native_package_dylib_name }}"
     package_kext_name: "{{ native_package_kext_name }}"
     package_is_cask: "{{ native_package_is_cask }}"
-  when: 
+  when:
     - (native_install_cmd | default('', true) | length == 0)
     - native_package_name is defined
     - (native_package_name is string) or (native_package_name is sequence)
@@ -238,7 +240,7 @@
     service_state: "started"
     service_enabled: "{{ native_service_enabled }}"
     service_shell: "{{ native_service_shell }}"
-  when: 
+  when:
     - native_service_name is defined
     - native_service_name | default('', true) | length > 0
     - (native_app_state | default('present', true)) in ['present', 'latest', 'started']
@@ -248,7 +250,7 @@
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "stopped"
-  when: 
+  when:
     - native_service_name is defined
     - native_service_name | default('', true) | length > 0
     - (native_app_state | default('present', true)) == 'stopped'
@@ -258,7 +260,7 @@
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "restarted"
-  when: 
+  when:
     - native_service_name is defined
     - native_service_name | default('', true) | length > 0
     - (native_app_state | default('present', true)) == 'restarted'
@@ -272,7 +274,7 @@
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "stopped"
-  when: 
+  when:
     - native_service_name is defined
     - native_service_name | default('', true) | length > 0
     - (native_app_state | default('present', true)) in ['absent', 'purged']
@@ -280,7 +282,7 @@
 # WHY: Audit the decision for script-based removal.
 - ansible.builtin.debug:
     msg: "[NATIVE_UNINSTALL_SCRIPT] Executing script-based removal for {{ native_app_name }}"
-  when: 
+  when:
     - (native_uninstall_cmd | default('', true) | length > 0)
     - (native_app_state | default('present', true)) in ['absent', 'purged']
 
@@ -294,7 +296,7 @@
   changed_when: "{{ native_uninstall_changed_when if native_uninstall_changed_when != omit else true }}"
   failed_when: "{{ native_uninstall_failed_when if native_uninstall_failed_when != omit else (_native_script_uninstall_result.rc != 0) }}"
   register: _native_script_uninstall_result
-  when: 
+  when:
     - (native_uninstall_cmd | default('', true) | length > 0)
     - (native_app_state | default('present', true)) in ['absent', 'purged']
   vars:
@@ -317,7 +319,7 @@
     package_dylib_name: "{{ native_package_dylib_name }}"
     package_kext_name: "{{ native_package_kext_name }}"
     package_is_cask: "{{ native_package_is_cask }}"
-  when: 
+  when:
     - (native_uninstall_cmd | default('', true) | length == 0)
     - native_package_name is defined
     - (native_package_name is string) or (native_package_name is sequence)

@@ -24,6 +24,7 @@
 #
 # =====================================================================
 
+---
 - name: "Configure RPM repository {{ repo_name | default('', true) }}"
   ansible.builtin.yum_repository:
     name: "{{ repo_name }}"

@@ -43,9 +43,9 @@
       - registry_state in ['login', 'logout']
     fail_msg: |
       docker_registry_loader validation failed:
-      
+
       Parameter 'registry_state' must be one of: login, logout.
-      
+
       Received:
         - Value: {{ registry_state | default('UNDEFINED') }}
     success_msg: "docker_registry_loader: registry_state validated ({{ registry_state }})"
@@ -83,4 +83,3 @@
   when: registry_state == 'logout'
   register: registry_logout_result
   become: "{{ become_enabled }}"
-

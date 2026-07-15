@@ -27,8 +27,10 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: Support legacy RHEL (SysVinit) and modern RHEL (Systemd) 
+# WHY: Support legacy RHEL (SysVinit) and modern RHEL (Systemd)
 # by dynamically including the detected manager's implementation.
+
+---
 - ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
   vars:
     fingerprint: "service_route_redhat_{{ os_service_mgr | default('systemd', true) }}"

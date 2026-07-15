@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (Bun): Verify Bun presence"
   ansible.builtin.assert:
     that: "is_bun_installed | bool"

@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (SDKMAN): Verify sdk presence"
   ansible.builtin.assert:
     that: "is_sdkman_installed | bool"

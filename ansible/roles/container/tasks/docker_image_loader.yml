@@ -51,9 +51,9 @@
       - (image_name | length) > 0
     fail_msg: |
       docker_image_loader parameter validation failed:
-      
+
       Required parameter 'image_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ image_name | default('UNDEFINED') | type_debug }}
         - Value: {{ image_name | default('UNDEFINED') }}
@@ -64,9 +64,9 @@
       - image_state in ['present', 'absent']
     fail_msg: |
       docker_image_loader parameter validation failed:
-      
+
       Parameter 'image_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ image_state | default('present') }}
     success_msg: "docker_image_loader: image_state validated ({{ image_state }})"
@@ -99,9 +99,9 @@
       - image_tar_load_stat.stat.exists
     fail_msg: |
       docker_image_loader validation failed:
-      
+
       Image tar load file does not exist.
-      
+
       File path: {{ image_tar_load }}
     success_msg: "docker_image_loader: tar file exists ({{ image_tar_load }})"
   when: image_tar_load is defined
@@ -182,4 +182,3 @@
   vars:
     label: "DOCKER_IMAGE"
     msg: "Name: {{ image_name }} | Action: {{ image_state }} | Tagged: {{ image_tag | default('none') }}"
-

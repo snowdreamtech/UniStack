@@ -1,28 +1,29 @@
+---
 init_openssh_packages:
-- openssh
+  - openssh
 init_sshd_service: sshd
 base_dev_packages: []
 foundation_packages:
-- bash-completion
-- bzip2
-- ca-certificates
-- curl
-- file
-- fzf
-- git
-- gpg2
-- gzip
-- htop
-- jq
-- openssl
-- patch
-- procps
-- rsync
-- sudo
-- timezone
-- tmux
-- unzip
-- vim
-- wget
-- xz
-- zip
+  - bash-completion
+  - bzip2
+  - ca-certificates
+  - curl
+  - file
+  - fzf
+  - git
+  - gpg2
+  - gzip
+  - htop
+  - jq
+  - openssl
+  - patch
+  - procps
+  - rsync
+  - sudo
+  - timezone
+  - tmux
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip

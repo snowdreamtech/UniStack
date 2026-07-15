@@ -53,9 +53,9 @@
       - (lxc_name | length) > 0
     fail_msg: |
       lxc_container_loader validation failed:
-      
+
       Required parameter 'lxc_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ lxc_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_name | default('UNDEFINED') }}
@@ -67,9 +67,9 @@
       - lxc_state in ['present', 'started', 'stopped', 'restarted', 'absent']
     fail_msg: |
       lxc_container_loader validation failed:
-      
+
       Parameter 'lxc_state' must be one of: present, started, stopped, restarted, absent.
-      
+
       Received:
         - Value: {{ lxc_state | default('present') }}
     success_msg: "lxc_container_loader: lxc_state validated ({{ lxc_state }})"

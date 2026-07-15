@@ -19,6 +19,7 @@
 #
 # =====================================================================
 
+---
 - name: "Repo (Fallback): No generic repo loader available"
   ansible.builtin.debug:
     msg: "No generic repository configuration is defined for this OS family."

@@ -28,6 +28,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Ensure mandatory service identity is provided before proceeding.
+
+---
 - ansible.builtin.assert:
     that:
       - service_name is defined
@@ -103,7 +105,7 @@
   when:
     - _openrc_init_check.stat.exists | default(false)
     - (service_state | default('started', true)) in ['started', 'stopped', 'restarted']
-    - (service_state | default('started', true) == 'restarted') or 
+    - (service_state | default('started', true) == 'restarted') or
       (service_state | default('started', true) == 'started' and not (_is_running | default(false))) or
       (service_state | default('started', true) == 'stopped' and (_is_running | default(false)))
   become: "{{ become_enabled | default(false, true) | bool }}"

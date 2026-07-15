@@ -21,6 +21,7 @@
 #
 # =====================================================================
 
+---
 - name: "Configure APT repository {{ repo_name | default('', true) }}"
   ansible.builtin.apt_repository:
     repo: "{{ repo_apt }}"

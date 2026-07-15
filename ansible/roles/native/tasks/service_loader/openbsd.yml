@@ -27,6 +27,8 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: OpenBSD uses the rc.d system, which we manage via the generic 
+# WHY: OpenBSD uses the rc.d system, which we manage via the generic
 # BSD service loader.
+
+---
 - ansible.builtin.include_tasks: "bsd.yml"

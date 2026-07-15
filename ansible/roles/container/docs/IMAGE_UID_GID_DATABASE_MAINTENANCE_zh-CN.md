@@ -26,6 +26,7 @@
 1. **精确匹配** (`image_uid_gid_exact_match`)
    - 用于特定的镜像:标签组合
    - 优先级最高,查询速度最快
+
    ```yaml
    "mongo:7.0": { uid: "999", gid: "999", source: "..." }
    ```
@@ -33,6 +34,7 @@
 2. **正则模式匹配** (`image_uid_gid_patterns`)
    - 用于匹配一系列相似镜像
    - 支持版本号通配
+
    ```yaml
    - regex: "^mongo(db)?:[0-9]+\\.[0-9]+"
      uid: "999"
@@ -337,11 +339,13 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # 只匹配字面上的点
 **内部团队流程**:
 
 1. **创建分支**
+
    ```bash
    git checkout -b add-kb-entry-kafka
    ```
 
 2. **添加条目**
+
    ```bash
    # 使用自动化工具
    ./scripts/detect_image_uid.sh confluentinc/cp-kafka:latest
@@ -351,11 +355,13 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # 只匹配字面上的点
    ```
 
 3. **验证条目**
+
    ```bash
    ./scripts/validate_image_database.sh
    ```
 
 4. **提交 PR**
+
    ```bash
    git add roles/container/vars/image_uid_gid_database.yml
    git commit -m "feat: add Kafka image UID/GID mapping"
@@ -384,16 +390,19 @@ regex: "^mongo:[0-9]+\\.[0-9]+"  # 只匹配字面上的点
 ### 有用的工具
 
 - **Docker Inspect**: 查看镜像元数据
+
   ```bash
   docker inspect -f '{{.Config.User}}' IMAGE:TAG
   ```
 
 - **Dive**: 探索镜像层
+
   ```bash
   dive IMAGE:TAG
   ```
 
 - **Skopeo**: 无需 pull 即可检查镜像
+
   ```bash
   skopeo inspect docker://IMAGE:TAG
   ```

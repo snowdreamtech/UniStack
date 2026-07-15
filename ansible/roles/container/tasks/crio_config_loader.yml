@@ -49,7 +49,7 @@
   ansible.builtin.file:
     path: /etc/crio
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Configure crio.conf
@@ -59,7 +59,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/crio/crio.conf
-    mode: '0644'
+    mode: "0644"
     content: |
       [crio.runtime]
       {% if crio_cgroup_driver is defined %}
@@ -88,7 +88,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/registries.conf
-    mode: '0644'
+    mode: "0644"
     content: |
       unqualified-search-registries = ["docker.io"]
 
@@ -117,7 +117,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/policy.json
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "default": [
@@ -127,4 +127,3 @@
         ]
       }
   register: crio_policy_write
-

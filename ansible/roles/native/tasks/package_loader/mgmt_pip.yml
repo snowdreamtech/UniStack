@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (PIP): Auto-install PIP if requested"
   ansible.builtin.package:
     name: "python3-pip"

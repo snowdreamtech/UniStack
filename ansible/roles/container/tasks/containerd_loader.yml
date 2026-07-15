@@ -3,9 +3,9 @@
 # roles/container/tasks/containerd_loader.yml
 #
 # Purpose:
-#   Enterprise-grade universal loader for managing containers on a 
+#   Enterprise-grade universal loader for managing containers on a
 #   containerd-based environment using nerdctl (Docker-compatible CLI).
-#   Supports advanced container parameters including hostname, memory 
+#   Supports advanced container parameters including hostname, memory
 #   limits, CPU constraints, and security options.
 #
 # Simple Usage:
@@ -52,13 +52,13 @@
       - (ctr_name | trim | length) > 0
     fail_msg: |
       containerd_loader parameter validation failed:
-      
+
       Required parameter 'ctr_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ ctr_name | default('UNDEFINED') | type_debug }}
         - Value: {{ ctr_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "container"
@@ -74,12 +74,12 @@
       - ctr_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
     fail_msg: |
       containerd_loader parameter validation failed:
-      
+
       Parameter 'ctr_state' must be one of: present, absent, restarted, stopped.
-      
+
       Received:
         - Value: {{ ctr_state | default('present') }}
-      
+
       State descriptions:
         - present: Create and start container
         - absent: Remove container
@@ -183,7 +183,7 @@
 # ---------------------------------------------------------------------
 - name: "Stop container via nerdctl"
   ansible.builtin.command: "nerdctl stop {{ ctr_name }}"
-  when: 
+  when:
     - ctr_state in ['absent', 'restarted', 'stopped']
   register: ctr_stop_result
   failed_when: "ctr_stop_result.rc not in [0, 1]"
@@ -193,7 +193,7 @@
 - name: "Remove container via nerdctl"
   ansible.builtin.command: >-
     nerdctl rm {{ '--force' if ctr_force_remove else '' }} {{ ctr_name }}
-  when: 
+  when:
     - ctr_state == 'absent' or ctr_state == 'restarted'
   register: ctr_rm_result
   failed_when: "ctr_rm_result.rc not in [0, 1]"
@@ -205,7 +205,7 @@
 # ---------------------------------------------------------------------
 - name: "Run container via nerdctl"
   ansible.builtin.command: "nerdctl {{ ctr_run_args }}"
-  when: 
+  when:
     - ctr_state in ['present', 'restarted']
   register: ctr_run_result
   changed_when: true

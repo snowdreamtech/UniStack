@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Yarn): Auto-install Yarn via NPM if requested"
   community.general.npm:
     name: "yarn"

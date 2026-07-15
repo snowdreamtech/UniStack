@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   Low-level Docker container orchestration.
-#   Uses the 'community.docker.docker_container' module to manage 
+#   Uses the 'community.docker.docker_container' module to manage
 #   the full lifecycle of a single container instance.
 #
 # Simple Usage:
@@ -35,7 +35,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Validation: Ensure mandatory input fields for the Docker engine 
+# Validation: Ensure mandatory input fields for the Docker engine
 # are correctly provided and non-empty.
 # ---------------------------------------------------------------------
 - name: "Assert container_name for Docker"
@@ -46,13 +46,13 @@
       - (container_name | length) > 0
     fail_msg: |
       docker_container_loader parameter validation failed:
-      
+
       Required parameter 'container_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ container_name | default('UNDEFINED') | type_debug }}
         - Value: {{ container_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "container"
@@ -68,12 +68,12 @@
       - container_state in ['present', 'started', 'stopped', 'restarted', 'absent']
     fail_msg: |
       docker_container_loader parameter validation failed:
-      
+
       Parameter 'container_state' must be one of: present, started, stopped, restarted, absent.
-      
+
       Received:
         - Value: {{ container_state | default('present') }}
-      
+
       State descriptions:
         - present: Create container
         - started: Start container
@@ -82,9 +82,8 @@
         - absent: Remove container
     success_msg: "docker_container_loader: container_state validated ({{ container_state }})"
 
-
 # ---------------------------------------------------------------------
-# Execution Phase: Invoke the Docker container module with all 
+# Execution Phase: Invoke the Docker container module with all
 # mapped variables to reach the desired state.
 # ---------------------------------------------------------------------
 - name: "Manage Docker container"

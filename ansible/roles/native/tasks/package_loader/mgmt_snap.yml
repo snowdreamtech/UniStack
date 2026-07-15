@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Snap): Auto-install Snapd if requested"
   ansible.builtin.package:
     name: "snapd"

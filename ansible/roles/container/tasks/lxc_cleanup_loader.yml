@@ -77,4 +77,3 @@
   register: lxc_cleanup_pidlock
   changed_when: false
   failed_when: false
-

@@ -9,8 +9,10 @@
 # Execution: Portage (Emerge) Binary Branch
 # ---------------------------------------------------------------------
 
-# WHY: Emerge is the core of Gentoo. We use the community-maintained 
+# WHY: Emerge is the core of Gentoo. We use the community-maintained
 # portage module for reliable state management.
+
+---
 - name: "Package (Gentoo): Portage execution"
   community.general.portage:
     package: "{{ pkg_repo_list }}"
@@ -39,7 +41,7 @@
 # Execution: Source Branch
 # ---------------------------------------------------------------------
 
-# WHY: While Gentoo is already source-based, we provide the manual 
+# WHY: While Gentoo is already source-based, we provide the manual
 # source-builder to handle packages outside the official tree.
 - ansible.builtin.include_tasks: "source_builder.yml"
   when: (pkg_src_list | length) > 0

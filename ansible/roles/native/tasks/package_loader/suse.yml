@@ -9,8 +9,10 @@
 # Execution: Zypper Binary Branch
 # ---------------------------------------------------------------------
 
-# WHY: Zypper is the native package manager for SUSE. We handle 
+# WHY: Zypper is the native package manager for SUSE. We handle
 # repositories, local RPMs, and URLs.
+
+---
 - name: "Package (SUSE): Zypper execution"
   community.general.zypper:
     name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"

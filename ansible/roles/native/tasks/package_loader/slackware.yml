@@ -10,8 +10,10 @@
 # Execution: Classic Slackware Branch
 # ---------------------------------------------------------------------
 
-# WHY: Slackware is the oldest surviving Linux distribution. 
+# WHY: Slackware is the oldest surviving Linux distribution.
 # We use the community-maintained slackpkg module if available.
+
+---
 - name: "Package (Slackware): slackpkg execution"
   community.general.slackpkg:
     name: "{{ pkg_item }}"

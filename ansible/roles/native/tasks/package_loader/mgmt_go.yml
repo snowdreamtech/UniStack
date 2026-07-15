@@ -30,6 +30,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert (Auto-install Go is too heavy/impactful for a pkg loader, we assert only)
+
+---
 - name: "Package (Go): Verify Go presence"
   ansible.builtin.assert:
     that: "is_go_installed | bool"

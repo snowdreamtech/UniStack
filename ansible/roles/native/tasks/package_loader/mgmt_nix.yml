@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Nix): Auto-install Nix if requested"
   ansible.builtin.shell: "PATH={{ os_paths }} curl -L https://nixos.org/nix/install | sh"
   become: false

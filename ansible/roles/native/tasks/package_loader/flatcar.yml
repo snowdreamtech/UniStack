@@ -7,8 +7,10 @@
 # =====================================================================
 
 # WHY: Flatcar is immutable and doesn't have a traditional package manager.
-# However, it provides 'toolbox' or can build from source. 
+# However, it provides 'toolbox' or can build from source.
 # We primarily support its source-building capability for custom tools.
+
+---
 - name: "Package (Flatcar): Identifying immutable environment"
   ansible.builtin.debug:
     msg: "Flatcar is an immutable system. Prefer containers for apps. Using source-builder for native tools."

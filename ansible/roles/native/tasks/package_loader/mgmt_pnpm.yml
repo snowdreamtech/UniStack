@@ -30,6 +30,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (PNPM): Auto-install PNPM via NPM if requested"
   community.general.npm:
     name: "pnpm"

@@ -7,6 +7,8 @@
 # =====================================================================
 
 # WHY: Alt Linux is unique for using 'apt-get' style commands with RPMs.
+
+---
 - name: "Package (AltLinux): apt-rpm execution"
   ansible.builtin.shell: "apt-get install -y {{ pkg_item }}"
   loop: "{{ pkg_repo_list }}"

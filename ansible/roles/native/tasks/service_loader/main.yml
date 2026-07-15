@@ -31,6 +31,8 @@
 
 # WHY: Ensure mandatory service identity is provided before proceeding.
 # Adding tags: ["always"] to ensure validation runs even when using filters.
+
+---
 - ansible.builtin.assert:
     that:
       - service_name is defined
@@ -68,7 +70,7 @@
 # --- Dispatch ---
 # ---------------------------------------------------------------------
 
-# WHY: Delegate to the distribution-specific loader while keeping this 
+# WHY: Delegate to the distribution-specific loader while keeping this
 # entry point generic and lean.
 - ansible.builtin.include_role:
     name: "core"

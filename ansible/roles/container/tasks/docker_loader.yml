@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Advanced Docker container lifecycle management engine.
-#   Provides a high-performance interface to 'community.docker.docker_container' 
-#   with pre-flight availability checks, explicit CLI image pulling, 
+#   Provides a high-performance interface to 'community.docker.docker_container'
+#   with pre-flight availability checks, explicit CLI image pulling,
 #   and comprehensive parameter mapping for enterprise environments.
 #
 # Simple Usage:
@@ -43,7 +43,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Validation: Ensure that the minimum required parameters are 
+# Validation: Ensure that the minimum required parameters are
 # provided before attempting deployment.
 # ---------------------------------------------------------------------
 - name: "Assert docker_name for Docker"
@@ -54,13 +54,13 @@
       - (docker_name | length) > 0
     fail_msg: |
       docker_loader parameter validation failed:
-      
+
       Required parameter 'docker_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ docker_name | default('UNDEFINED') | type_debug }}
         - Value: {{ docker_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "container"
@@ -78,12 +78,12 @@
       - docker_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
     fail_msg: |
       docker_loader parameter validation failed:
-      
+
       Parameter 'docker_state' must be one of: present, absent, restarted, stopped.
-      
+
       Received:
         - Value: {{ docker_state | default('present') }}
-      
+
       State descriptions:
         - present: Create and start container
         - absent: Remove container
@@ -93,7 +93,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Normalization: Aggregate and sanitize container parameters to ensure 
+# Normalization: Aggregate and sanitize container parameters to ensure
 # they conform to the expectations of the Docker module.
 # ---------------------------------------------------------------------
 - name: "Reset Docker Engine variables"
@@ -157,20 +157,20 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Pre-flight: Verify that the Docker Engine is active and responding 
+# Pre-flight: Verify that the Docker Engine is active and responding
 # on the target host.
 # ---------------------------------------------------------------------
 - name: "Check Docker Engine availability"
   ansible.builtin.command: "docker version --format '{{ '{{.Server.Version}}' }}'"
   register: docker_check
-  failed_when: 
+  failed_when:
     - docker_check.rc != 0
   changed_when: false
   become: "{{ become_enabled }}"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Dependency: Pull the requested Docker image using the CLI to 
+# Dependency: Pull the requested Docker image using the CLI to
 # ensure precise control over platform and output.
 # ---------------------------------------------------------------------
 - name: "Pull Docker image"
@@ -188,7 +188,7 @@
   become: "{{ become_enabled }}"
 
 # ---------------------------------------------------------------------
-# Execution: Perform the actual Docker container operation. 
+# Execution: Perform the actual Docker container operation.
 # This handles the full lifecycle using the community.docker collection.
 # ---------------------------------------------------------------------
 - name: "Manage Docker container"

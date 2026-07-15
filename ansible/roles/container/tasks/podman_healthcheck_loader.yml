@@ -97,4 +97,3 @@
   register: podman_policy_check
   changed_when: false
   failed_when: false
-

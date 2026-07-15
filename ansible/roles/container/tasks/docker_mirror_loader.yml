@@ -42,9 +42,9 @@
       - docker_registry_mirrors is defined
     fail_msg: |
       docker_mirror_loader validation failed:
-      
+
       Required parameter 'docker_registry_mirrors' must be defined.
-      
+
       Received:
         - Type: {{ docker_registry_mirrors | default('UNDEFINED') | type_debug }}
         - Value: {{ docker_registry_mirrors | default('UNDEFINED') }}
@@ -72,7 +72,7 @@
   ansible.builtin.file:
     path: /etc/docker
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Write daemon.json
@@ -82,7 +82,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/docker/daemon.json
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "registry-mirrors": [
@@ -103,4 +103,3 @@
     name: "docker"
     state: restarted
   when: docker_mirror_write.changed
-

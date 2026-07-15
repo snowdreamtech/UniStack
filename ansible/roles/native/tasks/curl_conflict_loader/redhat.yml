@@ -3,15 +3,17 @@
 #
 # Purpose:
 #   Resolve core package conflicts on Enterprise Linux 9 (EL9).
-#   Specifically handles the 'curl-minimal' vs 'curl' overlap by 
+#   Specifically handles the 'curl-minimal' vs 'curl' overlap by
 #   swapping the minimal variant for the full version using DNF.
 #
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Detection: Gather currently installed package facts to identify 
+# Detection: Gather currently installed package facts to identify
 # existing variants.
 # ---------------------------------------------------------------------
+
+---
 - name: "Ensure package facts are collected"
   ansible.builtin.package_facts:
     manager: "auto"
@@ -27,7 +29,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Execution: Perform the package swap using DNF. 
+# Execution: Perform the package swap using DNF.
 # Only triggers on EL9 systems where curl-minimal exists without curl.
 # ---------------------------------------------------------------------
 - name: "Swap curl-minimal to curl when needed"

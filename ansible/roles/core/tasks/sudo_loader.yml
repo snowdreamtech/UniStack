@@ -3,7 +3,7 @@
 #
 # Purpose:
 #   Detection for the 'sudo' utility on managed hosts.
-#   Exposing the 'sudo_available' boolean fact for use in privilege 
+#   Exposing the 'sudo_available' boolean fact for use in privilege
 #   escalation logic and conditional tasks.
 #
 # Simple Usage:
@@ -22,9 +22,11 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Detection: Execute a POSIX-compliant check for the sudo binary 
+# Detection: Execute a POSIX-compliant check for the sudo binary
 # on the target host.
 # ---------------------------------------------------------------------
+
+---
 - name: "Detect sudo availability"
   ansible.builtin.shell: "PATH={{ os_paths | default('/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', true) }} command -v sudo 2>/dev/null || true"
   register: sudo_check
@@ -43,7 +45,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# Validation: Ensure the fact was correctly initialized to prevent 
+# Validation: Ensure the fact was correctly initialized to prevent
 # undefined variable errors in downstream tasks.
 # ---------------------------------------------------------------------
 - name: "Validate sudo_available"

@@ -10,6 +10,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: FreeBSD uses 'pkg' for binary management.
+
+---
 - name: "Package (FreeBSD): PKG execution"
   community.general.pkgng:
     name: "{{ pkg_repo_list }}"
@@ -38,7 +40,7 @@
 # Execution: Source Branch
 # ---------------------------------------------------------------------
 
-# WHY: FreeBSD is famous for its Ports system, but here we provide a 
+# WHY: FreeBSD is famous for its Ports system, but here we provide a
 # generic source build capability compatible with our builder.
 - ansible.builtin.include_tasks: "source_builder.yml"
   when: (pkg_src_list | length) > 0

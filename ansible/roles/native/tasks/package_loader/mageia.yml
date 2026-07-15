@@ -11,6 +11,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: urpmi is the classic manager for Mandriva derivatives.
+
+---
 - name: "Package (Mageia): urpmi execution"
   community.general.urpmi:
     name: "{{ pkg_repo_list }}"

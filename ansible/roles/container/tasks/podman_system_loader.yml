@@ -43,9 +43,9 @@
       - system_action in ['info', 'df', 'prune']
     fail_msg: |
       podman_system_loader validation failed:
-      
+
       Parameter 'system_action' must be one of: info, df, prune.
-      
+
       Received:
         - Value: {{ system_action | default('UNDEFINED') }}
     success_msg: "podman_system_loader: system_action validated ({{ system_action }})"
@@ -95,4 +95,3 @@
   when: system_action == 'prune'
   register: podman_prune_result
   changed_when: "'Reclaimed' in podman_prune_result.stdout"
-

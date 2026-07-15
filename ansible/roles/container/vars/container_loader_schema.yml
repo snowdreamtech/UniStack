@@ -5,6 +5,7 @@
 #   Definition of the Container Loader variable schema.
 # =====================================================================
 
+---
 container_loader_api_vars:
   # Internal State
   - detected_engine
@@ -57,7 +58,7 @@ container_loader_internal_vars:
   # Internal state
   - detected_engine
   - container_result
-  
+
   # Normalized container configuration (computed from container_app_*)
   - container_name
   - container_image

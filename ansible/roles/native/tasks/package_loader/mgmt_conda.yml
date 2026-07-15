@@ -31,6 +31,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (Conda): Verify Conda presence"
   ansible.builtin.assert:
     that: "is_conda_installed | bool"

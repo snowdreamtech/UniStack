@@ -39,9 +39,9 @@
       - crio_sys_action in ['info', 'stats', 'prune']
     fail_msg: |
       crio_system_loader validation failed:
-      
+
       Parameter 'crio_sys_action' must be one of: info, stats, prune.
-      
+
       Received:
         - Value: {{ crio_sys_action | default('UNDEFINED') }}
     success_msg: "crio_system_loader: crio_sys_action validated ({{ crio_sys_action }})"
@@ -91,4 +91,3 @@
     'Deleted' in crio_prune_result.stdout
     or 'deleted' in crio_prune_result.stdout
     or 'Freed space' in crio_prune_result.stdout
-

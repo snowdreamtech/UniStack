@@ -29,4 +29,6 @@
 
 # WHY: Solaris exclusively uses the Service Management Facility (SMF).
 # We delegate to the specialized smf loader.
+
+---
 - ansible.builtin.include_tasks: "smf.yml"

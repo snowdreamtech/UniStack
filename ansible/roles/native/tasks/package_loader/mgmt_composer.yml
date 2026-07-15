@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Composer): Auto-install Composer if requested"
   ansible.builtin.package:
     name: "composer"

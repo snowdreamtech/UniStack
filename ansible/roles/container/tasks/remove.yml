@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   Simplified interface for removing application containers.
-#   Uses the engine-specific loader (Docker, Podman, Crio, LXC) to 
+#   Uses the engine-specific loader (Docker, Podman, Crio, LXC) to
 #   ensure clean termination and removal of managed containers.
 #
 # Simple Usage:

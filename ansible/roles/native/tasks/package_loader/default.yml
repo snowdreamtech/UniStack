@@ -10,8 +10,10 @@
 # Execution: Binary Branch (Repo + File + URL)
 # ---------------------------------------------------------------------
 
-# WHY: We use the standardized 'package' module which works across 
+# WHY: We use the standardized 'package' module which works across
 # most modern Linux distributions (SVR4, etc.).
+
+---
 - name: "Package (Generic): Unified execution"
   ansible.builtin.package:
     name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"
@@ -42,4 +44,3 @@
 # ---------------------------------------------------------------------
 - ansible.builtin.include_tasks: "source_builder.yml"
   when: (pkg_src_list | length) > 0
-

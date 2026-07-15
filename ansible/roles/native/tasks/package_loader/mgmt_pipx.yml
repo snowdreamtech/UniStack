@@ -31,6 +31,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert (Pipx should be installed via system package manager)
+
+---
 - name: "Package (Pipx): Verify Pipx presence"
   ansible.builtin.assert:
     that: "is_pipx_installed | bool"

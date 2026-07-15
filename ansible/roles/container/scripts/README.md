@@ -108,18 +108,21 @@ pwsh generate_kb_entry.ps1 kafka:latest 1000 1000
 ## 🔧 Technical Features
 
 ### Shell Scripts (`.sh`)
+
 - ✅ **POSIX sh Compatible** - No Bash dependency
 - ✅ **Lightweight & Efficient** - Minimal dependencies
 - ✅ **Cross-platform** - macOS/Linux/WSL/Git Bash
 - ✅ **Smart Colors** - Auto-detect terminal support
 
 ### CMD Batch (`.cmd`)
+
 - ✅ **Windows Native** - No additional installation
 - ✅ **Wide Compatibility** - Windows XP to Windows 11
 - ✅ **Simple & Direct** - Batch scripting syntax
 - ⚠️ **Limited Features** - Weak error handling
 
 ### PowerShell (`.ps1`)
+
 - ✅ **Modern** - Powerful object handling
 - ✅ **Cross-platform** - PowerShell Core 7+
 - ✅ **Error Handling** - Detailed exception information
@@ -131,19 +134,23 @@ pwsh generate_kb_entry.ps1 kafka:latest 1000 1000
 ## ⚙️ System Requirements
 
 ### Common Requirements for All Versions
+
 - Docker installed and running
 - Network connection (for pulling images)
 
 ### Shell Scripts (`.sh`)
+
 - **macOS**: Built-in `/bin/sh`
 - **Linux**: POSIX sh (dash/bash/ash)
 - **Windows**: Git Bash / WSL / MSYS2
 
 ### CMD Batch (`.cmd`)
+
 - **Windows**: XP / Vista / 7 / 8 / 10 / 11
 - **Command Prompt**: `cmd.exe`
 
 ### PowerShell (`.ps1`)
+
 - **Windows**: PowerShell 5.1+ (built-in on Windows 10+)
 - **Cross-platform**: PowerShell Core 7+ (requires separate installation)
 - **macOS/Linux**: `brew install powershell` or `snap install powershell`
@@ -210,16 +217,19 @@ generate_kb_entry.cmd alpine:latest 0 0
 ## 📝 Important Notes
 
 ### Windows Path Issues
+
 - **CMD**: Use backslashes `\` (e.g., `C:\path\to\file`)
 - **PowerShell**: Supports both forward `/` and backslashes `\`
 - **Shell (Git Bash/WSL)**: Use forward slashes `/` (e.g., `/c/path/to/file`)
 
 ### Line Ending Issues
+
 - **Windows**: CRLF (`\r\n`)
 - **macOS/Linux**: LF (`\n`)
 - All scripts handle cross-platform line ending compatibility
 
 ### Docker Desktop for Windows
+
 - CMD and PowerShell scripts require Docker Desktop running
 - WSL users can use Shell scripts to access Docker
 

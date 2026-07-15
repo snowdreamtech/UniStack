@@ -10,8 +10,10 @@
 # Execution: Native Bundle Branch
 # ---------------------------------------------------------------------
 
-# WHY: Clear Linux manages software as 'bundles' rather than 
+# WHY: Clear Linux manages software as 'bundles' rather than
 # individual packages for optimized performance.
+
+---
 - name: "Package (ClearLinux): swupd execution"
   community.general.swupd:
     name: "{{ pkg_item }}"

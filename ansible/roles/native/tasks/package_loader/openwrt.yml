@@ -10,8 +10,10 @@
 # Execution: Native OPKG Branch
 # ---------------------------------------------------------------------
 
-# WHY: OpenWrt is used in resource-constrained environments. 
+# WHY: OpenWrt is used in resource-constrained environments.
 # opkg is the standard lightweight package manager.
+
+---
 - name: "Package (OpenWrt): opkg execution"
   community.general.opkg:
     name: "{{ pkg_repo_list }}"

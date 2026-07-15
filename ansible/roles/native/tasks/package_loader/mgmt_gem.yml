@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (Gem): Auto-install Ruby/Gem if requested"
   ansible.builtin.package:
     name: "ruby"

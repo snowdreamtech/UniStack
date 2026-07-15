@@ -21,6 +21,7 @@
 #
 # =====================================================================
 
+---
 - name: "Configure APK repository {{ repo_name | default('', true) }}"
   ansible.builtin.lineinfile:
     path: "/etc/apk/repositories"

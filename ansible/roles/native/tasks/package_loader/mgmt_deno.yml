@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (Deno): Verify Deno presence"
   ansible.builtin.assert:
     that: "is_deno_installed | bool"

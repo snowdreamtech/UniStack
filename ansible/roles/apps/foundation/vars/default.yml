@@ -1,25 +1,26 @@
+---
 init_openssh_packages:
-- openssh-server
-- openssh-clients
+  - openssh-server
+  - openssh-clients
 init_sshd_service: sshd
-init_sshd_use_pam: 'yes'
+init_sshd_use_pam: "yes"
 base_dev_packages: []
 foundation_packages:
-- bzip2
-- ca-certificates
-- curl
-- file
-- git
-- gnupg
-- gzip
-- jq
-- lsof
-- openssl
-- procps
-- sudo
-- tzdata
-- unzip
-- vim
-- wget
-- xz
-- zip
+  - bzip2
+  - ca-certificates
+  - curl
+  - file
+  - git
+  - gnupg
+  - gzip
+  - jq
+  - lsof
+  - openssl
+  - procps
+  - sudo
+  - tzdata
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip

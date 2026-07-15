@@ -24,9 +24,9 @@
       - (kube_manifest | length) > 0
     fail_msg: |
       kubectl_loader validation failed:
-      
+
       Required parameter 'kube_manifest' must be a non-empty string.
-      
+
       Received:
         - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
         - Value: {{ kube_manifest | default('UNDEFINED') }}
@@ -47,7 +47,7 @@
 
 # ---------------------------------------------------------------------
 # Execution: Rollout restart (restarted)
-# Note: For 'restarted' state, we still use kubectl rollout restart 
+# Note: For 'restarted' state, we still use kubectl rollout restart
 # as it is an imperative action not natively mapped to a simple state.
 # ---------------------------------------------------------------------
 - name: "Rollout restart Kubernetes workload"
@@ -69,4 +69,3 @@
       action={{ kube_state | default('present', true) }}
       manifest='{{ kube_manifest }}'
       changed={{ k8s_module_result.changed | default(true, true) }}
-

@@ -48,9 +48,9 @@
       - (kube_manifest | length) > 0
     fail_msg: |
       podman_kube_loader validation failed:
-      
+
       Required parameter 'kube_manifest' must be a non-empty string.
-      
+
       Received:
         - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
         - Value: {{ kube_manifest | default('UNDEFINED') }}
@@ -62,9 +62,9 @@
       - kube_state in ['present', 'absent', 'restarted']
     fail_msg: |
       podman_kube_loader validation failed:
-      
+
       Parameter 'kube_state' must be one of: present, absent, restarted.
-      
+
       Received:
         - Value: {{ kube_state | default('present') }}
     success_msg: "podman_kube_loader: kube_state validated ({{ kube_state }})"
@@ -94,9 +94,9 @@
       - kube_manifest_stat.stat.exists
     fail_msg: |
       podman_kube_loader validation failed:
-      
+
       Manifest file does not exist.
-      
+
       File path: {{ kube_manifest }}
     success_msg: "podman_kube_loader: manifest file exists ({{ kube_manifest }})"
   tags: ["always"]
@@ -137,4 +137,3 @@
   when: kube_state == 'restarted'
   register: kube_restart_apply_result
   changed_when: "'Created' in kube_restart_apply_result.stdout or 'Replaced' in kube_restart_apply_result.stdout"
-

@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Auto-install or Assert
+
+---
 - name: "Package (NPM): Auto-install NodeJS/NPM if requested"
   ansible.builtin.package:
     name: "nodejs"

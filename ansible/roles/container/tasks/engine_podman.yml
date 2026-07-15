@@ -4,9 +4,9 @@
 #
 # Purpose:
 #   Podman-specific mapping layer.
-#   Transfers generic application variables (starting with 'container_app_') 
+#   Transfers generic application variables (starting with 'container_app_')
 #   to internal 'container_' variables used by the Podman container loader.
-#   Ensures that Podman-specific nuances (like rootless execution) can 
+#   Ensures that Podman-specific nuances (like rootless execution) can
 #   be handled downstream.
 #
 # Simple Usage:
@@ -25,7 +25,7 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Variable Mapping: Bridge application-level inputs to the low-level 
+# Variable Mapping: Bridge application-level inputs to the low-level
 # podman_container_loader variables.
 # ---------------------------------------------------------------------
 - name: "Deploy app using Podman"

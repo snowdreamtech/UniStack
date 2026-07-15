@@ -108,18 +108,21 @@ pwsh generate_kb_entry.ps1 kafka:latest 1000 1000
 ## 🔧 技术特性
 
 ### Shell 脚本 (`.sh`)
+
 - ✅ **POSIX sh 兼容** - 不依赖 Bash
 - ✅ **轻量高效** - 最小依赖
 - ✅ **跨平台** - macOS/Linux/WSL/Git Bash
 - ✅ **智能颜色** - 自动检测终端支持
 
 ### CMD 批处理 (`.cmd`)
+
 - ✅ **Windows 原生** - 无需额外安装
 - ✅ **广泛兼容** - Windows XP 到 Windows 11
 - ✅ **简单直接** - 批处理语法
 - ⚠️ **功能有限** - 错误处理较弱
 
 ### PowerShell (`.ps1`)
+
 - ✅ **现代化** - 强大的对象处理
 - ✅ **跨平台** - PowerShell Core 7+
 - ✅ **错误处理** - 详细的异常信息
@@ -131,19 +134,23 @@ pwsh generate_kb_entry.ps1 kafka:latest 1000 1000
 ## ⚙️ 系统要求
 
 ### 所有版本通用要求
+
 - Docker 已安装并运行
 - 网络连接（用于拉取镜像）
 
 ### Shell 脚本 (`.sh`)
+
 - **macOS**: 内置 `/bin/sh`
 - **Linux**: POSIX sh (dash/bash/ash)
 - **Windows**: Git Bash / WSL / MSYS2
 
 ### CMD 批处理 (`.cmd`)
+
 - **Windows**: XP / Vista / 7 / 8 / 10 / 11
 - **命令提示符**: `cmd.exe`
 
 ### PowerShell (`.ps1`)
+
 - **Windows**: PowerShell 5.1+ (内置于 Windows 10+)
 - **跨平台**: PowerShell Core 7+ (需单独安装)
 - **macOS/Linux**: `brew install powershell` 或 `snap install powershell`
@@ -210,16 +217,19 @@ generate_kb_entry.cmd alpine:latest 0 0
 ## 📝 注意事项
 
 ### Windows 路径问题
+
 - **CMD**: 使用反斜杠 `\` (如 `C:\path\to\file`)
 - **PowerShell**: 支持正斜杠 `/` 和反斜杠 `\`
 - **Shell (Git Bash/WSL)**: 使用正斜杠 `/` (如 `/c/path/to/file`)
 
 ### 换行符问题
+
 - **Windows**: CRLF (`\r\n`)
 - **macOS/Linux**: LF (`\n`)
 - 所有脚本已处理跨平台换行符兼容性
 
 ### Docker Desktop for Windows
+
 - CMD 和 PowerShell 脚本需要 Docker Desktop 运行
 - WSL 用户可以使用 Shell 脚本访问 Docker
 

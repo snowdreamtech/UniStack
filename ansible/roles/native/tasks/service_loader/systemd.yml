@@ -28,6 +28,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Ensure mandatory service identity is provided before proceeding.
+
+---
 - ansible.builtin.assert:
     that:
       - service_name is defined
@@ -92,7 +94,7 @@
 - name: "Service (Systemd): Daemon reload"
   ansible.builtin.systemd:
     daemon_reload: true
-  when: 
+  when:
     - _service_unit_exists | default(false) | bool
     - (service_state | default('started', true)) != 'stopped'
   become: "{{ become_enabled | default(false, true) | bool }}"

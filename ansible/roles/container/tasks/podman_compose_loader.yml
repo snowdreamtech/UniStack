@@ -3,8 +3,8 @@
 # roles/container/tasks/podman_compose_loader.yml
 #
 # Purpose:
-#   Enterprise-grade loader for managing Podman Compose projects using 
-#   podman-compose. Supports stack orchestration (up/down/restart) with 
+#   Enterprise-grade loader for managing Podman Compose projects using
+#   podman-compose. Supports stack orchestration (up/down/restart) with
 #   integrated audit logging and cross-distribution consistency.
 #
 # Simple Usage:
@@ -42,9 +42,9 @@
       - (compose_project_src | trim | length) > 0
     fail_msg: |
       podman_compose_loader validation failed:
-      
+
       Required parameter 'compose_project_src' must be a non-empty string.
-      
+
       Received:
         - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
         - Value: {{ compose_project_src | default('UNDEFINED') }}
@@ -56,9 +56,9 @@
       - compose_state | default('present', true) in ['present', 'absent', 'restarted']
     fail_msg: |
       podman_compose_loader validation failed:
-      
+
       Parameter 'compose_state' must be one of: present, absent, restarted.
-      
+
       Received:
         - Value: {{ compose_state | default('present') }}
     success_msg: "podman_compose_loader: compose_state validated ({{ compose_state | default('present') }})"
@@ -112,7 +112,7 @@
         {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
       )
     }}
-  when: 
+  when:
     - compose_state == 'present'
   register: compose_up_result
   changed_when: "'Creating' in compose_up_result.stdout or 'Recreating' in compose_up_result.stdout"
@@ -136,7 +136,7 @@
         {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
       )
     }}
-  when: 
+  when:
     - compose_state in ['absent', 'restarted']
   register: compose_down_result
   changed_when: "'Stopping' in compose_down_result.stdout or 'Removing' in compose_down_result.stdout"
@@ -160,7 +160,7 @@
         {'PODMAN_COMPOSE_ENV_FILE': compose_env_file} if (compose_env_file is defined and compose_env_file | length > 0) else {}
       )
     }}
-  when: 
+  when:
     - compose_state == 'restarted'
   register: compose_restart_up_result
   changed_when: "'Creating' in compose_restart_up_result.stdout or 'Recreating' in compose_restart_up_result.stdout"

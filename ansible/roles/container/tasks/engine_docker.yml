@@ -4,7 +4,7 @@
 #
 # Purpose:
 #   Docker-specific mapping layer.
-#   Transfers generic application variables (starting with 'container_app_') 
+#   Transfers generic application variables (starting with 'container_app_')
 #   to internal 'container_' variables used by the Docker container loader.
 #
 # Simple Usage:
@@ -26,8 +26,8 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Variable Mapping: Bridge application-level inputs to the low-level 
-# docker_container_loader variables. This decouples the public API 
+# Variable Mapping: Bridge application-level inputs to the low-level
+# docker_container_loader variables. This decouples the public API
 # from the internal implementation.
 # ---------------------------------------------------------------------
 - name: "Deploy app using Docker"

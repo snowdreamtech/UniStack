@@ -3,8 +3,8 @@
 # roles/container/tasks/main.yml
 #
 # Purpose:
-#   Entry point for the containerized deployment layer. 
-#   This file routes the application state to the container_loader 
+#   Entry point for the containerized deployment layer.
+#   This file routes the application state to the container_loader
 #   for execution and logs the routing event for audit purposes.
 #
 # Simple Usage:

@@ -59,4 +59,3 @@
   register: crio_cni_check
   changed_when: false
   failed_when: false
-

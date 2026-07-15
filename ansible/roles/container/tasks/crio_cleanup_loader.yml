@@ -58,4 +58,3 @@
   register: crio_cleanup_cni
   changed_when: false
   failed_when: false
-

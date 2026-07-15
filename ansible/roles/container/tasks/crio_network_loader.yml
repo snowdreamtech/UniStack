@@ -33,7 +33,7 @@
   ansible.builtin.file:
     path: /etc/cni/net.d
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Write CNI conflist
@@ -43,7 +43,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: "/etc/cni/net.d/87-{{ crio_cni_name }}-bridge.conflist"
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "cniVersion": "0.4.0",
@@ -62,4 +62,3 @@
         ]
       }
   register: crio_cni_write
-

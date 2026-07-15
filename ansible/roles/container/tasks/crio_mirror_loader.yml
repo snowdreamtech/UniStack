@@ -23,9 +23,9 @@
       - crio_registry_mirrors is defined
     fail_msg: |
       crio_mirror_loader validation failed:
-      
+
       Required parameter 'crio_registry_mirrors' must be defined.
-      
+
       Received:
         - Type: {{ crio_registry_mirrors | default('UNDEFINED') | type_debug }}
         - Value: {{ crio_registry_mirrors | default('UNDEFINED') }}
@@ -53,7 +53,7 @@
   ansible.builtin.file:
     path: /etc/containers
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Write registries.conf
@@ -63,7 +63,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/registries.conf
-    mode: '0644'
+    mode: "0644"
     content: |
       unqualified-search-registries = ["docker.io"]
 
@@ -76,4 +76,3 @@
       location = "{{ m }}"
       {% endfor %}
   register: crio_mirror_write
-

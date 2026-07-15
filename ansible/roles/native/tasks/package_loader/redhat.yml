@@ -29,9 +29,11 @@
 # Execution: DNF/YUM Binary Branch
 # ---------------------------------------------------------------------
 
-# WHY: DNF efficiently handles standard names, local paths, and URLs 
+# WHY: DNF efficiently handles standard names, local paths, and URLs
 # in the 'name' parameter. We combine Repo, File, and URL lists.
 # For Atomic systems (Silverblue/Kinoite), we use rpm_ostree_pkg.
+
+---
 - name: "Package (RedHat): Execution branch"
   block:
     - name: "Package (RedHat): rpm-ostree layering"
@@ -68,12 +70,11 @@
       ansible.builtin.set_fact:
         package_result: "{{ package_result_ostree if (package_result_ostree is defined and not (package_result_ostree.skipped | default(false))) else package_result_dnf }}"
       tags: ["always"]
-    
+
   become: "{{ become_enabled }}"
   when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
   vars:
     fingerprint: "package_rh_exec_{{ package_name | default('unknown', true) }}"
-
 
 # ---------------------------------------------------------------------
 # Execution: Source Branch

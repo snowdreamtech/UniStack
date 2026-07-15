@@ -6,8 +6,10 @@
 #   Uses its unique approach to handle PET packages.
 # =====================================================================
 
-# WHY: Puppy Linux is a legendary lightweight distro. 
+# WHY: Puppy Linux is a legendary lightweight distro.
 # We use the shell to call its native package helper.
+
+---
 - name: "Package (Puppy): execution"
   ansible.builtin.shell: "pkg add {{ pkg_item }}"
   loop: "{{ pkg_repo_list }}"

@@ -9,8 +9,10 @@
 # Execution: Image Packaging System (IPS) Branch
 # ---------------------------------------------------------------------
 
-# WHY: Modern Solaris (11+) uses IPS. We handle standard repository 
+# WHY: Modern Solaris (11+) uses IPS. We handle standard repository
 # packages for enterprise environments.
+
+---
 - name: "Package (Solaris): IPS execution"
   community.general.pkg5:
     name: "{{ pkg_repo_list }}"

@@ -11,6 +11,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: NetBSD aims for portability. 'pkgin' is the binary manager.
+
+---
 - name: "Package (NetBSD): pkgin execution"
   community.general.pkgin:
     name: "{{ pkg_repo_list }}"

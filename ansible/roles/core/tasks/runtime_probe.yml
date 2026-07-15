@@ -3,7 +3,7 @@
 #
 # Purpose:
 #   Detection for container runtimes (Docker/Podman) on managed hosts.
-#   Exposing the 'container_engine_available' boolean fact for use in 
+#   Exposing the 'container_engine_available' boolean fact for use in
 #   the 'auto' app delivery mode dispatch logic.
 #
 # Simple Usage:
@@ -16,6 +16,8 @@
 # ---------------------------------------------------------------------
 # Detection: Check for docker or podman binary
 # ---------------------------------------------------------------------
+
+---
 - name: "Detect container runtime availability"
   ansible.builtin.shell: "PATH={{ os_paths | default('/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin', true) }} command -v docker podman 2>/dev/null || true"
   register: runtime_check

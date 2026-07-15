@@ -28,6 +28,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Reset functional variables to prevent pollution between iterations.
+
+---
 - name: "Service (macOS): Reset loader variables"
   ansible.builtin.set_fact:
     _service_mgr_target: null

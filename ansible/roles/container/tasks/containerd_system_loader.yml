@@ -3,9 +3,9 @@
 # roles/container/tasks/containerd_system_loader.yml
 #
 # Purpose:
-#   Enterprise-grade loader for managing containerd system-level 
+#   Enterprise-grade loader for managing containerd system-level
 #   operations using nerdctl and containerd CLI.
-#   Provides utilities for auditing (info, df) and maintenance (prune) 
+#   Provides utilities for auditing (info, df) and maintenance (prune)
 #   of the containerd runtime.
 #
 # Simple Usage:
@@ -51,9 +51,9 @@
       - ctr_sys_action in ['info', 'df', 'prune']
     fail_msg: |
       containerd_system_loader validation failed:
-      
+
       Parameter 'ctr_sys_action' must be one of: info, df, prune.
-      
+
       Received:
         - Value: {{ ctr_sys_action | default('UNDEFINED') }}
     success_msg: "containerd_system_loader: ctr_sys_action validated ({{ ctr_sys_action }})"
@@ -70,7 +70,7 @@
 # ---------------------------------------------------------------------
 - name: "Gather containerd/nerdctl info"
   ansible.builtin.command: "nerdctl info"
-  when: 
+  when:
     - ctr_sys_action == 'info'
   register: ctr_info_result
   changed_when: false
@@ -81,7 +81,7 @@
 # ---------------------------------------------------------------------
 - name: "Gather containerd/nerdctl disk usage"
   ansible.builtin.command: "nerdctl system df"
-  when: 
+  when:
     - ctr_sys_action == 'df'
   register: ctr_df_result
   changed_when: false
@@ -93,7 +93,7 @@
 - name: "Prune containerd/nerdctl resources"
   ansible.builtin.command: >-
     nerdctl system prune -f {{ '--all' if ctr_prune_all else '' }}
-  when: 
+  when:
     - ctr_sys_action == 'prune'
   register: ctr_prune_result
   changed_when: "'Reclaimed' in ctr_prune_result.stdout"

@@ -10,10 +10,11 @@
 # Execution: Redirect to RedHat foundation
 # ---------------------------------------------------------------------
 
-# WHY: Amazon Linux (AL2/AL2023) is derivative of RHEL/Fedora. 
-# Reusing the RedHat loader ensures consistency while giving us 
+# WHY: Amazon Linux (AL2/AL2023) is derivative of RHEL/Fedora.
+# Reusing the RedHat loader ensures consistency while giving us
 # a place to add AWS-specific logic like 'amazon-linux-extras'.
-- ansible.builtin.include_tasks: "redhat.yml"
 
-# WHY: Future support for AWS-specific high-level package logic 
+---
+- ansible.builtin.include_tasks: "redhat.yml"
+# WHY: Future support for AWS-specific high-level package logic
 # can be added here (e.g., amazon-linux-extras for AL2).

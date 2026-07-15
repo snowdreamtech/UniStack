@@ -19,11 +19,12 @@
 #
 # =====================================================================
 
-
 # ---------------------------------------------------------------------
-# Invoke the os_loader to select the appropriate conflict resolution 
+# Invoke the os_loader to select the appropriate conflict resolution
 # tasks (redhat/default/etc) based on the target OS.
 # ---------------------------------------------------------------------
+
+---
 - ansible.builtin.include_role:
     name: "core"
     tasks_from: "os_loader"

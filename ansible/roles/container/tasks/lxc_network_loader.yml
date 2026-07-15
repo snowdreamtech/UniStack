@@ -38,9 +38,9 @@
       - (lxc_net_name | length) > 0
     fail_msg: |
       lxc_network_loader validation failed:
-      
+
       Required parameter 'lxc_net_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ lxc_net_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_net_name | default('UNDEFINED') }}
@@ -51,9 +51,9 @@
       - lxc_net_state in ['present', 'absent']
     fail_msg: |
       lxc_network_loader validation failed:
-      
+
       Parameter 'lxc_net_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ lxc_net_state | default('present') }}
     success_msg: "lxc_network_loader: lxc_net_state validated ({{ lxc_net_state }})"
@@ -109,4 +109,3 @@
   register: lxc_net_delete
   changed_when: "lxc_net_delete.rc == 0"
   failed_when: "lxc_net_delete.rc not in [0, 1]"
-

@@ -21,8 +21,8 @@
   ansible.builtin.set_fact:
     detected_engine: >-
       {{
-        container_engine 
-        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit') 
+        container_engine
+        if (container_engine is defined and container_engine | length > 0 and container_engine != 'omit')
         else (container_engine_detected | default('podman', true))
       }}
   tags: ["always"]
@@ -44,12 +44,12 @@
 # ---------------------------------------------------------------------
 - name: "Dispatch to Podman kube loader"
   ansible.builtin.include_tasks: "podman_kube_loader.yml"
-  when: 
+  when:
     - detected_engine == 'podman'
 
 - name: "Dispatch to kubectl loader"
   ansible.builtin.include_tasks: "kubectl_loader.yml"
-  when: 
+  when:
     - detected_engine != 'podman'
     - check_kubectl.rc == 0
 

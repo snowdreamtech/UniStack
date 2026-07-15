@@ -24,6 +24,8 @@
 # =====================================================================
 
 # WHY: Reset functional variables to prevent pollution.
+
+---
 - name: "Service (Upstart): Reset loader variables"
   ansible.builtin.set_fact:
     _upstart_check: null

@@ -29,9 +29,11 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# Invoke the os_loader to select the appropriate repo configuration 
+# Invoke the os_loader to select the appropriate repo configuration
 # tasks (debian/redhat/alpine/darwin) based on the target OS.
 # ---------------------------------------------------------------------
+
+---
 - ansible.builtin.include_role:
     name: "core"
     tasks_from: "os_loader"

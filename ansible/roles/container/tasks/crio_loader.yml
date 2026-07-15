@@ -3,9 +3,9 @@
 # roles/container/tasks/crio_loader.yml
 #
 # Purpose:
-#   Enterprise-grade loader for managing CRI-O runtime resources using 
+#   Enterprise-grade loader for managing CRI-O runtime resources using
 #   crictl on Kubernetes worker/control-plane nodes.
-#   Supports diagnostic and maintenance operations including pull, 
+#   Supports diagnostic and maintenance operations including pull,
 #   ps, images, stop, rm, inspect, and run.
 #
 # Simple Usage:
@@ -57,12 +57,12 @@
       - crio_action in ['pull', 'ps', 'images', 'stop', 'rm', 'inspect', 'run']
     fail_msg: |
       crio_loader parameter validation failed:
-      
+
       Parameter 'crio_action' must be one of: pull, ps, images, stop, rm, inspect, run.
-      
+
       Received:
         - Value: {{ crio_action | default('UNDEFINED') }}
-      
+
       Action descriptions:
         - pull: Pull container image
         - ps: List containers
@@ -118,7 +118,7 @@
 
 - name: "CRI-O list containers"
   ansible.builtin.command: "crictl ps -a"
-  when: 
+  when:
     - crio_action == 'ps'
   register: crio_ps_result
   changed_when: false
@@ -126,7 +126,7 @@
 
 - name: "CRI-O list images"
   ansible.builtin.command: "crictl images"
-  when: 
+  when:
     - crio_action == 'images'
   register: crio_images_result
   changed_when: false
@@ -152,10 +152,10 @@
 
 - name: "CRI-O inspect container/image"
   ansible.builtin.command: >-
-    crictl inspect {{ crio_container_id 
+    crictl inspect {{ crio_container_id
                       if (crio_container_id is defined and crio_container_id | length > 0)
                       else (crio_image | default('', true)) }}
-  when: 
+  when:
     - crio_action == 'inspect'
   register: crio_inspect_result
   changed_when: false

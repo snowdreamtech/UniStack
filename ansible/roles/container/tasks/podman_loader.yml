@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Enterprise-grade universal loader for managing Podman containers.
-#   Provides full lifecycle management (present/absent/restarted) 
-#   supporting advanced parameters like resource limits, network 
+#   Provides full lifecycle management (present/absent/restarted)
+#   supporting advanced parameters like resource limits, network
 #   configurations, and security options.
 #
 # Simple Usage:
@@ -50,13 +50,13 @@
       - (podman_name | trim | length) > 0
     fail_msg: |
       podman_loader parameter validation failed:
-      
+
       Required parameter 'podman_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ podman_name | default('UNDEFINED') | type_debug }}
         - Value: {{ podman_name | default('UNDEFINED') }}
-      
+
       Example usage:
         - ansible.builtin.include_role:
             name: "container"
@@ -73,12 +73,12 @@
       - podman_state | default('present', true) in ['present', 'absent', 'restarted', 'stopped']
     fail_msg: |
       podman_loader parameter validation failed:
-      
+
       Parameter 'podman_state' must be one of: present, absent, restarted, stopped.
-      
+
       Received:
         - Value: {{ podman_state | default('present') }}
-      
+
       State descriptions:
         - present: Create and start container
         - absent: Remove container

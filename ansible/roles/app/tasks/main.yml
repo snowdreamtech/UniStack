@@ -5,7 +5,7 @@
 # Purpose:
 #   Entry point for the unified application deployment API.
 #   This file orchestrates the validation, normalization, and dispatching
-#   of application deployment requests regardless of the underlying 
+#   of application deployment requests regardless of the underlying
 #   technology (container vs. native).
 #
 # Simple Usage:
@@ -65,7 +65,7 @@
 
 # ---------------------------------------------------------------------
 # 1. Unified Loader: Orchestrate the full application lifecycle.
-#    This includes validation, path resolution, variable merging, 
+#    This includes validation, path resolution, variable merging,
 #    task resolution, and final execution/dispatch.
 # ---------------------------------------------------------------------
 - name: "Load application configuration and execute"

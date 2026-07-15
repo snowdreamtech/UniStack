@@ -4,8 +4,8 @@
 #
 # Purpose:
 #   Unified audit log engine for container operations.
-#   Provides structured, labeled output for container deployment 
-#   auditing, ensuring visibility into lifecycle events on the 
+#   Provides structured, labeled output for container deployment
+#   auditing, ensuring visibility into lifecycle events on the
 #   Ansible controller.
 #
 # Simple Usage:

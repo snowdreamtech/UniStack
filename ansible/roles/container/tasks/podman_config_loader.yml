@@ -60,7 +60,7 @@
   ansible.builtin.file:
     path: /etc/containers
     state: directory
-    mode: '0755'
+    mode: "0755"
 
 # ---------------------------------------------------------------------
 # Configure registries.conf
@@ -70,7 +70,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/registries.conf
-    mode: '0644'
+    mode: "0644"
     content: |
       unqualified-search-registries = ["docker.io"]
 
@@ -99,7 +99,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.lineinfile:
     path: /etc/containers/storage.conf
-    regexp: '^driver ='
+    regexp: "^driver ="
     line: 'driver = "overlay"'
   register: podman_storage_write
 
@@ -111,7 +111,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/containers/policy.json
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "default": [
@@ -130,7 +130,7 @@
   become: "{{ become_enabled }}"
   ansible.builtin.copy:
     dest: /etc/cni/net.d/87-podman-bridge.conflist
-    mode: '0644'
+    mode: "0644"
     content: |
       {
         "cniVersion": "0.4.0",
@@ -149,4 +149,3 @@
         ]
       }
   register: podman_cni_write
-

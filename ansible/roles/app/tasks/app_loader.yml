@@ -49,7 +49,6 @@
     label: "reset {{ loader_internal_item }} (null)"
   tags: ["always"]
 
-
 # ---------------------------------------------------------------------
 # 3. Path Resolution & Base Discovery
 #    Identify the source directory for application definitions.
@@ -100,8 +99,8 @@
       ansible.builtin.stat:
         path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}"
       loop:
-        - { path: 'vars', type: 'dir' }
-        - { path: 'tasks', type: 'dir' }
+        - { path: "vars", type: "dir" }
+        - { path: "tasks", type: "dir" }
       loop_control:
         loop_var: loader_item
       register: _app_mod_stat
@@ -114,8 +113,8 @@
       ansible.builtin.stat:
         path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}.yml"
       loop:
-        - { path: 'vars', type: 'file' }
-        - { path: 'tasks', type: 'file' }
+        - { path: "vars", type: "file" }
+        - { path: "tasks", type: "file" }
       loop_control:
         loop_var: loader_item
       register: _app_root_stat
@@ -197,7 +196,7 @@
     family: "{{ os_family | default('unknown', true) }}"
     version: "{{ os_version_major | default('0', true) }}"
     mode: "{{ app_delivery_mode }}"
-  when: 
+  when:
     - app_loader_custom_exists | default(false, true)
     - "lookup('first_found', {'paths': [app_vars_path], 'files': [loader_item]}, errors='ignore') != ''"
   failed_when: false
@@ -206,7 +205,7 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# 8. Variable Prefixing: Aggregate all variable prefixes to be used 
+# 8. Variable Prefixing: Aggregate all variable prefixes to be used
 #    in the subsequent merging step.
 # ---------------------------------------------------------------------
 - name: "Resolve effective variable prefixes for {{ app_name }}"
@@ -252,7 +251,7 @@
 
 # ---------------------------------------------------------------------
 # 10. API Mapping
-#     Map merged variables from the primary app object to the unified 
+#     Map merged variables from the primary app object to the unified
 #     app_* API if they are not already set.
 # ---------------------------------------------------------------------
 - name: "Map merged variables to unified API for {{ app_name }}"
@@ -310,7 +309,6 @@
   when: app_loader_custom_exists | default(false, true)
   tags: ["always"]
 
-
 # ---------------------------------------------------------------------
 # 14. Audit Logging
 # ---------------------------------------------------------------------
@@ -319,18 +317,18 @@
       [APP_LOADER] {{ app_name }}
       Status: {{ 'Custom-Tasks' if (app_tasks_file | default('', true) | length > 0) else 'Generic-Logic' }}
       Delivery Mode: {{ app_delivery_mode }}
-      
+
       Discovery Context:
       - Apps Role Base: {{ resolved_apps_path }}
       - Parent Chain: {{ ansible_parent_role_paths | default([], true) | join(' -> ') }}
       - Discovery Mode: {{ 'Root-Mode' if (app_loader_root_mode | default(false, true)) else 'Module-Mode' }}
       - Custom Exists: {{ app_loader_custom_exists | default(false, true) }}
-      
+
       Path Context:
       - Variables Root: {{ app_vars_path }}
       - Tasks Root: {{ app_tasks_path }}
       - Resolved Task: {{ app_tasks_file | default('NONE', true) }}
-      
+
       OS Context:
       - Family: {{ os_family | default('unknown', true) }}
       - Distribution: {{ os_distribution | default('unknown', true) }}
@@ -341,12 +339,12 @@
 # ---------------------------------------------------------------------
 - name: "Execute resolved tasks for {{ app_name }}"
   ansible.builtin.include_tasks: "{{ app_tasks_file }}"
-  when: 
+  when:
     - app_tasks_file is defined
     - app_tasks_file | default('', true) | length > 0
 
 - name: "Execute generic deployment logic for {{ app_name }}"
   ansible.builtin.include_tasks: "dispatch.yml"
-  when: 
+  when:
     - app_tasks_file is defined
     - app_tasks_file | default('', true) | length == 0

@@ -3,6 +3,8 @@
 # =====================================================================
 
 # 1. Lifecycle: Assert
+
+---
 - name: "Package (Guix): Verify Guix presence"
   ansible.builtin.assert:
     that: "is_guix_installed | bool"

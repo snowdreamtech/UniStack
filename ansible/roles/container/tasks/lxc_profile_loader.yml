@@ -38,9 +38,9 @@
       - (lxc_profile_name | length) > 0
     fail_msg: |
       lxc_profile_loader validation failed:
-      
+
       Required parameter 'lxc_profile_name' must be a non-empty string.
-      
+
       Received:
         - Type: {{ lxc_profile_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_profile_name | default('UNDEFINED') }}
@@ -51,9 +51,9 @@
       - lxc_profile_state in ['present', 'absent']
     fail_msg: |
       lxc_profile_loader validation failed:
-      
+
       Parameter 'lxc_profile_state' must be one of: present, absent.
-      
+
       Received:
         - Value: {{ lxc_profile_state | default('present') }}
     success_msg: "lxc_profile_loader: lxc_profile_state validated ({{ lxc_profile_state }})"
@@ -138,4 +138,3 @@
   register: lxc_profile_delete
   changed_when: "lxc_profile_delete.rc == 0"
   failed_when: "lxc_profile_delete.rc not in [0, 1]"
-

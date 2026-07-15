@@ -27,6 +27,8 @@
 # --- Execution ---
 # ---------------------------------------------------------------------
 
-# WHY: NetBSD utilizes the standard rc.d infrastructure common across 
+# WHY: NetBSD utilizes the standard rc.d infrastructure common across
 # traditional BSD systems.
+
+---
 - ansible.builtin.include_tasks: "bsd.yml"

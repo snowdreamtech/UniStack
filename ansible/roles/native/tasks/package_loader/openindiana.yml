@@ -7,6 +7,8 @@
 # =====================================================================
 
 # WHY: OpenIndiana is the key successor to OpenSolaris.
+
+---
 - name: "Package (OpenIndiana): IPS execution"
   community.general.pkg5:
     name: "{{ pkg_repo_list }}"

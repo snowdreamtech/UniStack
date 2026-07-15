@@ -20,6 +20,7 @@
 #       gpg_checksum: "sha256:..."
 # =====================================================================
 
+---
 - name: "Ensure /etc/apk/keys directory exists"
   ansible.builtin.file:
     path: "/etc/apk/keys"

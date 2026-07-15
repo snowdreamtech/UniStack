@@ -21,6 +21,7 @@
 #
 # =====================================================================
 
+---
 - name: "Configure Homebrew Tap {{ repo_name | default(repo_brew, true) }}"
   community.general.homebrew_tap:
     name: "{{ repo_brew }}"

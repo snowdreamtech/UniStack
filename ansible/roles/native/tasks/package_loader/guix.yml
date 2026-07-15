@@ -11,6 +11,8 @@
 # ---------------------------------------------------------------------
 
 # WHY: Guix is the GNU project's answer to functional packaging.
+
+---
 - name: "Package (Guix): guix execution"
   community.general.guix:
     name: "{{ pkg_repo_list }}"
