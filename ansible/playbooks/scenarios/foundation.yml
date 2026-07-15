@@ -9,7 +9,7 @@
 
 - name: Deploy System Foundation
   hosts: all
-  become: "{{ become_enabled | default(true) }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   gather_facts: false
 
   tasks:
