@@ -39,14 +39,14 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.ProjectName=unistack'
-      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.Author=Snowdream Tech <snowdreamtech@qq.com>'
-      - -X github.com/snowdreamtech/unistack/internal/pkg/env.BuildTime={{.Date}}
-      - -X github.com/snowdreamtech/unistack/internal/pkg/env.CommitHash={{.ShortCommit}}
-      - -X github.com/snowdreamtech/unistack/internal/pkg/env.CommitHashFull={{.FullCommit}}
-      - -X github.com/snowdreamtech/unistack/internal/pkg/env.GitTag={{.Tag}}
-      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.COPYRIGHT=Copyright (c) 2026-present SnowdreamTech Inc.'
-      - -X 'github.com/snowdreamtech/unistack/internal/pkg/env.LICENSE=MIT <https://github.com/snowdreamtech/unistack/blob/main/LICENSE>'
+      - -X 'github.com/snowdreamtech/unistack/internal/env.ProjectName=unistack'
+      - -X 'github.com/snowdreamtech/unistack/internal/env.Author=Snowdream Tech <snowdreamtech@qq.com>'
+      - -X github.com/snowdreamtech/unistack/internal/env.BuildTime={{.Date}}
+      - -X github.com/snowdreamtech/unistack/internal/env.CommitHash={{.ShortCommit}}
+      - -X github.com/snowdreamtech/unistack/internal/env.CommitHashFull={{.FullCommit}}
+      - -X github.com/snowdreamtech/unistack/internal/env.GitTag={{.Tag}}
+      - -X 'github.com/snowdreamtech/unistack/internal/env.COPYRIGHT=Copyright (c) 2026-present SnowdreamTech Inc.'
+      - -X 'github.com/snowdreamtech/unistack/internal/env.LICENSE=MIT <https://github.com/snowdreamtech/unistack/blob/main/LICENSE>'
     goos:
       - linux
       - darwin
