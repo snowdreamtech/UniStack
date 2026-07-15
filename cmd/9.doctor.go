@@ -16,7 +16,7 @@ import (
 	"github.com/pterm/pterm"
 	"github.com/snowdreamtech/unistack/internal/cli/output"
 	"github.com/snowdreamtech/unistack/internal/database"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/spf13/cobra"
 )
 

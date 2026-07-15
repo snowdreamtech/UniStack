@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	pkgHttp "github.com/snowdreamtech/unistack/internal/pkg/http"
+	pkgHttp "github.com/snowdreamtech/unistack/internal/http"
 
 	"github.com/ProtonMail/gopenpgp/v2/crypto"
 )

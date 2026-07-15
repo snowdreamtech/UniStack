@@ -10,7 +10,7 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/cli/output"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 )
 
 // ShellConfigManager handles persistent configuration changes in shell RC files.

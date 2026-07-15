@@ -8,9 +8,9 @@ import (
 	"os"
 
 	"github.com/snowdreamtech/unistack/internal/cli/output"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
-	"github.com/snowdreamtech/unistack/internal/pkg/errors"
-	"github.com/snowdreamtech/unistack/internal/pkg/logger"
+	"github.com/snowdreamtech/unistack/internal/env"
+	"github.com/snowdreamtech/unistack/internal/errors"
+	"github.com/snowdreamtech/unistack/internal/logger"
 	"github.com/snowdreamtech/unistack/internal/updater"
 	"github.com/spf13/cobra"
 )

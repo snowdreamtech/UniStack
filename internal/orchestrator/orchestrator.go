@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/gofrs/flock"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 )
 
 // PrepareEnvironment is the unified entry point that prepares the entire execution environment.

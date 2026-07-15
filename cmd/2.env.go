@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/snowdreamtech/unistack/internal/sysinfo"
 	"github.com/spf13/cobra"
 )

@@ -13,7 +13,7 @@ import (
 
 	"github.com/snowdreamtech/unistack/internal/cli/output"
 	"github.com/snowdreamtech/unistack/internal/cli/shell"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/spf13/cobra"
 )
 

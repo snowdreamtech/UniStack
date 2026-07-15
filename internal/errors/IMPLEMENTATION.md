@@ -127,14 +127,14 @@ Full support for Go 1.13+ error wrapping:
 ### Build Status
 
 ```bash
-go build ./internal/pkg/errors/
+go build ./internal/errors/
 # ✅ Success
 ```
 
 ### Test Status
 
 ```bash
-go test -v -race ./internal/pkg/errors/
+go test -v -race ./internal/errors/
 # ✅ PASS: All tests pass
 # ✅ No race conditions detected
 ```
@@ -174,18 +174,18 @@ make lint
 
 ## Files Created
 
-1. `internal/pkg/errors/errors.go` - Core error handling implementation (217 lines)
-2. `internal/pkg/errors/errors_test.go` - Comprehensive test suite (358 lines)
-3. `internal/pkg/errors/example_test.go` - Example usage tests (95 lines)
-4. `internal/pkg/errors/README.md` - Complete documentation (285 lines)
-5. `internal/pkg/errors/IMPLEMENTATION.md` - This summary (150 lines)
+1. `internal/errors/errors.go` - Core error handling implementation (217 lines)
+2. `internal/errors/errors_test.go` - Comprehensive test suite (358 lines)
+3. `internal/errors/example_test.go` - Example usage tests (95 lines)
+4. `internal/errors/README.md` - Complete documentation (285 lines)
+5. `internal/errors/IMPLEMENTATION.md` - This summary (150 lines)
 
 ## Next Steps
 
 The error handling infrastructure is now ready for use throughout the UniStack codebase. Other components can import and use:
 
 ```go
-import "github.com/snowdreamtech/unistack/internal/pkg/errors"
+import "github.com/snowdreamtech/unistack/internal/errors"
 ```
 
 Recommended integration points:

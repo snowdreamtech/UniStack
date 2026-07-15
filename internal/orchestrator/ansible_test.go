@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 )
 
 func TestEnsureAnsibleInstalled(t *testing.T) {

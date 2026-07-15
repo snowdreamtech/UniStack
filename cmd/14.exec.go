@@ -11,8 +11,8 @@ import (
 
 	"log/slog"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/errors"
-	"github.com/snowdreamtech/unistack/internal/pkg/orchestrator"
+	"github.com/snowdreamtech/unistack/internal/errors"
+	"github.com/snowdreamtech/unistack/internal/orchestrator"
 	"github.com/spf13/cobra"
 )
 

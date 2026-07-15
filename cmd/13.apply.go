@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/orchestrator"
+	"github.com/snowdreamtech/unistack/internal/orchestrator"
 	"github.com/spf13/cobra"
 )
 

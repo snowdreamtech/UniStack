@@ -17,7 +17,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 )
 
 // ensureAnsibleInstalled checks for ansible and installs it in a venv if missing

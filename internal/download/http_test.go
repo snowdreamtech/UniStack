@@ -16,8 +16,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/download"
-	"github.com/snowdreamtech/unistack/internal/pkg/errors"
+	"github.com/snowdreamtech/unistack/internal/download"
+	"github.com/snowdreamtech/unistack/internal/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -302,7 +302,7 @@ The package includes comprehensive unit tests covering:
 Run tests with:
 
 ```bash
-go test ./internal/pkg/errors/...
+go test ./internal/errors/...
 ```
 
 ## References

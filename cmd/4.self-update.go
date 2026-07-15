@@ -16,8 +16,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/archive"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/archive"
+	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/snowdreamtech/unistack/internal/updater"
 	"github.com/spf13/cobra"
 )

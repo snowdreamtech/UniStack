@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/download"
+	"github.com/snowdreamtech/unistack/internal/download"
 )
 
 // ExampleNewHTTPDownloader demonstrates creating a new HTTP downloader.

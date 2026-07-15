@@ -9,7 +9,7 @@ import (
 	"os/exec"
 
 	"github.com/snowdreamtech/unistack/internal/config"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/spf13/cobra"
 )
 

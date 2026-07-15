@@ -17,8 +17,8 @@ import (
 
 	"github.com/mattn/go-isatty"
 	"github.com/pterm/pterm"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
-	"github.com/snowdreamtech/unistack/internal/pkg/version"
+	"github.com/snowdreamtech/unistack/internal/env"
+	"github.com/snowdreamtech/unistack/internal/version"
 )
 
 const (

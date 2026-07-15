@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/snowdreamtech/unistack/internal/pkg/download"
+	"github.com/snowdreamtech/unistack/internal/download"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

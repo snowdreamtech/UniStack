@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/snowdreamtech/unistack/ansible"
-	"github.com/snowdreamtech/unistack/internal/pkg/env"
+	"github.com/snowdreamtech/unistack/internal/env"
 )
 
 type manifest struct {
