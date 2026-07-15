@@ -46,17 +46,9 @@
 
 # WHY: Set predictable defaults to ensure consistency across all backend loaders.
 # Adding tags: ["always"] is critical for variable availability in subsequent tasks.
-- name: "Service (Global): Load variable schema"
-  ansible.builtin.include_vars:
-    file: "../../vars/service_loader_schema.yml"
-  tags: ["always"]
-
-- ansible.builtin.set_fact:
-    "{{ item }}": null
-  loop: "{{ service_loader_internal_vars }}"
-  loop_control:
-    label: "reset {{ item }} (null)"
-  tags: ["always"]
+# ---------------------------------------------------------------------
+# (Unified schema and resets are handled by native_loader.yml)
+# ---------------------------------------------------------------------
 
 - name: "Service (Global): Normalize variables"
   ansible.builtin.set_fact:
