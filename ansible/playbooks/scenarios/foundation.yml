@@ -13,6 +13,10 @@
   gather_facts: false
 
   tasks:
+    - name: "Scenario: Bootstrap Environment (Install Python if missing)"
+      ansible.builtin.include_role:
+        name: bootstrap
+
     - name: "Scenario: Execute Foundation via App Dispatcher"
       ansible.builtin.include_role:
         name: app
