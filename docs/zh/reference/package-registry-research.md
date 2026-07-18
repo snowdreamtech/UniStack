@@ -267,3 +267,34 @@ var BuiltinPackages embed.FS
 * **Phase 1（当前最优解）**：写极简 Go 脚本，纯解析外部 JSON 数据 Dump 并组装 `package.yml`。
 * **Phase 2（Server-side Isolation）**：若需自行运行复杂的 Python/数据库解析引擎，将其强制隔离在 CI/CD (Docker 容器) 中执行，产出干净数据后销毁环境。彻底阻绝用户端 Go 项目引入 Python 环境依赖。
 * **Phase 3（原生规则演进）**：若项目做大做强，再考虑自研基于纯 Go 原生的正则表达式和 YAML 规则引擎（难度高且目前优先级最低）。
+
+## 九、多源架构与生态安全设计 (Multi-Registry & Security Architecture)
+
+基于对大规模协作生态的研究，我们最终确立了**“Git 协作源码，HTTP 分发产物”**的双轨制隔离架构，并引入了以下企业级安全与生态设计：
+
+### 9.1 强制命名空间 (Strict Namespacing) 与 防混淆攻击 (Dependency Confusion)
+为了彻底粉碎同名高版本覆盖的“依赖混淆攻击”，我们制定了极其严苛的命名红线：
+1. **Core 核心包**：独占全局顶层命名空间，**绝对不允许**带有任何前缀（例如 `vim`，`nginx`）。
+2. **Community / 第三方包**：**必须**带有作者或组织的命名空间前缀（例如 `community/vim`，`snowdreamtech/nginx`）。
+在打包构建阶段（`unistack repo build`），如果发现第三方仓库试图提交无前缀的核心包，构建程序将直接抛出致命错误拒绝打包。
+
+### 9.2 优先级锁 (Priority Pinning)
+在客户端配置文件（如 `~/.unistack/config.yaml`）中，每个源都必须分配 `priority`：
+```yaml
+registries:
+  - name: "core"
+    url: "https://core.unistack.org"
+    priority: 10          # 数字越小，优先级越高，绝不被覆盖
+  - name: "community"
+    url: "https://community.unistack.org"
+    priority: 20
+```
+客户端查询时严格按照优先级顺序进行。哪怕社区库存在一个版本号极其离谱的恶意包（如 `v99.9.9`），只要在最高优先级的库中找到了同名（或同前缀）的包，搜索立即终止，从而保证官方防线的绝对安全。
+
+### 9.3 纯客户端的多源镜像与物理隔离
+* **镜像天然支持**：由于我们抛弃了后端 API，转而采用纯静态的分发模式（DNF 模式）。CDN 厂商或开源镜像站只需要原封不动地同步（`rsync`）静态文件即可。用户通过修改配置文件中的 `url`，即可享受千兆极速下载。
+* **本地沙盒化索引**：为了防止多个源的 `packages.db` 在用户本地互相覆盖打架，客户端在下载时会利用配置的 `name` 字段作为本地文件名（如保存为 `core.db`, `community.db`）。本地的所有 SQLite 查询将在这些被物理隔离的副本上联合执行，彻底避免了文件冲突。
+
+### 9.4 克制的协议与分支管理
+* **废弃 Edge 分支**：与 Alpine 和 Debian 不同，UniStack 聚焦于提供“绝对稳定的跨平台环境”。为了避免系统极度臃肿，官方 Core 源**仅包含主干稳定版 (Stable) 软件**。所有追求激进更新（Edge / Testing）的需求都被转移至社区源由极客自行管理。
+* **精简网络协议**：系统坚决只支持 `http(s)://` 和 `file://` 协议，主动砍掉了 `ftp://` 和 `git://` 下载。依靠强大的操作系统原生挂载能力，用户通过配置 `file:///mnt/nfs_share/` 即可实现全离线断网和企业级 NFS/SMB 私有化部署，不仅规避了 SQLite 在网络驱动器上的文件锁崩溃灾难，更将 Go 核心代码的依赖和体积缩减到了极致。

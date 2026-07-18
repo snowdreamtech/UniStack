@@ -254,3 +254,36 @@ Utilize **Repology (repology.org)**, the industry's most authoritative cross-pla
 * **Phase 1 (Current Best)**: Write minimalist Go scripts, purely parsing external JSON Data Dumps to assemble `package.yml`.
 * **Phase 2 (Server-side Isolation)**: If complex Python/Database parsing engines are needed, isolate them entirely within CI/CD (Docker containers), destroying the environment after yielding clean data. Prevent any Python dependencies from creeping into the user-facing Go project.
 * **Phase 3 (Native Rule Evolution)**: Once the project scales up, consider developing pure Go-native regex and YAML rule engines (High difficulty, currently lowest priority).
+
+---
+
+## 9. Multi-Registry & Security Architecture
+
+Based on our research into large-scale collaboration ecosystems, we finalized a **"Git for Collaboration, HTTP for Distribution"** dual-track architecture, introducing the following enterprise-grade security and ecosystem designs:
+
+### 9.1 Strict Namespacing & Dependency Confusion Prevention
+To completely crush "dependency confusion" attacks (where malicious high-version packages overwrite core packages), we enforce a strict naming red line:
+1. **Core Packages**: Exclusively occupy the global top-level namespace and are **strictly forbidden** from having any prefixes (e.g., `vim`, `nginx`).
+2. **Community / Third-Party Packages**: **MUST** have an author or organization namespace prefix (e.g., `community/vim`, `snowdreamtech/nginx`).
+During the build phase (`unistack repo build`), if a third-party repository attempts to submit an unprefixed core package, the builder will throw a fatal error and reject the package.
+
+### 9.2 Priority Pinning
+In the client configuration file (e.g., `~/.unistack/config.yaml`), every registry must be assigned a `priority`:
+```yaml
+registries:
+  - name: "core"
+    url: "https://core.unistack.org"
+    priority: 10          # Lower number = higher priority. Cannot be overridden.
+  - name: "community"
+    url: "https://community.unistack.org"
+    priority: 20
+```
+Client queries strictly follow the priority order. Even if a community repository contains a malicious package with an absurdly high version (e.g., `v99.9.9`), as long as a package with the same name (or prefix) is found in a higher-priority registry, the search terminates immediately, ensuring the absolute safety of the official defense line.
+
+### 9.3 Multi-Source Mirroring & Physical Isolation
+* **Native Mirror Support**: By ditching backend APIs in favor of a purely static distribution model (DNF style), CDNs or open-source mirrors only need to sync (`rsync`) the static files. Users can enjoy gigabit download speeds simply by modifying the `url` in their configuration.
+* **Local Sandboxed Indexes**: To prevent `packages.db` files from multiple sources from overwriting each other locally, the client uses the `name` field from the configuration as the local filename upon download (saving them as `core.db`, `community.db`). All local SQLite queries are executed concurrently across these physically isolated copies, completely avoiding file conflicts.
+
+### 9.4 Restrained Protocols & Branch Management
+* **Deprecating Edge Branches**: Unlike Alpine and Debian, UniStack focuses on providing an "absolutely stable cross-platform environment." To prevent extreme system bloat, the official Core registry **only contains main/stable versions**. All demands for aggressive updates (Edge/Testing) are shifted to community registries managed by enthusiasts.
+* **Minimalist Network Protocols**: The system strictly supports ONLY `http(s)://` and `file://` protocols, proactively cutting off `ftp://` and `git://` downloads. Relying on the powerful native mounting capabilities of operating systems, users can configure `file:///mnt/nfs_share/` to achieve fully offline enterprise-grade NFS/SMB private deployments. This not only avoids the disaster of SQLite file lock crashes on network drives but also minimizes the dependencies and footprint of the Go core code to the extreme.
