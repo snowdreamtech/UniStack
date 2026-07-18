@@ -1,0 +1,10 @@
+{
+  "name": "unistack-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "docs:install": "npm install --prefix docs",
+    "docs:dev": "npm run docs:dev --prefix docs",
+    "docs:build": "npm run docs:build --prefix docs"
+  }
+}
