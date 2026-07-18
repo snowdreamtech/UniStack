@@ -1,0 +1,19 @@
+---
+# tasks/main.yml for the hello package
+
+- name: Install GNU Hello on Linux
+  ansible.builtin.package:
+    name: hello
+    state: present
+  when: ansible_system == 'Linux'
+
+- name: Install GNU Hello on macOS
+  community.general.homebrew:
+    name: hello
+    state: present
+  when: ansible_system == 'Darwin'
+
+- name: Debug GNU Hello on Windows
+  ansible.builtin.debug:
+    msg: "GNU Hello installation via Chocolatey/Scoop would go here for Windows"
+  when: ansible_system == 'Win32NT'

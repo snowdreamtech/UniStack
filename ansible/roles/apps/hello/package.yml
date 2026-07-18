@@ -1,0 +1,30 @@
+apiVersion: "v1alpha1"
+kind: "package" 
+
+metadata:
+  name: "hello"
+  version: "1.0.0"
+  appVersion: 
+    - ">= 2.10.0"
+  description: "GNU Hello prints a friendly greeting"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://www.gnu.org/software/hello/"
+  license: "GPL-3.0-or-later"
+  tags: ["utility", "gnu", "example"]
+
+compatibility:
+  - os: "linux"
+    arch: ["amd64", "arm64", "386", "arm"]
+  - os: "darwin"
+    arch: ["amd64", "arm64"]
+  - os: "windows"
+    arch: ["amd64", "arm64", "386"]
+
+delivery:
+  type: "binary"
+  binaries: 
+    - "hello"
+
+dependencies:
+  required: {}
+  recommended: {}

@@ -1,0 +1,59 @@
+# Schema 规范版本
+apiVersion: "v1alpha1"
+
+# 包类型：package (普通包) 或 meta (元包)
+kind: "package" 
+
+# 核心元数据
+metadata:
+  # 包名（小写，不含组织前缀，组织前缀由社区源管理）
+  name: "template"
+  
+  # 【配方版本号】(必须是严格的 SemVer 字符串)：
+  # 用于判断安装脚本（Ansible 逻辑）本身是否更新。
+  version: "1.0.0"
+  
+  # 【真实软件版本号 / App Version】：
+  # 真实下载和安装的软件版本，支持数组或 SemVer 范围。
+  appVersion: 
+    - "1.0.x"
+    
+  description: "A standard template package for UniStack"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/UniStack"
+  license: "MIT"
+  tags: ["template", "example"]
+
+# 规范化环境支持声明 (精准防错机制)
+compatibility:
+  # 采用对象数组，精准表达 N×M 的支持关系。
+  # 规范：os 和 arch 必须全部强制为【小写】！
+  - os: "linux"
+    arch: ["amd64", "arm64"]
+  - os: "darwin"
+    arch: ["amd64", "arm64"]
+  - os: "windows"
+    arch: ["amd64", "arm64"]
+
+# 分发与安装声明 (高度抽象化)
+delivery:
+  # 分发形态 (二选一)：
+  # - source: 源码编译 (需要极客时间)
+  # - binary: 预编译二进制 (拿来即用)
+  type: "binary"
+  
+  # 对外暴露的 CLI 命令行名称。
+  # 非常关键！UniStack 会据此在全局生成软链接 (Symlink) 映射到真实执行路径。
+  binaries: 
+    - "template-cli"
+
+# 依赖管理 (安全与扩展并存)
+dependencies:
+  # 硬性依赖：如果不装，这个包绝对跑不起来（由客户端自动在执行前安装）
+  required:
+    # 依赖包名: "版本范围" (支持 SemVer Constraints)
+    # curl: ">= 7.0.0"
+  
+  # 推荐依赖：装了体验更好，不装也不影响核心功能（由用户通过 --with-recommends 决定）
+  recommended:
+    # wget: ">= 1.20"

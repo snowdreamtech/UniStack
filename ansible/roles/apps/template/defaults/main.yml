@@ -1,0 +1,7 @@
+---
+# defaults/main.yml for the template package
+#
+# Define default variables here. These can be overridden by users.
+
+app_name: "template"
+app_version: "1.0.x"

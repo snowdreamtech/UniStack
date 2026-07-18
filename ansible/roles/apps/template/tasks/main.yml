@@ -1,0 +1,9 @@
+---
+# tasks/main.yml for the template package
+#
+# This is the main entry point for the Ansible role.
+# Add your installation, configuration, and setup tasks here.
+
+- name: Example task for template package
+  ansible.builtin.debug:
+    msg: "Installing {{ app_name }} version {{ app_version }}"

@@ -1,0 +1,5 @@
+---
+# defaults/main.yml for the hello package
+
+app_name: "hello"
+app_version: "2.12.x"
