@@ -50,14 +50,19 @@ kind: "package"
 metadata:
   name: "nginx"
   
-  # [Recipe Version] (Must be SemVer):
+  # [Recipe Version] (Must be a strict SemVer string):
   # Used only for the UniStack client to determine if the "installation script" itself needs an upgrade (e.g., fixing an Ansible bug).
+  # Note: Must use a string (e.g., "1.0.1") to prevent YAML float parsing traps.
+  # [Tech Selection]: The Go backend strictly uses `github.com/Masterminds/semver/v3` for version parsing,
+  # perfectly accommodating versions with or without the 'v' prefix.
   version: "1.0.1"
   
   # [App Version / Real Software Version]:
   # To completely eliminate user confusion, the real software version is separated out here.
   # Given the severe fragmentation of built-in versions across Linux distros (e.g., Debian has 1.18, Alpine has 1.24),
   # this field can not only be a single string but natively supports arrays or SemVer range syntax!
+  # [Tech Selection]: Thanks to the powerful Constraint engine in `Masterminds/semver/v3`,
+  # the Go client can natively parse and process complex dependency range constraints.
   appVersion: 
     - "1.18.x"
     - "1.24.x"

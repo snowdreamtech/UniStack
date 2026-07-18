@@ -50,14 +50,19 @@ kind: "package"
 metadata:
   name: "nginx"
   
-  # 【配方版本号】(必须是 SemVer)：
+  # 【配方版本号】(必须是严格的 SemVer 字符串)：
   # 仅用于 UniStack 客户端判断“安装脚本”本身是否需要更新升级（例如修复了某个 Ansible bug）。
+  # 注意：必须使用字符串（如 "1.0.1"）防止 YAML 浮点数解析陷阱。
+  # [技术选型]：Go 后端强制采用 `github.com/Masterminds/semver/v3` 进行版本解析，
+  # 完美兼容带与不带 `v` 前缀的写法。
   version: "1.0.1"
   
   # 【真实软件版本号 / App Version】：
   # 为了彻底消除用户的懵逼感，这里单独剥离出真正的软件版本。
   # 针对 Linux 各大发行版自带版本严重碎片化（如 Debian 是 1.18，Alpine 是 1.24）的现状，
   # 这个字段不仅可以是单字符串，还原生支持数组或 SemVer 范围语法！
+  # [技术选型]：得益于 `Masterminds/semver/v3` 强大的 Constraint 引擎，
+  # Go 客户端能原生解析并处理复杂的依赖范围约束。
   appVersion: 
     - "1.18.x"
     - "1.24.x"
