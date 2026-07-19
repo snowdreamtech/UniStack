@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/env"
@@ -91,13 +92,29 @@ func normalizeURL(u string) string {
 	}
 	abs, err := filepath.Abs(u)
 	if err == nil {
+		abs = filepath.ToSlash(abs)
+		if !strings.HasPrefix(abs, "/") {
+			abs = "/" + abs
+		}
 		return "file://" + abs
 	}
 	return u
 }
 
+var sourceNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+
+func validateSourceName(name string) error {
+	if !sourceNamePattern.MatchString(name) {
+		return fmt.Errorf("invalid source name '%s': only alphanumeric, dashes, and underscores are allowed", name)
+	}
+	return nil
+}
+
 // AddSource adds a new registry source.
 func AddSource(name, url string) error {
+	if err := validateSourceName(name); err != nil {
+		return err
+	}
 	url = normalizeURL(url)
 	sources, err := LoadSources()
 	if err != nil {

@@ -9,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -35,6 +36,9 @@ func NewDownloader() *Downloader {
 func (d *Downloader) Download(ctx context.Context, uri string, handleBody func(io.Reader) error) error {
 	if strings.HasPrefix(uri, "file://") {
 		path := strings.TrimPrefix(uri, "file://")
+		if runtime.GOOS == "windows" && strings.HasPrefix(path, "/") {
+			path = strings.TrimPrefix(path, "/")
+		}
 		f, err := os.Open(path)
 		if err != nil {
 			return fmt.Errorf("failed to open local file: %w", err)
