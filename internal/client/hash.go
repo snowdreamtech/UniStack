@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"strings"
 )
 
 // ValidateHash reads from an io.Reader, computes its SHA-256 hash, and compares it to expectedHash.
@@ -16,7 +17,7 @@ import (
 // CheckHash reads the entire file and checks its hash. But since we want to validate it during or after download,
 // we can do a post-download check on the temp file before moving it to its final destination.
 
-// ValidateFileHash calculates the SHA-256 hash of the content in reader and compares it to expectedHash.
+// ValidateFileHash calculates the hash of the content in reader and compares it to expectedHash.
 func ValidateFileHash(reader io.Reader, expectedHash string) error {
 	if expectedHash == "" {
 		// If no hash is expected, we implicitly trust it.
@@ -24,14 +25,22 @@ func ValidateFileHash(reader io.Reader, expectedHash string) error {
 		return nil
 	}
 
+	// Parse the expected hash to handle algorithm prefixes like "sha256:abcd..."
+	expectedHex := expectedHash
+	if strings.HasPrefix(expectedHash, "sha256:") {
+		expectedHex = strings.TrimPrefix(expectedHash, "sha256:")
+	} else if strings.Contains(expectedHash, ":") {
+		return fmt.Errorf("unsupported hash algorithm in expected hash: %s", expectedHash)
+	}
+
 	hasher := sha256.New()
 	if _, err := io.Copy(hasher, reader); err != nil {
 		return fmt.Errorf("failed to read data for hashing: %w", err)
 	}
 
-	actualHash := hex.EncodeToString(hasher.Sum(nil))
-	if actualHash != expectedHash {
-		return fmt.Errorf("hash mismatch: expected %s, got %s", expectedHash, actualHash)
+	actualHex := hex.EncodeToString(hasher.Sum(nil))
+	if actualHex != expectedHex {
+		return fmt.Errorf("security validation failed: hash mismatch. expected %s, got %s", expectedHex, actualHex)
 	}
 
 	return nil

@@ -91,7 +91,7 @@ var registryBuildCmd = &cobra.Command{
 		if _, err := io.Copy(h, zstFile); err != nil {
 			return fmt.Errorf("failed to hash compressed db: %w", err)
 		}
-		zstHash := hex.EncodeToString(h.Sum(nil))
+		zstHash := "sha256:" + hex.EncodeToString(h.Sum(nil))
 
 		// Write repomd.json
 		repomdPath := filepath.Join(repodataDir, "repomd.json")

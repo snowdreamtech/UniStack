@@ -103,7 +103,7 @@ func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
 		if _, err := io.Copy(h, f); err != nil {
 			return fmt.Errorf("failed to hash %s: %w", path, err)
 		}
-		checksum := hex.EncodeToString(h.Sum(nil))
+		checksum := "sha256:" + hex.EncodeToString(h.Sum(nil))
 
 		if _, err := f.Seek(0, 0); err != nil {
 			return fmt.Errorf("failed to rewind %s: %w", path, err)
