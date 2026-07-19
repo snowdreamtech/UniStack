@@ -18,6 +18,7 @@ import (
 	"time"
 
 	"github.com/snowdreamtech/unistack/internal/env"
+	"gopkg.in/yaml.v3"
 )
 
 // ensureAnsibleInstalled checks for ansible and installs it in a venv if missing
@@ -179,32 +180,37 @@ func ensureAnsibleInstalled(workDir string, pipIndexUrl string) (string, []strin
 			}
 		}
 
-		// Install Collections
-		err = runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
+		// 1. Try online installation first (up to 3 times)
+		onlineErr := runWithRetry("ansible-galaxy collection install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "collection", "install", "-r", galaxyReqFile)
 			cCmd.Dir = workDir
-			env := activeEnv
-			if env == nil {
-				env = os.Environ()
+			envVars := activeEnv
+			if envVars == nil {
+				envVars = os.Environ()
 			}
-			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
-			cCmd.Env = env
+			envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+			cCmd.Env = envVars
 			return cCmd
 		}, 3, 3*time.Second)
-		if err != nil {
-			return "", nil, err
+
+		// 2. Fallback to offline mechanism if online failed
+		if onlineErr != nil {
+			err := fallbackToOfflineCollections(ctx, galaxyReqFile, galaxyBin, activeEnv, workDir, runWithRetry)
+			if err != nil {
+				return "", nil, fmt.Errorf("fallback source build failed: %w (online error was: %v)", err, onlineErr)
+			}
 		}
 
 		// Install Roles (ignore errors if no roles are defined in requirements.yml)
 		_ = runWithRetry("ansible-galaxy role install", func(c context.Context) *exec.Cmd {
 			cCmd := exec.CommandContext(c, galaxyBin, "role", "install", "-r", galaxyReqFile)
 			cCmd.Dir = workDir
-			env := activeEnv
-			if env == nil {
-				env = os.Environ()
+			envVars := activeEnv
+			if envVars == nil {
+				envVars = os.Environ()
 			}
-			env = append(env, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
-			cCmd.Env = env
+			envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+			cCmd.Env = envVars
 			return cCmd
 		}, 3, 3*time.Second)
 	}
@@ -238,4 +244,154 @@ func calculateDependenciesHash(workDir string) (string, error) {
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), nil
+}
+
+type GalaxyRequirements struct {
+	Collections []struct {
+		Name    string `yaml:"name"`
+		Version string `yaml:"version"`
+	} `yaml:"collections"`
+}
+
+var galaxyRepoMap = map[string]string{
+	"community.general": "ansible-collections/community.general",
+	"ansible.posix":     "ansible-collections/ansible.posix",
+	"containers.podman": "containers/ansible-podman-collections",
+	"community.docker":  "ansible-collections/community.docker",
+	"kubernetes.core":   "ansible-collections/kubernetes.core",
+}
+
+func fallbackToOfflineCollections(
+	ctx context.Context,
+	galaxyReqFile string,
+	galaxyBin string,
+	activeEnv []string,
+	workDir string,
+	runWithRetry func(string, func(context.Context) *exec.Cmd, int, time.Duration) error,
+) error {
+	slog.Debug("⚠️ Online collection installation failed. Automatically falling back to source build offline mechanism...")
+
+	reqData, err := os.ReadFile(galaxyReqFile)
+	if err != nil {
+		return fmt.Errorf("failed to read requirements.yml: %w", err)
+	}
+
+	var reqs GalaxyRequirements
+	if err := yaml.Unmarshal(reqData, &reqs); err != nil {
+		return fmt.Errorf("failed to parse requirements.yml: %w", err)
+	}
+
+	tmpDir, err := os.MkdirTemp("", "unistack_source_*")
+	if err != nil {
+		return fmt.Errorf("failed to create temp dir for source collections: %w", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	var downloadTool string
+	if _, err := exec.LookPath("curl"); err == nil {
+		downloadTool = "curl"
+	} else if _, err := exec.LookPath("wget"); err == nil {
+		downloadTool = "wget"
+	} else {
+		return fmt.Errorf("neither curl nor wget found in system path, cannot download source")
+	}
+
+	proxy := os.Getenv("GITHUB_PROXY")
+	var builtTarballs []string
+
+	for _, col := range reqs.Collections {
+		repo, ok := galaxyRepoMap[col.Name]
+		if !ok {
+			return fmt.Errorf("collection %s is not in the Repo Map, cannot perform source build fallback", col.Name)
+		}
+
+		slog.Debug(fmt.Sprintf("📦 Resolving source for %s version %s (repo: %s)...", col.Name, col.Version, repo))
+
+		tagsToTry := []string{
+			fmt.Sprintf("v%s", col.Version),
+			col.Version,
+		}
+
+		var downloadedTarball string
+		for _, tag := range tagsToTry {
+			baseURL := fmt.Sprintf("https://github.com/%s/archive/refs/tags/%s.tar.gz", repo, tag)
+			if proxy != "" {
+				baseURL = proxy + baseURL
+			}
+
+			tarballPath := filepath.Join(tmpDir, fmt.Sprintf("%s-%s.tar.gz", col.Name, tag))
+
+			// Try 2 times per tag in case of network flakes
+			err = runWithRetry(fmt.Sprintf("download source %s (tag %s)", col.Name, tag), func(c context.Context) *exec.Cmd {
+				if downloadTool == "curl" {
+					return exec.CommandContext(c, "curl", "-L", "-s", "-f", "-o", tarballPath, baseURL)
+				}
+				return exec.CommandContext(c, "wget", "-q", "-O", tarballPath, baseURL)
+			}, 2, 2*time.Second)
+
+			if err == nil {
+				downloadedTarball = tarballPath
+				break
+			}
+		}
+
+		if downloadedTarball == "" {
+			return fmt.Errorf("failed to download source for %s: tags tried %v", col.Name, tagsToTry)
+		}
+
+		// Extract the downloaded source tarball
+		extractDir := filepath.Join(tmpDir, fmt.Sprintf("extract-%s", col.Name))
+		os.MkdirAll(extractDir, 0755)
+
+		cmd := exec.CommandContext(ctx, "tar", "-xzf", downloadedTarball, "-C", extractDir, "--strip-components=1")
+		if err := cmd.Run(); err != nil {
+			return fmt.Errorf("failed to extract source for %s: %w", col.Name, err)
+		}
+
+		// Build the collection
+		slog.Debug(fmt.Sprintf("🔨 Building collection %s locally...", col.Name))
+		err = runWithRetry(fmt.Sprintf("build collection %s", col.Name), func(c context.Context) *exec.Cmd {
+			cCmd := exec.CommandContext(c, galaxyBin, "collection", "build")
+			cCmd.Dir = extractDir
+			envVars := activeEnv
+			if envVars == nil {
+				envVars = os.Environ()
+			}
+			cCmd.Env = envVars
+			return cCmd
+		}, 1, 0)
+
+		if err != nil {
+			return fmt.Errorf("failed to build collection %s: %w", col.Name, err)
+		}
+
+		// Collect the built tarball
+		matches, _ := filepath.Glob(filepath.Join(extractDir, "*.tar.gz"))
+		if len(matches) == 0 {
+			return fmt.Errorf("failed to find built tarball for %s", col.Name)
+		}
+		builtTarballs = append(builtTarballs, matches[0])
+	}
+
+	// Install locally
+	if len(builtTarballs) > 0 {
+		args := []string{"collection", "install"}
+		args = append(args, builtTarballs...)
+		err := runWithRetry("ansible-galaxy collection install (offline source build)", func(c context.Context) *exec.Cmd {
+			cCmd := exec.CommandContext(c, galaxyBin, args...)
+			cCmd.Dir = workDir
+			envVars := activeEnv
+			if envVars == nil {
+				envVars = os.Environ()
+			}
+			envVars = append(envVars, fmt.Sprintf("ANSIBLE_CONFIG=%s", filepath.Join(workDir, "ansible.cfg")))
+			cCmd.Env = envVars
+			return cCmd
+		}, 1, 0)
+		if err != nil {
+			return fmt.Errorf("failed to install built collections: %w", err)
+		}
+	}
+
+	return nil
 }

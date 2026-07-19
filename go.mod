@@ -1,6 +1,6 @@
 module github.com/snowdreamtech/unistack
 
-go 1.26.5
+go 1.26.4
 
 require (
 	github.com/ProtonMail/gopenpgp/v2 v2.10.0
