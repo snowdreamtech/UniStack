@@ -8,6 +8,7 @@ import (
 	"os"
 	"text/tabwriter"
 
+	"github.com/snowdreamtech/unistack/internal/client"
 	"github.com/snowdreamtech/unistack/internal/config"
 	"github.com/spf13/cobra"
 )
@@ -32,6 +33,13 @@ var sourceAddCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Printf("Successfully added source '%s' (%s)\n", name, url)
+
+		fmt.Printf("Syncing source '%s' database...\n", name)
+		if err := client.UpdateSource(cmd.Context(), name, url); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to sync database for '%s': %v\n", name, err)
+		} else {
+			fmt.Printf("Successfully synced source '%s'\n", name)
+		}
 	},
 }
 
@@ -48,6 +56,13 @@ var sourceUpdateCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		fmt.Printf("Successfully updated source '%s' to %s\n", name, url)
+
+		fmt.Printf("Syncing source '%s' database...\n", name)
+		if err := client.UpdateSource(cmd.Context(), name, url); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: Failed to sync database for '%s': %v\n", name, err)
+		} else {
+			fmt.Printf("Successfully synced source '%s'\n", name)
+		}
 	},
 }
 
