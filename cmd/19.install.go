@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/client"
-	"github.com/snowdreamtech/unistack/internal/registry"
 	"github.com/spf13/cobra"
 )
 
@@ -45,31 +44,12 @@ Examples:
 
 		// Remote registry installation (Phase 3)
 		ctx := context.Background()
+		registryURL := "http://localhost:8080" // Default for now
 
-		// 1. Query the registry for the package
-		meta, err := registry.QueryPackage(ctx, target)
-		if err != nil {
-			return fmt.Errorf("failed to query package: %w", err)
-		}
-		if meta == nil {
-			return fmt.Errorf("package %q not found in registry", target)
-		}
-
-		// 2. Download the package
-		downloader := client.NewDownloader()
-		// Hardcoded registry URL for now, or from config. Let's use a default localhost for testing or
-		// "http://localhost:8080" as used in downloader tests
-		registryURL := "http://localhost:8080"
-
-		fmt.Printf("Downloading %s version %s...\n", meta.Name, meta.Version)
-		downloadedPath, err := downloader.DownloadPackage(ctx, registryURL, meta)
-		if err != nil {
-			return fmt.Errorf("failed to download package: %w", err)
-		}
-
-		// 3. Install it
-		fmt.Printf("Installing %s...\n", meta.Name)
-		if err := installer.InstallFromLocal(downloadedPath); err != nil {
+		if err := installer.InstallPackage(ctx, target, registryURL); err != nil {
+			if err.Error() == client.ErrCircularDependency.Error() {
+				return fmt.Errorf("installation aborted: %w", err)
+			}
 			return fmt.Errorf("installation failed: %w", err)
 		}
 

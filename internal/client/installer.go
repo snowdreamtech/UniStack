@@ -4,6 +4,8 @@
 package client
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -11,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/env"
+	"github.com/snowdreamtech/unistack/internal/registry"
 	"gopkg.in/yaml.v3"
 )
 
@@ -201,6 +204,33 @@ func (i *Installer) Uninstall(pkgName string) error {
 		return fmt.Errorf("package %s is not installed", pkgName)
 	}
 
+	// 0. Check for reverse dependencies
+	db, err := registry.OpenRegistryDB()
+	if err == nil {
+		// It's possible the registry DB isn't initialized locally if only local packages were installed,
+		// but if it exists, check for reverse dependencies.
+		revDeps, err := registry.GetReverseDependencies(context.Background(), db, pkgName)
+		db.Close()
+		if err == nil && len(revDeps) > 0 {
+			// Filter to see if any are currently installed
+			installedMap := make(map[string]bool)
+			for _, p := range pkgs {
+				installedMap[p.Metadata.Name] = true
+			}
+
+			var installedRevDeps []string
+			for _, rd := range revDeps {
+				if installedMap[rd] {
+					installedRevDeps = append(installedRevDeps, rd)
+				}
+			}
+
+			if len(installedRevDeps) > 0 {
+				return fmt.Errorf("cannot uninstall %s because the following installed packages depend on it: %v", pkgName, installedRevDeps)
+			}
+		}
+	}
+
 	// 1. Ansible absent if playbook exists
 	tasksMainPath := filepath.Join(finalDir, "tasks", "main.yml")
 	if _, err := os.Stat(tasksMainPath); err == nil {
@@ -218,6 +248,73 @@ func (i *Installer) Uninstall(pkgName string) error {
 	// 3. Remove package directory
 	if err := os.RemoveAll(finalDir); err != nil {
 		return fmt.Errorf("failed to remove package directory %s: %w", finalDir, err)
+	}
+
+	return nil
+}
+
+// InstallPackage resolves dependencies, downloads, and installs a package and its dependencies.
+func (i *Installer) InstallPackage(ctx context.Context, targetPkg string, registryURL string) error {
+	// 1. Open registry database
+	db, err := registry.OpenRegistryDB()
+	if err != nil {
+		return fmt.Errorf("failed to open registry database: %w", err)
+	}
+	defer db.Close()
+
+	// 2. Build dependency graph
+	graph := NewDependencyGraph()
+	fmt.Printf("Resolving dependencies for %s...\n", targetPkg)
+	if err := graph.BuildGraph(ctx, db, targetPkg); err != nil {
+		return fmt.Errorf("failed to build dependency graph: %w", err)
+	}
+
+	// 3. Topological Sort
+	sorted, err := graph.TopologicalSort()
+	if err != nil {
+		if errors.Is(err, ErrCircularDependency) {
+			return err
+		}
+		return fmt.Errorf("failed to sort dependencies: %w", err)
+	}
+
+	// 4. Check already installed packages (T009)
+	installedPkgs, err := i.ListInstalledPackages()
+	if err != nil {
+		return fmt.Errorf("failed to list installed packages: %w", err)
+	}
+	installedMap := make(map[string]bool)
+	for _, p := range installedPkgs {
+		installedMap[p.Metadata.Name] = true
+	}
+
+	downloader := NewDownloader()
+
+	// 5. Download and install in order
+	for _, pkgName := range sorted {
+		if installedMap[pkgName] {
+			fmt.Printf("Package %s is already installed, skipping.\n", pkgName)
+			continue
+		}
+
+		meta, err := registry.QueryPackage(ctx, pkgName)
+		if err != nil {
+			return fmt.Errorf("failed to query package %s from registry: %w", pkgName, err)
+		}
+		if meta == nil {
+			return fmt.Errorf("package %q not found in registry", pkgName)
+		}
+
+		fmt.Printf("Downloading %s version %s...\n", meta.Name, meta.Version)
+		downloadedPath, err := downloader.DownloadPackage(ctx, registryURL, meta)
+		if err != nil {
+			return fmt.Errorf("failed to download package %s: %w", pkgName, err)
+		}
+
+		fmt.Printf("Installing %s...\n", meta.Name)
+		if err := i.InstallFromLocal(downloadedPath); err != nil {
+			return fmt.Errorf("installation failed for %s: %w", pkgName, err)
+		}
 	}
 
 	return nil

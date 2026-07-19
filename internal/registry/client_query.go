@@ -72,3 +72,76 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 
 	return &meta, nil
 }
+
+// OpenRegistryDB opens a read-only connection to the registry database.
+func OpenRegistryDB() (*sql.DB, error) {
+	dbPath := env.GetRegistryDatabasePath()
+	dsn := fmt.Sprintf("file:%s?mode=ro", dbPath)
+	return sql.Open("sqlite", dsn)
+}
+
+// GetDependencies fetches the direct required dependencies for a given package.
+// It returns a list of dependency package names.
+func GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error) {
+	// For simplicity, we just fetch dependencies of the latest version of the package.
+	// In a real scenario, we should resolve the exact version first.
+	query := `
+		SELECT dependency_name 
+		FROM dependencies 
+		WHERE package_name = ? AND is_recommended = 0
+		AND package_version = (
+			SELECT version FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1
+		)
+	`
+	
+	rows, err := db.QueryContext(ctx, query, pkgName, pkgName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query dependencies for package %s: %w", pkgName, err)
+	}
+	defer rows.Close()
+
+	var deps []string
+	for rows.Next() {
+		var depName string
+		if err := rows.Scan(&depName); err != nil {
+			return nil, err
+		}
+		deps = append(deps, depName)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return deps, nil
+}
+
+// GetReverseDependencies fetches packages that depend on the given package.
+func GetReverseDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error) {
+	query := `
+		SELECT DISTINCT package_name 
+		FROM dependencies 
+		WHERE dependency_name = ?
+	`
+	
+	rows, err := db.QueryContext(ctx, query, pkgName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query reverse dependencies for package %s: %w", pkgName, err)
+	}
+	defer rows.Close()
+
+	var revDeps []string
+	for rows.Next() {
+		var revDepName string
+		if err := rows.Scan(&revDepName); err != nil {
+			return nil, err
+		}
+		revDeps = append(revDeps, revDepName)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return revDeps, nil
+}

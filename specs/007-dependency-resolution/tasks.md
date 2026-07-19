@@ -10,7 +10,7 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Create `internal/client/resolver.go` and `internal/client/resolver_test.go` per implementation plan
+- [X] T001 Create `internal/client/resolver.go` and `internal/client/resolver_test.go` per implementation plan
 
 ---
 
@@ -20,8 +20,8 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Implement `GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error)` in `internal/registry/query.go` to fetch direct dependencies from the SQLite `dependencies` table.
-- [ ] T003 Implement `GetReverseDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error)` in `internal/registry/query.go` to fetch packages that depend on the given package.
+- [X] T002 Implement `GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error)` in `internal/registry/query.go` to fetch direct dependencies from the SQLite `dependencies` table.
+- [X] T003 Implement `GetReverseDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error)` in `internal/registry/query.go` to fetch packages that depend on the given package.
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -35,12 +35,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Create `DependencyGraph` and `Node` structs in `internal/client/resolver.go` based on data-model.md
-- [ ] T005 [US1] Implement `BuildGraph(targetPkg string)` in `resolver.go` using `registry.GetDependencies` to recursively build the graph
-- [ ] T006 [US1] Implement `TopologicalSort()` in `resolver.go` using Kahn's algorithm to return the ordered installation list
-- [ ] T007 [P] [US1] Add unit tests for successful graph building and topological sort in `internal/client/resolver_test.go`
-- [ ] T008 [US1] Update `InstallFromRemote` and `InstallFromLocal` in `internal/client/installer.go` to call the resolver and loop through the ordered list to download/install dependencies first.
-- [ ] T009 [US1] Add logic to skip already installed dependencies (by querying local state/manifest)
+- [X] T004 [US1] Create `DependencyGraph` and `Node` structs in `internal/client/resolver.go` based on data-model.md
+- [X] T005 [US1] Implement `BuildGraph(targetPkg string)` in `resolver.go` using `registry.GetDependencies` to recursively build the graph
+- [X] T006 [US1] Implement `TopologicalSort()` in `resolver.go` using Kahn's algorithm to return the ordered installation list
+- [X] T007 [P] [US1] Add unit tests for successful graph building and topological sort in `internal/client/resolver_test.go`
+- [X] T008 [US1] Update `InstallFromRemote` and `InstallFromLocal` in `internal/client/installer.go` to call the resolver and loop through the ordered list to download/install dependencies first.
+- [X] T009 [US1] Add logic to skip already installed dependencies (by querying local state/manifest)
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -54,9 +54,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T010 [P] [US2] Ensure `TopologicalSort()` in `resolver.go` returns `ErrCircularDependency` if the sorted slice length does not equal the total number of graph nodes.
-- [ ] T011 [P] [US2] Add unit tests for circular dependency scenarios in `internal/client/resolver_test.go`
-- [ ] T012 [US2] Update `installer.go` to catch `ErrCircularDependency` and gracefully abort the installation process, printing a user-friendly error.
+- [X] T010 [P] [US2] Ensure `TopologicalSort()` in `resolver.go` returns `ErrCircularDependency` if the sorted slice length does not equal the total number of graph nodes.
+- [X] T011 [P] [US2] Add unit tests for circular dependency scenarios in `internal/client/resolver_test.go`
+- [X] T012 [US2] Update `installer.go` to catch `ErrCircularDependency` and gracefully abort the installation process, printing a user-friendly error.
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -70,10 +70,10 @@
 
 ### Implementation for User Story 3
 
-- [ ] T013 [US3] Update `Uninstall` in `internal/client/installer.go` to query `registry.GetReverseDependencies` for the target package.
-- [ ] T014 [US3] Filter reverse dependencies to check if any of them are currently installed locally (via `ListInstalledPackages` or local state).
-- [ ] T015 [US3] Return an error or warning if active installed dependents exist, aborting the uninstallation.
-- [ ] T016 [P] [US3] Add unit tests covering safe uninstallation logic in `installer_test.go`.
+- [X] T013 [US3] Update `Uninstall` in `internal/client/installer.go` to query `registry.GetReverseDependencies` for the target package.
+- [X] T014 [US3] Filter reverse dependencies to check if any of them are currently installed locally (via `ListInstalledPackages` or local state).
+- [X] T015 [US3] Return an error or warning if active installed dependents exist, aborting the uninstallation.
+- [X] T016 [P] [US3] Add unit tests covering safe uninstallation logic in `installer_test.go`.
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -83,8 +83,8 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T017 [P] Run quickstart.md validation locally to ensure E2E scenarios work (Scenario 1 & 2).
-- [ ] T018 Code cleanup and verify error messages are consistent.
+- [X] T017 [P] Run quickstart.md validation locally to ensure E2E scenarios work (Scenario 1 & 2).
+- [X] T018 Code cleanup and verify error messages are consistent.
 
 ---
 
