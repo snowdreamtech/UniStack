@@ -101,11 +101,14 @@ func normalizeURL(u string) string {
 	return u
 }
 
-var sourceNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
+var sourceNamePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 
 func validateSourceName(name string) error {
+	if name == "." || name == ".." {
+		return fmt.Errorf("invalid source name '%s': cannot be '.' or '..'", name)
+	}
 	if !sourceNamePattern.MatchString(name) {
-		return fmt.Errorf("invalid source name '%s': only alphanumeric, dashes, and underscores are allowed", name)
+		return fmt.Errorf("invalid source name '%s': only alphanumeric, dashes, underscores, and dots are allowed", name)
 	}
 	return nil
 }
