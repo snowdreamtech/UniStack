@@ -12,6 +12,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -55,9 +56,9 @@ func (b *Builder) Close() error {
 	return b.db.Close()
 }
 
-// Build scans the provided directory, parses package.yml from archives, and inserts into DB
-func (b *Builder) Build(ctx context.Context, sourceDir string) error {
-	entries, err := b.scanPackages(sourceDir)
+// Build scans the provided directory, auto-arranges packages, parses package.yml from archives, and inserts into DB
+func (b *Builder) Build(ctx context.Context, sourceDir, destDir string) error {
+	entries, err := b.scanAndArrangePackages(sourceDir, destDir)
 	if err != nil {
 		return err
 	}
@@ -69,17 +70,17 @@ func (b *Builder) Build(ctx context.Context, sourceDir string) error {
 	return b.insertPackages(ctx, entries)
 }
 
-func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
+func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageEntry, error) {
 	var entries []*PackageEntry
-	packagesDir := filepath.Join(sourceDir, "packages")
+	packagesDir := filepath.Join(destDir, "packages")
 
-	// If packages/ directory doesn't exist, fallback to scanning sourceDir directly
-	scanDir := packagesDir
-	if _, err := os.Stat(packagesDir); os.IsNotExist(err) {
-		scanDir = sourceDir
+	// Create destDir/packages if it doesn't exist
+	if err := os.MkdirAll(packagesDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create packages directory: %w", err)
 	}
 
-	err := filepath.WalkDir(scanDir, func(path string, d os.DirEntry, err error) error {
+	// We scan the source directory for any tarballs
+	err := filepath.WalkDir(sourceDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -111,7 +112,7 @@ func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
 
 		gzr, err := gzip.NewReader(f)
 		if err != nil {
-			fmt.Printf("Warning: failed to read gzip %s: %v\n", path, err)
+			slog.Warn("failed to read gzip", "path", path, "error", err)
 			return nil
 		}
 		defer gzr.Close()
@@ -124,7 +125,7 @@ func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
 				break
 			}
 			if err != nil {
-				fmt.Printf("Warning: failed to read tar %s: %v\n", path, err)
+				slog.Warn("failed to read tar", "path", path, "error", err)
 				return nil
 			}
 
@@ -138,34 +139,82 @@ func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
 		}
 
 		if pkgContent == nil {
-			fmt.Printf("Warning: no package.yml found in %s\n", path)
+			slog.Warn("no package.yml found in archive", "path", path)
 			return nil
 		}
 
 		var pkg Package
 		if err := yaml.Unmarshal(pkgContent, &pkg); err != nil {
-			fmt.Printf("Warning: failed to parse package.yml in %s: %v\n", path, err)
+			slog.Warn("failed to parse package.yml", "path", path, "error", err)
 			return nil
 		}
 
 		if err := Validate(&pkg); err != nil {
-			fmt.Printf("Warning: validation failed for %s: %v\n", path, err)
+			slog.Warn("validation failed for package.yml", "path", path, "error", err)
 			return nil
 		}
 
-		relPath, _ := filepath.Rel(sourceDir, path)
-		// Fix windows paths for web URL compatibility
-		relPath = filepath.ToSlash(relPath)
+		name := pkg.Metadata.Name
+		version := pkg.Metadata.Version
+		if len(name) == 0 {
+			slog.Warn("package name is empty, skipping", "path", path)
+			return nil
+		}
+
+		firstChar := strings.ToLower(string(name[0]))
+		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", name, version))
+		expectedAbsPath := filepath.Join(destDir, expectedRelPath)
+
+		// Close the file before doing any potential moves
+		f.Close()
+
+		if filepath.Clean(path) != filepath.Clean(expectedAbsPath) {
+			slog.Info("Arranging package", "name", name, "version", version, "from", path, "to", expectedAbsPath)
+			if err := os.MkdirAll(filepath.Dir(expectedAbsPath), 0755); err != nil {
+				return fmt.Errorf("failed to create directory for arranged package: %w", err)
+			}
+
+			if sourceDir == destDir {
+				// Move file if source and dest are the same
+				if err := os.Rename(path, expectedAbsPath); err != nil {
+					return fmt.Errorf("failed to move package %s: %w", path, err)
+				}
+			} else {
+				// Copy file if source and dest are different
+				if err := copyFile(path, expectedAbsPath); err != nil {
+					return fmt.Errorf("failed to copy package %s: %w", path, err)
+				}
+			}
+		}
 
 		entries = append(entries, &PackageEntry{
 			Pkg:          &pkg,
 			Hash:         checksum,
-			RelativePath: relPath,
+			RelativePath: filepath.ToSlash(expectedRelPath),
 		})
 		return nil
 	})
 
 	return entries, err
+}
+
+func copyFile(src, dst string) error {
+	in, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer in.Close()
+
+	out, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	if _, err = io.Copy(out, in); err != nil {
+		return err
+	}
+	return out.Sync()
 }
 
 func (b *Builder) insertPackages(ctx context.Context, entries []*PackageEntry) error {

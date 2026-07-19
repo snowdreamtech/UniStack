@@ -31,23 +31,33 @@ type RepoMd struct {
 }
 
 var registryBuildCmd = &cobra.Command{
-	Use:   "build [DIR]",
-	Short: "Build the registry SQLite database from a directory of package archives",
-	Args:  cobra.MaximumNArgs(1),
+	Use:   "build [SOURCE_DIR] [DEST_DIR]",
+	Short: "Build the registry SQLite database from a directory of package archives, auto-arranging them",
+	Args:  cobra.MaximumNArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		start := time.Now()
 
-		dir := "."
-		if len(args) > 0 {
-			dir = args[0]
+		sourceDir := "."
+		destDir := "."
+		if len(args) == 1 {
+			sourceDir = args[0]
+			destDir = args[0]
+		} else if len(args) == 2 {
+			sourceDir = args[0]
+			destDir = args[1]
 		}
 
-		absDir, err := filepath.Abs(dir)
+		absSource, err := filepath.Abs(sourceDir)
 		if err != nil {
-			return fmt.Errorf("invalid directory path: %w", err)
+			return fmt.Errorf("invalid source path: %w", err)
 		}
 
-		return buildRegistry(absDir, start)
+		absDest, err := filepath.Abs(destDir)
+		if err != nil {
+			return fmt.Errorf("invalid destination path: %w", err)
+		}
+
+		return buildRegistry(absSource, absDest, start)
 	},
 }
 
@@ -86,17 +96,17 @@ var registryPackCmd = &cobra.Command{
 		}
 
 		// Proceed to build the registry using the generated packages
-		return buildRegistry(absDest, start)
+		return buildRegistry(absDest, absDest, start)
 	},
 }
 
-func buildRegistry(absDir string, start time.Time) error {
-	repodataDir := filepath.Join(absDir, "repodata")
+func buildRegistry(absSource, absDest string, start time.Time) error {
+	repodataDir := filepath.Join(absDest, "repodata")
 	if err := os.MkdirAll(repodataDir, 0755); err != nil {
 		return fmt.Errorf("failed to create repodata directory: %w", err)
 	}
 
-	slog.Info(fmt.Sprintf("Starting registry build from directory: %s", absDir))
+	slog.Info(fmt.Sprintf("Starting registry build from source %s to %s", absSource, absDest))
 
 	dbPath := filepath.Join(repodataDir, "packages.db")
 	zstPath := dbPath + ".zst"
@@ -109,7 +119,7 @@ func buildRegistry(absDir string, start time.Time) error {
 	defer builder.Close()
 
 	ctx := context.Background()
-	if err := builder.Build(ctx, absDir); err != nil {
+	if err := builder.Build(ctx, absSource, absDest); err != nil {
 		return fmt.Errorf("registry build failed: %w", err)
 	}
 
