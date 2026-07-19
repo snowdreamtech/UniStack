@@ -17,6 +17,11 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// RegistryConfig defines the global registry configuration
+type RegistryConfig struct {
+	GlobalVersion string `yaml:"global_version"`
+}
+
 // Pack scans the source directory for roles containing package.yml
 // and packages them into the destination directory following the spec.
 func Pack(ctx context.Context, sourceDir, destDir string) error {
@@ -27,8 +32,19 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 		return fmt.Errorf("failed to create packages directory: %w", err)
 	}
 
+	var globalVersion string
+	registryConfigPath := filepath.Join(sourceDir, "registry.yml")
+	configBytes, err := os.ReadFile(registryConfigPath)
+	if err == nil {
+		var regConfig RegistryConfig
+		if err := yaml.Unmarshal(configBytes, &regConfig); err == nil && regConfig.GlobalVersion != "" {
+			globalVersion = regConfig.GlobalVersion
+			slog.Info("Found global_version in registry.yml, overriding package versions", "global_version", globalVersion)
+		}
+	}
+
 	// Walk through the source directory to find package.yml
-	err := filepath.WalkDir(sourceDir, func(path string, d os.DirEntry, err error) error {
+	err = filepath.WalkDir(sourceDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -58,6 +74,11 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 
 		name := pkg.Metadata.Name
 		version := pkg.Metadata.Version
+
+		if globalVersion != "" {
+			version = globalVersion
+			pkg.Metadata.Version = globalVersion
+		}
 		
 		if len(name) == 0 {
 			slog.Warn("package name is empty, skipping", "path", path)
@@ -76,7 +97,7 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 		targetFile := filepath.Join(targetDir, fmt.Sprintf("%s-%s.tar.gz", name, version))
 		slog.Info("Packaging role", "name", name, "version", version, "source", roleDir, "target", targetFile)
 
-		if err := tarGzDir(roleDir, targetFile); err != nil {
+		if err := tarGzDir(roleDir, targetFile, globalVersion); err != nil {
 			return fmt.Errorf("failed to package %s: %w", name, err)
 		}
 
@@ -86,7 +107,7 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 	return err
 }
 
-func tarGzDir(sourceDir, targetFile string) error {
+func tarGzDir(sourceDir, targetFile, overrideVersion string) error {
 	f, err := os.Create(targetFile)
 	if err != nil {
 		return err
@@ -127,19 +148,47 @@ func tarGzDir(sourceDir, targetFile string) error {
 		// Use relative path
 		header.Name = relPath
 
-		if err := tw.WriteHeader(header); err != nil {
-			return err
-		}
-
 		// If it's a regular file, write contents
 		if fi.Mode().IsRegular() {
-			data, err := os.Open(file)
-			if err != nil {
+			var dataBytes []byte
+
+			if overrideVersion != "" && fi.Name() == "package.yml" {
+				// Rewrite the package.yml with the new version
+				content, err := os.ReadFile(file)
+				if err != nil {
+					return err
+				}
+				var pkg Package
+				if err := yaml.Unmarshal(content, &pkg); err == nil {
+					pkg.Metadata.Version = overrideVersion
+					if out, err := yaml.Marshal(pkg); err == nil {
+						dataBytes = out
+						header.Size = int64(len(dataBytes))
+					}
+				}
+			}
+
+			if err := tw.WriteHeader(header); err != nil {
 				return err
 			}
-			defer data.Close()
 
-			if _, err := io.Copy(tw, data); err != nil {
+			if dataBytes != nil {
+				if _, err := tw.Write(dataBytes); err != nil {
+					return err
+				}
+			} else {
+				data, err := os.Open(file)
+				if err != nil {
+					return err
+				}
+				defer data.Close()
+
+				if _, err := io.Copy(tw, data); err != nil {
+					return err
+				}
+			}
+		} else {
+			if err := tw.WriteHeader(header); err != nil {
 				return err
 			}
 		}
