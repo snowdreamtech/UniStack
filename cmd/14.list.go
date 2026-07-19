@@ -37,11 +37,7 @@ Examples:
 		fmt.Fprintln(w, "PACKAGE\tVERSION")
 
 		for _, pkg := range pkgs {
-			// Extract name and version from package ID (e.g. hello-1.0.0)
-			// we assume the last hyphen separates name and version
-			// if there is no hyphen, the version is unknown
-			// To keep it simple, we just print the raw ID for now
-			fmt.Fprintf(w, "%s\t\n", pkg)
+			fmt.Fprintf(w, "%s\t%s\n", pkg.Metadata.Name, pkg.Metadata.Version)
 		}
 
 		w.Flush()

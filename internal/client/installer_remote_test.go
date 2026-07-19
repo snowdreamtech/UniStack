@@ -20,7 +20,8 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	tarballPath := filepath.Join(tmpDir, "hello-1.0.0.tar.gz")
 
 	files := map[string]string{
-		"bin/hello": "#!/bin/sh\necho 'hello from remote'",
+		"bin/hello":   "#!/bin/sh\necho 'hello from remote'",
+		"package.yml": "apiVersion: v1alpha1\nkind: package\nmetadata:\n  name: hello\n  version: 1.0.0\n",
 	}
 	createTestTarball(t, tarballPath, files)
 	tarBytes, err := os.ReadFile(tarballPath)

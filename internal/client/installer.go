@@ -11,12 +11,26 @@ import (
 	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/env"
+	"gopkg.in/yaml.v3"
 )
 
 // Installer handles installing packages from local tarballs or remote registry.
 type Installer struct {
 	PackagesDir string
 	BinDir      string
+}
+
+// PackageMetadata holds the inner metadata for a package.yml
+type PackageMetadata struct {
+	Name    string `yaml:"name"`
+	Version string `yaml:"version"`
+}
+
+// PackageManifest represents the structure of package.yml
+type PackageManifest struct {
+	ApiVersion string          `yaml:"apiVersion"`
+	Kind       string          `yaml:"kind"`
+	Metadata   PackageMetadata `yaml:"metadata"`
 }
 
 // NewInstaller creates a new Installer with default paths.
@@ -34,131 +48,171 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 		return fmt.Errorf("only .tar.gz packages are supported currently")
 	}
 
-	// Extract name and version from file name (e.g. hello-1.0.0.tar.gz -> hello-1.0.0)
+	// 1. Extract to a temporary directory first to read package.yml
 	base := filepath.Base(pkgPath)
-	pkgID := strings.TrimSuffix(base, ".tar.gz")
-
-	// Try to guess the executable name (e.g., hello from hello-1.0.0)
-	parts := strings.Split(pkgID, "-")
-	execName := parts[0]
-	if len(parts) > 1 {
-		execName = strings.Join(parts[:len(parts)-1], "-") // Handle names with hyphens
-	}
-
-	finalDir := filepath.Join(i.PackagesDir, pkgID)
-	tmpDir := filepath.Join(i.PackagesDir, ".tmp-"+pkgID)
-
-	// Check if already installed
-	if _, err := os.Stat(finalDir); err == nil {
-		return fmt.Errorf("package %s is already installed", pkgID)
-	}
-
-	// Cleanup tmp dir if it exists from a previous failed run
-	_ = os.RemoveAll(tmpDir)
-
+	tmpExtractDir := filepath.Join(i.PackagesDir, ".tmp-"+base)
+	
 	if err := os.MkdirAll(i.PackagesDir, 0755); err != nil {
 		return fmt.Errorf("failed to create packages directory: %w", err)
 	}
 
-	// 1. Extract atomically
-	if err := ExtractTarGz(pkgPath, tmpDir); err != nil {
-		_ = os.RemoveAll(tmpDir)
+	_ = os.RemoveAll(tmpExtractDir)
+
+	if err := ExtractTarGz(pkgPath, tmpExtractDir); err != nil {
+		_ = os.RemoveAll(tmpExtractDir)
 		return fmt.Errorf("failed to extract package: %w", err)
 	}
 
-	if err := os.Rename(tmpDir, finalDir); err != nil {
-		_ = os.RemoveAll(tmpDir)
+	// 2. Read package.yml
+	manifestPath := filepath.Join(tmpExtractDir, "package.yml")
+	data, err := os.ReadFile(manifestPath)
+	if err != nil {
+		_ = os.RemoveAll(tmpExtractDir)
+		return fmt.Errorf("failed to read package.yml: %w", err)
+	}
+
+	var manifest PackageManifest
+	if err := yaml.Unmarshal(data, &manifest); err != nil {
+		_ = os.RemoveAll(tmpExtractDir)
+		return fmt.Errorf("invalid package.yml format: %w", err)
+	}
+
+	if manifest.Metadata.Name == "" {
+		_ = os.RemoveAll(tmpExtractDir)
+		return fmt.Errorf("package.yml is missing metadata.name")
+	}
+
+	pkgID := fmt.Sprintf("%s-%s", manifest.Metadata.Name, manifest.Metadata.Version)
+	finalDir := filepath.Join(i.PackagesDir, pkgID)
+
+	// Check if already installed
+	if _, err := os.Stat(finalDir); err == nil {
+		_ = os.RemoveAll(tmpExtractDir)
+		return fmt.Errorf("package %s is already installed", pkgID)
+	}
+
+	if err := os.Rename(tmpExtractDir, finalDir); err != nil {
+		_ = os.RemoveAll(tmpExtractDir)
 		return fmt.Errorf("failed to move package to final directory: %w", err)
 	}
 
-	// 2. Execute Ansible if app_loader.yml exists
-	appLoaderPath := filepath.Join(finalDir, "app_loader.yml")
-	if _, err := os.Stat(appLoaderPath); err == nil {
-		if err := runAnsiblePlaybook(finalDir); err != nil {
+	// 3. Execute Ansible if tasks/main.yml exists
+	tasksMainPath := filepath.Join(finalDir, "tasks", "main.yml")
+	if _, err := os.Stat(tasksMainPath); err == nil {
+		if err := runAnsibleRole(finalDir, ""); err != nil {
 			return fmt.Errorf("ansible-playbook failed: %w", err)
 		}
 	}
 
-	// 3. Symlink
-	// Try to find the executable: either in bin/ or root
+	// 4. Symlink
+	execName := manifest.Metadata.Name
 	execPath := filepath.Join(finalDir, "bin", execName)
 	if _, err := os.Stat(execPath); os.IsNotExist(err) {
 		execPath = filepath.Join(finalDir, execName)
-		if _, err := os.Stat(execPath); os.IsNotExist(err) {
-			return fmt.Errorf("could not find executable %q in extracted package", execName)
-		}
 	}
-
-	linkPath := filepath.Join(i.BinDir, execName)
-	if err := CreateSymlink(execPath, linkPath); err != nil {
-		return fmt.Errorf("failed to create symlink for %s: %w", execName, err)
+	
+	// We do not fail if executable is not found, because meta packages or Ansible-only packages might not have a direct binary in bin/
+	if _, err := os.Stat(execPath); err == nil {
+		linkPath := filepath.Join(i.BinDir, execName)
+		if err := CreateSymlink(execPath, linkPath); err != nil {
+			return fmt.Errorf("failed to create symlink for %s: %w", execName, err)
+		}
 	}
 
 	return nil
 }
 
-// runAnsiblePlaybook executes the app_loader.yml playbook located in the package path.
-func runAnsiblePlaybook(pkgPath string) error {
-	appLoaderPath := filepath.Join(pkgPath, "app_loader.yml")
-	fmt.Printf("Detected Ansible playbook %s. Executing...\n", appLoaderPath)
-	cmd := exec.Command("ansible-playbook", "-i", "localhost,", "-c", "local", appLoaderPath, "-e", fmt.Sprintf("app_source_path=%s", pkgPath))
+// runAnsibleRole generates a temporary playbook and executes the ansible role in the package path.
+// state can be empty (install) or "absent" (uninstall).
+func runAnsibleRole(pkgPath string, state string) error {
+	playbookContent := `
+- hosts: localhost
+  connection: local
+  roles:
+    - role: .
+`
+	playbookPath := filepath.Join(pkgPath, "_unistack_playbook.yml")
+	if err := os.WriteFile(playbookPath, []byte(playbookContent), 0644); err != nil {
+		return fmt.Errorf("failed to create temporary playbook: %w", err)
+	}
+	defer os.Remove(playbookPath)
+
+	fmt.Printf("Detected Ansible role in %s. Executing (state=%s)...\n", pkgPath, state)
+	
+	args := []string{"-i", "localhost,", "-c", "local", playbookPath, "-e", fmt.Sprintf("app_source_path=%s", pkgPath)}
+	if state != "" {
+		args = append(args, "-e", fmt.Sprintf("state=%s", state))
+	}
+	
+	cmd := exec.Command("ansible-playbook", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
 }
 
-// ListInstalledPackages returns a list of installed packages in the form of "pkgID" strings (e.g. "hello-1.0.0")
-func (i *Installer) ListInstalledPackages() ([]string, error) {
+// ListInstalledPackages returns a list of installed PackageManifests parsed from their package.yml files.
+func (i *Installer) ListInstalledPackages() ([]PackageManifest, error) {
 	entries, err := os.ReadDir(i.PackagesDir)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return []string{}, nil
+			return []PackageManifest{}, nil
 		}
 		return nil, err
 	}
-	var pkgs []string
+	
+	var manifests []PackageManifest
 	for _, e := range entries {
 		if e.IsDir() && !strings.HasPrefix(e.Name(), ".") {
-			pkgs = append(pkgs, e.Name())
+			manifestPath := filepath.Join(i.PackagesDir, e.Name(), "package.yml")
+			data, err := os.ReadFile(manifestPath)
+			if err != nil {
+				continue // skip invalid directories without package.yml
+			}
+			
+			var manifest PackageManifest
+			if err := yaml.Unmarshal(data, &manifest); err == nil && manifest.Metadata.Name != "" {
+				manifests = append(manifests, manifest)
+			}
 		}
 	}
-	return pkgs, nil
+	return manifests, nil
 }
 
 // Uninstall removes a package from the system, invoking Ansible uninstall logic if present.
-func (i *Installer) Uninstall(pkgID string) error {
-	finalDir := filepath.Join(i.PackagesDir, pkgID)
-	
-	if _, err := os.Stat(finalDir); err != nil {
-		if os.IsNotExist(err) {
-			return fmt.Errorf("package %s is not installed", pkgID)
-		}
+func (i *Installer) Uninstall(pkgName string) error {
+	pkgs, err := i.ListInstalledPackages()
+	if err != nil {
 		return err
 	}
-
-	// Guess exec name similarly to InstallFromLocal
-	parts := strings.Split(pkgID, "-")
-	execName := parts[0]
-	if len(parts) > 1 {
-		execName = strings.Join(parts[:len(parts)-1], "-")
+	
+	var installedPkg *PackageManifest
+	var finalDir string
+	
+	for _, p := range pkgs {
+		if p.Metadata.Name == pkgName {
+			installedPkg = &p
+			pkgID := fmt.Sprintf("%s-%s", p.Metadata.Name, p.Metadata.Version)
+			finalDir = filepath.Join(i.PackagesDir, pkgID)
+			break
+		}
+	}
+	
+	if installedPkg == nil {
+		return fmt.Errorf("package %s is not installed", pkgName)
 	}
 
 	// 1. Ansible absent if playbook exists
-	appLoaderPath := filepath.Join(finalDir, "app_loader.yml")
-	if _, err := os.Stat(appLoaderPath); err == nil {
-		fmt.Printf("Detected Ansible playbook %s. Executing uninstall...\n", appLoaderPath)
-		cmd := exec.Command("ansible-playbook", "-i", "localhost,", "-c", "local", appLoaderPath, "-e", fmt.Sprintf("app_source_path=%s", finalDir), "-e", "state=absent")
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		if err := cmd.Run(); err != nil {
+	tasksMainPath := filepath.Join(finalDir, "tasks", "main.yml")
+	if _, err := os.Stat(tasksMainPath); err == nil {
+		if err := runAnsibleRole(finalDir, "absent"); err != nil {
 			return fmt.Errorf("ansible-playbook uninstall failed: %w", err)
 		}
 	}
 
 	// 2. Remove symlink
-	linkPath := filepath.Join(i.BinDir, execName)
+	linkPath := filepath.Join(i.BinDir, pkgName)
 	if err := os.Remove(linkPath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove symlink for %s: %w", execName, err)
+		return fmt.Errorf("failed to remove symlink for %s: %w", pkgName, err)
 	}
 
 	// 3. Remove package directory

@@ -11,24 +11,23 @@ import (
 )
 
 var uninstallCmd = &cobra.Command{
-	Use:   "uninstall <package_id>",
+	Use:   "uninstall <package_name>",
 	Short: "Uninstall a package",
-	Long: `Uninstall an existing package from the local UniStack environment.
+	Long: `Uninstall a package and its associated files and symlinks.
 
 Examples:
-  unistack uninstall hello-1.0.0
+  unistack uninstall hello
 `,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		pkgID := args[0]
+		pkgName := args[0]
 		installer := client.NewInstaller()
 
-		fmt.Printf("Uninstalling %s...\n", pkgID)
-		if err := installer.Uninstall(pkgID); err != nil {
-			return fmt.Errorf("uninstall failed: %w", err)
+		if err := installer.Uninstall(pkgName); err != nil {
+			return fmt.Errorf("failed to uninstall package %q: %w", pkgName, err)
 		}
 
-		fmt.Println("Uninstallation completed successfully.")
+		fmt.Printf("Successfully uninstalled %s.\n", pkgName)
 		return nil
 	},
 }

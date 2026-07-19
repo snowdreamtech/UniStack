@@ -6,7 +6,6 @@ package cmd
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/go-version"
 	"github.com/snowdreamtech/unistack/internal/client"
@@ -32,17 +31,17 @@ Examples:
 			return fmt.Errorf("failed to list installed packages: %w", err)
 		}
 
-		var installedID string
 		var installedVersionStr string
+		var isInstalled bool
 		for _, p := range pkgs {
-			if strings.HasPrefix(p, pkgName+"-") {
-				installedID = p
-				installedVersionStr = strings.TrimPrefix(p, pkgName+"-")
+			if p.Metadata.Name == pkgName {
+				isInstalled = true
+				installedVersionStr = p.Metadata.Version
 				break
 			}
 		}
 
-		if installedID == "" {
+		if !isInstalled {
 			return fmt.Errorf("package %q is not currently installed", pkgName)
 		}
 
@@ -74,8 +73,8 @@ Examples:
 		fmt.Printf("Upgrading %s from %s to %s...\n", pkgName, installedVersionStr, meta.Version)
 
 		// 1. Uninstall old version
-		fmt.Printf("Uninstalling old version (%s)...\n", installedID)
-		if err := installer.Uninstall(installedID); err != nil {
+		fmt.Printf("Uninstalling old version...\n")
+		if err := installer.Uninstall(pkgName); err != nil {
 			return fmt.Errorf("failed to uninstall old version: %w", err)
 		}
 

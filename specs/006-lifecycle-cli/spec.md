@@ -36,7 +36,7 @@ Users need to remove software they no longer need to free up resources and avoid
 **Acceptance Scenarios**:
 
 1. **Given** an installed package (pure binary), **When** the user runs `unistack uninstall <pkg>`, **Then** the symlink is removed, and the package directory is deleted.
-2. **Given** an installed package with Ansible lifecycle hooks, **When** the user runs `unistack uninstall <pkg>`, **Then** the CLI invokes the corresponding Ansible uninstall logic, and only upon success does it remove the package files.
+2. **Given** an installed package with Ansible lifecycle hooks, **When** the user runs `unistack uninstall <pkg>`, **Then** the CLI invokes the corresponding Ansible uninstall logic (passing `-e state=absent` to `tasks/main.yml`), and only upon success does it remove the package files.
 3. **Given** a package that is not installed, **When** the user runs `unistack uninstall <pkg>`, **Then** the CLI returns an appropriate error message indicating the package is not found.
 
 ---
@@ -67,7 +67,7 @@ Users want to keep their software up to date effortlessly without having to manu
 - **FR-001**: System MUST provide a `list` command that enumerates all currently installed packages by inspecting the local directory `~/.local/share/unistack` or local state file.
 - **FR-002**: System MUST provide an `uninstall` command that accepts a package name.
 - **FR-003**: System MUST remove the symbolic link(s) created during the installation of the specified package during `uninstall`.
-- **FR-004**: System MUST invoke the Ansible uninstall logic (e.g., a specific tag or playbook) if the package contains an `app_loader.yml` during `uninstall`.
+- **FR-004**: System MUST invoke the Ansible uninstall logic (by passing `-e state=absent` to the temporary playbook running the role) if the package contains a `tasks/main.yml` during `uninstall`.
 - **FR-005**: System MUST delete the local package directory and related cached files upon successful `uninstall`.
 - **FR-006**: System MUST provide an `upgrade` command that accepts a package name.
 - **FR-007**: System MUST compare the currently installed version against the latest version available in the local SQLite database during `upgrade`.
@@ -90,5 +90,5 @@ Users want to keep their software up to date effortlessly without having to manu
 ## Assumptions
 
 - Users have sufficient filesystem permissions to delete packages and symlinks in their user directory (or system directory if running as root).
-- The Ansible `app_loader.yml` structure supports an uninstallation path (e.g., standard Ansible practices like setting `state=absent`).
+- The Ansible role structure supports an uninstallation path (e.g., standard Ansible practices like setting `state=absent`).
 - The local SQLite registry accurately reflects the latest package metadata following a `unistack update`.
