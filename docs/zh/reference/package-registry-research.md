@@ -206,11 +206,9 @@ https://registry.unistack.dev/              # 仓库根 URL
 │
 └── packages/                                # 按首字母组织
     ├── a/
-    │   └── aria2/aria2-1.0.0.tar.gz
-    ├── f/
-    │   └── foundation/foundation-1.0.0.tar.gz  # 元包
-    └── r/
-        └── redis/redis-1.0.0.uspkg             # 付费包
+    │   └── aria2-1.0.0.tar.gz
+    └── f/
+        └── foundation-1.0.0.tar.gz             # 元包
 ```
 
 **下载链接** = `仓库 URL` + SQLite 中的 `relative_path`

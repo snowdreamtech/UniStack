@@ -200,9 +200,9 @@ https://registry.unistack.dev/              # Registry Base URL
 │
 └── packages/                                # Organized alphabetically
     ├── a/
-    │   └── aria2/aria2-1.0.0.tar.gz
+    │   └── aria2-1.0.0.tar.gz
     └── f/
-        └── foundation/foundation-1.0.0.tar.gz  # Meta package
+        └── foundation-1.0.0.tar.gz             # Meta package
 ```
 
 **Download URL** = `Registry Base URL` + `relative_path` (from SQLite)
