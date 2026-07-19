@@ -5,8 +5,13 @@ package cmd
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -15,14 +20,19 @@ import (
 )
 
 var registryCmd = &cobra.Command{
-	Use:    "registry",
-	Short:  "Manage the local package registry",
-	Hidden: true,
+	Use:   "registry",
+	Short: "Manage the local package registry",
+}
+
+type RepoMd struct {
+	Timestamp int64  `json:"timestamp"`
+	Hash      string `json:"hash"`
+	Path      string `json:"path"`
 }
 
 var registryBuildCmd = &cobra.Command{
 	Use:   "build [DIR]",
-	Short: "Build the registry SQLite database from a directory of package YAML files",
+	Short: "Build the registry SQLite database from a directory of package archives",
 	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		start := time.Now()
@@ -37,9 +47,14 @@ var registryBuildCmd = &cobra.Command{
 			return fmt.Errorf("invalid directory path: %w", err)
 		}
 
+		repodataDir := filepath.Join(absDir, "repodata")
+		if err := os.MkdirAll(repodataDir, 0755); err != nil {
+			return fmt.Errorf("failed to create repodata directory: %w", err)
+		}
+
 		slog.Info(fmt.Sprintf("Starting registry build from directory: %s", absDir))
 
-		dbPath := filepath.Join(absDir, "packages.db")
+		dbPath := filepath.Join(repodataDir, "packages.db")
 		zstPath := dbPath + ".zst"
 
 		// Initialize registry builder
@@ -64,6 +79,36 @@ var registryBuildCmd = &cobra.Command{
 		if err := registry.CompressZstd(dbPath, zstPath); err != nil {
 			return fmt.Errorf("compression failed: %w", err)
 		}
+
+		// Calculate hash of zst file
+		zstFile, err := os.Open(zstPath)
+		if err != nil {
+			return fmt.Errorf("failed to open compressed db: %w", err)
+		}
+		defer zstFile.Close()
+
+		h := sha256.New()
+		if _, err := io.Copy(h, zstFile); err != nil {
+			return fmt.Errorf("failed to hash compressed db: %w", err)
+		}
+		zstHash := hex.EncodeToString(h.Sum(nil))
+
+		// Write repomd.json
+		repomdPath := filepath.Join(repodataDir, "repomd.json")
+		repomd := RepoMd{
+			Timestamp: time.Now().Unix(),
+			Hash:      zstHash,
+			Path:      "repodata/packages.db.zst",
+		}
+		repomdBytes, err := json.MarshalIndent(repomd, "", "  ")
+		if err != nil {
+			return fmt.Errorf("failed to encode repomd.json: %w", err)
+		}
+		if err := os.WriteFile(repomdPath, repomdBytes, 0644); err != nil {
+			return fmt.Errorf("failed to write repomd.json: %w", err)
+		}
+
+		slog.Info(fmt.Sprintf("Generated repomd.json at: %s", repomdPath))
 
 		duration := time.Since(start)
 		slog.Info(fmt.Sprintf("Registry build completed successfully in %v", duration))

@@ -749,3 +749,7 @@ sbom.json
 completions/
 manpages/
 /unistack
+
+# Temporary test files
+local_repo/
+unistack_bin

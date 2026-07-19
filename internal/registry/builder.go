@@ -4,9 +4,14 @@
 package registry
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
+	"crypto/sha256"
 	"database/sql"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,6 +23,13 @@ import (
 // Builder defines the registry builder instance
 type Builder struct {
 	db *sql.DB
+}
+
+// PackageEntry wraps a Package with metadata about its physical file.
+type PackageEntry struct {
+	Pkg          *Package
+	Hash         string
+	RelativePath string
 }
 
 // NewBuilder initializes a new registry builder
@@ -43,41 +55,96 @@ func (b *Builder) Close() error {
 	return b.db.Close()
 }
 
-// Build scans the provided directory, parses package.yml, and inserts into DB
+// Build scans the provided directory, parses package.yml from archives, and inserts into DB
 func (b *Builder) Build(ctx context.Context, sourceDir string) error {
-	packages, err := b.scanPackages(sourceDir)
+	entries, err := b.scanPackages(sourceDir)
 	if err != nil {
 		return err
 	}
 
-	if len(packages) == 0 {
-		return fmt.Errorf("no valid packages found in %s", sourceDir)
+	if len(entries) == 0 {
+		return fmt.Errorf("no valid package archives found in %s", sourceDir)
 	}
 
-	return b.insertPackages(ctx, packages)
+	return b.insertPackages(ctx, entries)
 }
 
-func (b *Builder) scanPackages(sourceDir string) ([]*Package, error) {
-	var pkgs []*Package
+func (b *Builder) scanPackages(sourceDir string) ([]*PackageEntry, error) {
+	var entries []*PackageEntry
+	packagesDir := filepath.Join(sourceDir, "packages")
 
-	err := filepath.WalkDir(sourceDir, func(path string, d os.DirEntry, err error) error {
+	// If packages/ directory doesn't exist, fallback to scanning sourceDir directly
+	scanDir := packagesDir
+	if _, err := os.Stat(packagesDir); os.IsNotExist(err) {
+		scanDir = sourceDir
+	}
+
+	err := filepath.WalkDir(scanDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if d.IsDir() || d.Name() != "package.yml" {
+		if d.IsDir() {
 			return nil
 		}
 
-		content, err := os.ReadFile(path)
+		isTarball := strings.HasSuffix(d.Name(), ".tar.gz") || strings.HasSuffix(d.Name(), ".uspkg")
+		if !isTarball {
+			return nil
+		}
+
+		f, err := os.Open(path)
 		if err != nil {
-			return fmt.Errorf("failed to read %s: %w", path, err)
+			return fmt.Errorf("failed to open %s: %w", path, err)
+		}
+		defer f.Close()
+
+		h := sha256.New()
+		if _, err := io.Copy(h, f); err != nil {
+			return fmt.Errorf("failed to hash %s: %w", path, err)
+		}
+		checksum := hex.EncodeToString(h.Sum(nil))
+
+		if _, err := f.Seek(0, 0); err != nil {
+			return fmt.Errorf("failed to rewind %s: %w", path, err)
+		}
+
+		gzr, err := gzip.NewReader(f)
+		if err != nil {
+			fmt.Printf("Warning: failed to read gzip %s: %v\n", path, err)
+			return nil
+		}
+		defer gzr.Close()
+
+		tr := tar.NewReader(gzr)
+		var pkgContent []byte
+		for {
+			header, err := tr.Next()
+			if err == io.EOF {
+				break
+			}
+			if err != nil {
+				fmt.Printf("Warning: failed to read tar %s: %v\n", path, err)
+				return nil
+			}
+
+			if filepath.Base(header.Name) == "package.yml" {
+				pkgContent, err = io.ReadAll(tr)
+				if err != nil {
+					return fmt.Errorf("failed to read package.yml in %s: %w", path, err)
+				}
+				break
+			}
+		}
+
+		if pkgContent == nil {
+			fmt.Printf("Warning: no package.yml found in %s\n", path)
+			return nil
 		}
 
 		var pkg Package
-		if err := yaml.Unmarshal(content, &pkg); err != nil {
-			// Print warning and skip
-			fmt.Printf("Warning: failed to parse %s: %v\n", path, err)
+		if err := yaml.Unmarshal(pkgContent, &pkg); err != nil {
+			fmt.Printf("Warning: failed to parse package.yml in %s: %v\n", path, err)
 			return nil
 		}
 
@@ -86,14 +153,22 @@ func (b *Builder) scanPackages(sourceDir string) ([]*Package, error) {
 			return nil
 		}
 
-		pkgs = append(pkgs, &pkg)
+		relPath, _ := filepath.Rel(sourceDir, path)
+		// Fix windows paths for web URL compatibility
+		relPath = filepath.ToSlash(relPath)
+
+		entries = append(entries, &PackageEntry{
+			Pkg:          &pkg,
+			Hash:         checksum,
+			RelativePath: relPath,
+		})
 		return nil
 	})
 
-	return pkgs, err
+	return entries, err
 }
 
-func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error {
+func (b *Builder) insertPackages(ctx context.Context, entries []*PackageEntry) error {
 	tx, err := b.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -101,8 +176,8 @@ func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error
 	defer tx.Rollback()
 
 	pkgStmt, err := tx.PrepareContext(ctx, `
-		INSERT OR REPLACE INTO packages (name, version, description, authors, homepage, license)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT OR REPLACE INTO packages (name, version, description, authors, homepage, license, hash, relative_path)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`)
 	if err != nil {
 		return err
@@ -118,7 +193,8 @@ func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error
 	}
 	defer depStmt.Close()
 
-	for _, pkg := range packages {
+	for _, entry := range entries {
+		pkg := entry.Pkg
 		authors := strings.Join(pkg.Metadata.Authors, ",")
 
 		_, err := pkgStmt.ExecContext(ctx,
@@ -128,12 +204,13 @@ func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error
 			authors,
 			pkg.Metadata.Homepage,
 			pkg.Metadata.License,
+			entry.Hash,
+			entry.RelativePath,
 		)
 		if err != nil {
 			return fmt.Errorf("failed to insert package %s: %w", pkg.Metadata.Name, err)
 		}
 
-		// Insert required dependencies
 		for depName, constraint := range pkg.Dependencies.Required {
 			_, err := depStmt.ExecContext(ctx, pkg.Metadata.Name, pkg.Metadata.Version, depName, constraint, false)
 			if err != nil {
@@ -141,7 +218,6 @@ func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error
 			}
 		}
 
-		// Insert recommended dependencies
 		for depName, constraint := range pkg.Dependencies.Recommended {
 			_, err := depStmt.ExecContext(ctx, pkg.Metadata.Name, pkg.Metadata.Version, depName, constraint, true)
 			if err != nil {
@@ -162,6 +238,8 @@ func initSchema(db *sql.DB) error {
 		authors TEXT,
 		homepage TEXT,
 		license TEXT,
+		hash TEXT NOT NULL,
+		relative_path TEXT NOT NULL,
 		PRIMARY KEY (name, version)
 	);
 
