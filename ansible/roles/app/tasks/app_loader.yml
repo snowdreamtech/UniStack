@@ -55,52 +55,47 @@
 # ---------------------------------------------------------------------
 - name: "Resolve apps role base path"
   ansible.builtin.set_fact:
-    resolved_apps_path: >-
+    resolved_app_source_path: >-
       {{
-        (role_path | dirname ~ '/apps')
-        if (
-          (role_path | dirname ~ '/apps/vars/' ~ app_name) is directory or
-          (role_path | dirname ~ '/apps/vars/' ~ app_name ~ '.yml') is file or
-          (role_path | dirname ~ '/apps/tasks/' ~ app_name) is directory or
-          (role_path | dirname ~ '/apps/tasks/' ~ app_name ~ '.yml') is file
-        )
-        else (
+        app_source_path | default(
           app_role_path
             | default(((ansible_parent_role_paths | default([], true)) | first), true)
             | default(role_path | dirname ~ '/apps', true)
+          ~ '/' ~ app_name, true
         )
       }}
   tags: ["always"]
 
 - name: "Log base path resolution for {{ app_name }}"
   ansible.builtin.debug:
-    msg: "Apps Base selected: {{ resolved_apps_path }}"
+    msg: "App Source Path selected: {{ resolved_app_source_path }}"
   when: verbose | default(false, true) | bool
   tags: ["always"]
 
-- name: "Verify apps role existence at {{ resolved_apps_path }}"
+- name: "Verify app source existence at {{ resolved_app_source_path }}"
   ansible.builtin.stat:
-    path: "{{ resolved_apps_path }}"
-  register: app_base_dir_stat
+    path: "{{ resolved_app_source_path }}"
+  register: app_source_dir_stat
   delegate_to: localhost
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
-# 4. Discovery: Multi-Mode Presence Check
-#    Check for any custom definitions (folders or files) for this app.
+# 4. Discovery: Presence Check
+#    Check for vars, defaults, or tasks directories in the app source.
 # ---------------------------------------------------------------------
 - name: "Probe for custom definitions of {{ app_name }}"
-  when: app_base_dir_stat.stat.exists | default(false, true)
+  when: app_source_dir_stat.stat.exists | default(false, true)
   tags: ["always"]
   block:
-    - name: "Detect module-mode structures for {{ app_name }}"
+    - name: "Detect structures for {{ app_name }}"
       ansible.builtin.stat:
-        path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}"
+        path: "{{ resolved_app_source_path }}/{{ loader_item }}"
       loop:
-        - { path: "vars", type: "dir" }
-        - { path: "tasks", type: "dir" }
+        - "defaults"
+        - "vars"
+        - "tasks"
       loop_control:
         loop_var: loader_item
       register: _app_mod_stat
@@ -109,37 +104,18 @@
         ansible_python_interpreter: "{{ ansible_playbook_python }}"
       tags: ["always"]
 
-    - name: "Detect root-mode files for {{ app_name }}"
-      ansible.builtin.stat:
-        path: "{{ resolved_apps_path }}/{{ loader_item.path }}/{{ app_name }}.yml"
-      loop:
-        - { path: "vars", type: "file" }
-        - { path: "tasks", type: "file" }
-      loop_control:
-        loop_var: loader_item
-      register: _app_root_stat
-      delegate_to: localhost
-      tags: ["always"]
-
     - name: "Set custom existence facts for {{ app_name }}"
       ansible.builtin.set_fact:
         app_loader_custom_exists: >-
           {{
             (_app_mod_stat.results[0].stat.exists | default(false, true)) or
             (_app_mod_stat.results[1].stat.exists | default(false, true)) or
-            (_app_root_stat.results[0].stat.exists | default(false, true)) or
-            (_app_root_stat.results[1].stat.exists | default(false, true))
+            (_app_mod_stat.results[2].stat.exists | default(false, true))
           }}
-        app_loader_root_mode: >-
-          {{
-            not (
-              (_app_mod_stat.results[0].stat.exists | default(false, true)) or
-              (_app_mod_stat.results[1].stat.exists | default(false, true))
-            )
-          }}
-        app_vars_dir: "{{ _app_mod_stat.results[0] }}"
-        app_tasks_dir: "{{ _app_mod_stat.results[1] }}"
-      when: app_base_dir_stat.stat.exists | default(false, true)
+        app_defaults_path: "{{ resolved_app_source_path }}/defaults"
+        app_vars_path: "{{ resolved_app_source_path }}/vars"
+        app_tasks_path: "{{ resolved_app_source_path }}/tasks"
+      when: app_source_dir_stat.stat.exists | default(false, true)
       tags: ["always"]
 
 # ---------------------------------------------------------------------
@@ -147,16 +123,6 @@
 # ---------------------------------------------------------------------
 - name: "Initialize app loader state for {{ app_name }}"
   ansible.builtin.set_fact:
-    app_vars_path: >-
-      {{
-        (app_loader_root_mode | default(false, true))
-        | ternary(resolved_apps_path ~ '/vars', resolved_apps_path ~ '/vars/' ~ app_name)
-      }}
-    app_tasks_path: >-
-      {{
-        (app_loader_root_mode | default(false, true))
-        | ternary(resolved_apps_path ~ '/tasks', resolved_apps_path ~ '/tasks/' ~ app_name)
-      }}
     app_tasks_file: ""
   tags: ["always"]
 
@@ -177,20 +143,24 @@
 # ---------------------------------------------------------------------
 - name: "Load hierarchical variables for {{ app_name }}"
   ansible.builtin.include_vars:
-    file: "{{ app_vars_path }}/{{ loader_item }}"
+    file: "{{ loader_item.path }}/{{ loader_item.file }}"
   loop:
-    - "default.yml"
-    - "{{ app_name }}.yml"
-    - "{{ family }}.yml"
-    - "{{ family }}-{{ version }}.yml"
-    - "{{ distro }}.yml"
-    - "{{ distro }}-{{ version }}.yml"
-    - "{{ mode }}.yml"
-    - "{{ mode }}/default.yml"
-    - "{{ mode }}/{{ family }}.yml"
-    - "{{ mode }}/{{ family }}-{{ version }}.yml"
-    - "{{ mode }}/{{ distro }}.yml"
-    - "{{ mode }}/{{ distro }}-{{ version }}.yml"
+    - { path: "{{ app_defaults_path | default('', true) }}", file: "main.yml" }
+    - { path: "{{ app_defaults_path | default('', true) }}", file: "default.yml" }
+    - { path: "{{ app_defaults_path | default('', true) }}", file: "{{ app_name }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "main.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "default.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ app_name }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}-{{ version }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}-{{ version }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/default.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}-{{ version }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}-{{ version }}.yml" }
   vars:
     distro: "{{ os_distribution | default('unknown', true) }}"
     family: "{{ os_family | default('unknown', true) }}"
@@ -198,7 +168,8 @@
     mode: "{{ app_delivery_mode }}"
   when:
     - app_loader_custom_exists | default(false, true)
-    - "lookup('first_found', {'paths': [app_vars_path], 'files': [loader_item]}, errors='ignore') != ''"
+    - loader_item.path | length > 0
+    - "lookup('first_found', {'paths': [loader_item.path], 'files': [loader_item.file]}, errors='ignore') != ''"
   failed_when: false
   loop_control:
     loop_var: loader_item
@@ -291,13 +262,14 @@
     version: "{{ os_version_major | default('0', true) }}"
     mode: "{{ app_delivery_mode }}"
     params_tasks:
-      paths: ["{{ app_tasks_path }}"]
+      paths: ["{{ app_tasks_path | default('', true) }}"]
       files:
         - "{{ mode }}/{{ distro }}-{{ version }}.yml"
         - "{{ mode }}/{{ distro }}.yml"
         - "{{ mode }}/{{ family }}-{{ version }}.yml"
         - "{{ mode }}/{{ family }}.yml"
         - "{{ mode }}/{{ app_name }}.yml"
+        - "{{ mode }}/main.yml"
         - "{{ app_name }}.yml"
         - "{{ mode }}/default.yml"
         - "{{ mode }}.yml"
@@ -305,8 +277,11 @@
         - "{{ distro }}.yml"
         - "{{ family }}-{{ version }}.yml"
         - "{{ family }}.yml"
+        - "main.yml"
         - "default.yml"
-  when: app_loader_custom_exists | default(false, true)
+  when: 
+    - app_loader_custom_exists | default(false, true)
+    - app_tasks_path is defined
   tags: ["always"]
 
 # ---------------------------------------------------------------------
@@ -319,9 +294,9 @@
       Delivery Mode: {{ app_delivery_mode }}
 
       Discovery Context:
-      - Apps Role Base: {{ resolved_apps_path }}
+      - App Source Path: {{ resolved_app_source_path }}
       - Parent Chain: {{ ansible_parent_role_paths | default([], true) | join(' -> ') }}
-      - Discovery Mode: {{ 'Root-Mode' if (app_loader_root_mode | default(false, true)) else 'Module-Mode' }}
+      - Defaults Root: {{ app_defaults_path | default('NONE', true) }}
       - Custom Exists: {{ app_loader_custom_exists | default(false, true) }}
 
       Path Context:
