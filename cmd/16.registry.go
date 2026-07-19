@@ -69,7 +69,7 @@ var registryPackCmd = &cobra.Command{
 			sourceDir = args[0]
 		}
 
-		destDir := "local_repo"
+		destDir := "public"
 		if len(args) > 1 {
 			destDir = args[1]
 		}

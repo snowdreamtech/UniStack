@@ -1,0 +1,4 @@
+metadata:
+  name: nginx
+  version: 0.0.1
+  description: Nginx web server
