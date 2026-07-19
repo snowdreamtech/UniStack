@@ -1,7 +1,0 @@
----
-- name: Test GNU Hello Role
-  hosts: localhost
-  connection: local
-  gather_facts: true
-  roles:
-    - role: ansible/roles/apps/hello
