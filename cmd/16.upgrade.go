@@ -7,7 +7,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/go-version"
+	"github.com/Masterminds/semver/v3"
 	"github.com/snowdreamtech/unistack/internal/client"
 	"github.com/snowdreamtech/unistack/internal/registry"
 	"github.com/spf13/cobra"
@@ -55,17 +55,17 @@ Examples:
 			return fmt.Errorf("package %q not found in registry", pkgName)
 		}
 
-		vInstalled, err := version.NewVersion(installedVersionStr)
+		vInstalled, err := semver.NewVersion(installedVersionStr)
 		if err != nil {
 			return fmt.Errorf("invalid installed version %q: %w", installedVersionStr, err)
 		}
 
-		vLatest, err := version.NewVersion(meta.Version)
+		vLatest, err := semver.NewVersion(meta.Version)
 		if err != nil {
 			return fmt.Errorf("invalid registry version %q: %w", meta.Version, err)
 		}
 
-		if vLatest.LessThanOrEqual(vInstalled) {
+		if vLatest.LessThan(vInstalled) || vLatest.Equal(vInstalled) {
 			fmt.Printf("Package %s is already up-to-date (version %s).\n", pkgName, installedVersionStr)
 			return nil
 		}

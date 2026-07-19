@@ -7,7 +7,6 @@ require (
 	github.com/ProtonMail/gopenpgp/v2 v2.10.0
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
 	github.com/gofrs/flock v0.13.0
-	github.com/hashicorp/go-version v1.9.0
 	github.com/klauspost/compress v1.19.0
 	github.com/lithammer/fuzzysearch v1.1.8
 	github.com/mattn/go-isatty v0.0.22

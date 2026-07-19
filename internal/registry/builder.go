@@ -17,7 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/hashicorp/go-version"
+	"github.com/Masterminds/semver/v3"
 	"gopkg.in/yaml.v3"
 	_ "modernc.org/sqlite"
 )
@@ -38,7 +38,7 @@ type scannedFile struct {
 	Path     string
 	Checksum string
 	Pkg      Package
-	Version  *version.Version
+	Version  *semver.Version
 }
 
 // NewBuilder initializes a new registry builder
@@ -157,7 +157,7 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 			return nil
 		}
 
-		ver, err := version.NewVersion(verStr)
+		ver, err := semver.NewVersion(verStr)
 		if err != nil {
 			slog.Warn("invalid semver, skipping", "path", path, "version", verStr)
 			return nil
