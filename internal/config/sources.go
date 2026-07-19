@@ -27,8 +27,12 @@ func GetSourcesFile() string {
 func GetDefaultSources() []Source {
 	return []Source{
 		{
-			Name: "default",
-			URL:  "https://registry.unistack.org",
+			Name: "core",
+			URL:  "https://registry.unistack.org/core",
+		},
+		{
+			Name: "community",
+			URL:  "https://registry.unistack.org/community",
 		},
 	}
 }

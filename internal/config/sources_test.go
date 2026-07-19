@@ -22,8 +22,8 @@ func TestSourcesCRUD(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadSources failed: %v", err)
 	}
-	if len(sources) != 1 || sources[0].Name != "default" {
-		t.Fatalf("Expected default source, got %v", sources)
+	if len(sources) != 2 || sources[0].Name != "core" || sources[1].Name != "community" {
+		t.Fatalf("Expected core and community sources, got %v", sources)
 	}
 
 	// 2. Test Add Source
@@ -32,11 +32,11 @@ func TestSourcesCRUD(t *testing.T) {
 	}
 	
 	sources, _ = LoadSources()
-	if len(sources) != 2 {
-		t.Fatalf("Expected 2 sources, got %d", len(sources))
+	if len(sources) != 3 {
+		t.Fatalf("Expected 3 sources, got %d", len(sources))
 	}
-	if sources[1].Name != "custom" || sources[1].URL != "http://test.local" {
-		t.Fatalf("Custom source incorrect: %v", sources[1])
+	if sources[2].Name != "custom" || sources[2].URL != "http://test.local" {
+		t.Fatalf("Custom source incorrect: %v", sources[2])
 	}
 
 	// 3. Test Update Source
@@ -45,8 +45,8 @@ func TestSourcesCRUD(t *testing.T) {
 	}
 	
 	sources, _ = LoadSources()
-	if sources[1].URL != "http://test.updated" {
-		t.Fatalf("UpdateSource didn't change URL, got: %s", sources[1].URL)
+	if sources[2].URL != "http://test.updated" {
+		t.Fatalf("UpdateSource didn't change URL, got: %s", sources[2].URL)
 	}
 
 	// 4. Test Remove Source
@@ -55,7 +55,7 @@ func TestSourcesCRUD(t *testing.T) {
 	}
 	
 	sources, _ = LoadSources()
-	if len(sources) != 1 {
-		t.Fatalf("Expected 1 source after removal, got %d", len(sources))
+	if len(sources) != 2 {
+		t.Fatalf("Expected 2 sources after removal, got %d", len(sources))
 	}
 }

@@ -16,7 +16,7 @@ var updateCmd = &cobra.Command{
 	Long:  `Downloads the latest packages.db.zst from the remote registry and updates the local cache.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		urlFlag := cmd.Flags().Lookup("url").Value.String()
-		if urlFlag != "https://registry.unistack.org" && urlFlag != "" {
+		if urlFlag != "" {
 			slog.Info("Starting single-source registry update", "url", urlFlag)
 			if err := client.UpdateSource(cmd.Context(), "default", urlFlag); err != nil {
 				slog.Error("Failed to update registry", "error", err)
@@ -37,6 +37,6 @@ var updateCmd = &cobra.Command{
 }
 
 func init() {
-	updateCmd.Flags().String("url", "https://registry.unistack.org", "Registry Base URL")
+	updateCmd.Flags().String("url", "", "One-off registry base URL to update from")
 	rootCmd.AddCommand(updateCmd)
 }
