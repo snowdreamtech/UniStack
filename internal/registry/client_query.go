@@ -24,7 +24,7 @@ type PackageMetadata struct {
 // Since we don't have version resolution logic fully defined yet, we'll fetch the first matching package.
 func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 	dbPath := env.GetRegistryDatabasePath()
-	
+
 	// Open in read-only mode if possible, but standard open is fine for query.
 	// We use modernc.org/sqlite driver directly
 	dsn := fmt.Sprintf("file:%s?mode=ro", dbPath)
@@ -34,7 +34,7 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 	}
 	defer db.Close()
 
-	// Query for the package. 
+	// Query for the package.
 	// Our builder schema has a 'packages' table.
 	// In the real schema we built:
 	// CREATE TABLE IF NOT EXISTS packages (
@@ -48,12 +48,12 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 	//	)
 	// (Note: hash wasn't explicitly added to the schema in previous tasks, but spec says we need it.
 	// If it doesn't exist, this query will fail or return empty. We should handle it gracefully or ensure it's selected if exists.)
-	
+
 	// Assuming schema from our spec:
 	// For now we'll try to select name and version. If hash doesn't exist, we'll just not query it,
 	// but the spec for 003 says "实现包哈希与签名校验". We assume the `hash` column exists.
 	row := db.QueryRowContext(ctx, "SELECT name, version, COALESCE(hash, '') FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1", name)
-	
+
 	var meta PackageMetadata
 	err = row.Scan(&meta.Name, &meta.Version, &meta.Hash)
 	if err != nil {
@@ -69,6 +69,6 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 		}
 		return &metaFallback, nil
 	}
-	
+
 	return &meta, nil
 }

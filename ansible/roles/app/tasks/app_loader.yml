@@ -279,7 +279,7 @@
         - "{{ family }}.yml"
         - "main.yml"
         - "default.yml"
-  when: 
+  when:
     - app_loader_custom_exists | default(false, true)
     - app_tasks_path is defined
   tags: ["always"]

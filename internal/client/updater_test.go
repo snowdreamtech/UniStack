@@ -19,7 +19,7 @@ import (
 func TestUpdateRegistry(t *testing.T) {
 	// Set up a mock sqlite DB content (just dummy data)
 	dummyDBContent := []byte("SQLite format 3\x00...")
-	
+
 	// Compress it using zstd
 	var buf bytes.Buffer
 	enc, err := zstd.NewWriter(&buf)
@@ -28,7 +28,7 @@ func TestUpdateRegistry(t *testing.T) {
 	}
 	enc.Write(dummyDBContent)
 	enc.Close()
-	
+
 	compressedData := buf.Bytes()
 
 	// Create a test HTTP server
@@ -39,7 +39,7 @@ func TestUpdateRegistry(t *testing.T) {
 
 	// Override env directories for testing so we don't mess up real data
 	tempDir := t.TempDir()
-	
+
 	// Temporarily override env config
 	originalCacheHome := os.Getenv("XDG_CACHE_HOME")
 	os.Setenv("XDG_CACHE_HOME", tempDir)

@@ -42,10 +42,10 @@
 ```text
 specs/003-client-registry-integration/
 ├── plan.md              # This file
-├── research.md          
-├── data-model.md        
-├── quickstart.md        
-└── tasks.md             
+├── research.md
+├── data-model.md
+├── quickstart.md
+└── tasks.md
 ```
 
 ### Source Code (repository root)
@@ -59,11 +59,11 @@ internal/
 ├── client/                 # Client download and network operations
 │   ├── downloader.go
 │   └── hash.go
-└── registry/               
+└── registry/
     └── client_query.go     # Local DB querying logic
 ```
 
-**Structure Decision**: 
+**Structure Decision**:
 The code is placed in `cmd/` for the new CLI commands, and `internal/client/` to handle network requests (HTTP GET, retry, download) and file operations. Queries to the synced local DB remain in `internal/registry/`.
 
 ## Complexity Tracking

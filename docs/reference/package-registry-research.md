@@ -4,7 +4,7 @@
 
 ---
 
-# 📖 Part 1: Preliminary Research & Alternative Explorations
+## 📖 Part 1: Preliminary Research & Alternative Explorations
 
 > **Goal**: Explore the design space across four dimensions: **Universality, Security, Extensibility, and Speed**.
 
@@ -30,21 +30,25 @@ We studied 10 of the most successful package management systems to extract their
 ### 🏆 Champions in Each Dimension
 
 #### 1. Universality Champion: OCI (Open Container Initiative)
+
 - ✅ Originally designed for Docker containers, but evolved into a "Universal Distribution Protocol" in v1.1+.
 - ✅ Global infrastructure ubiquitous: Docker Hub, GitHub GHCR, AWS ECR, GCP GCR, Harbor.
 - ⚠️ Concepts are complex (manifest, layer, config blob), overkill for lightweight "installation maps".
 
 #### 2. Security Champion: TUF (The Update Framework)
+
 - ✅ Designed specifically for software distribution security, protecting even if the Registry is compromised or signing keys are leaked.
 - ✅ Defends against rollback attacks, freeze attacks, mix-and-match attacks, etc.
 - ⚠️ High implementation complexity, too heavy for smaller projects.
 
 #### 3. Extensibility Champion: Homebrew Tap + aqua Registry
+
 - ✅ Anyone can create their own "Tap" (Git repo) for decentralized distribution.
 - ✅ Minimalist format: One YAML/Ruby/JSON file per software.
 - ⚠️ Git repo indexing performance degrades significantly with a massive number of packages.
 
 #### 4. Speed Champion: Cargo Sparse Index + Go GOPROXY
+
 - ✅ Avoids downloading full indexes, fetches package info on-demand via lightweight HTTP.
 - ✅ Supports cascading proxies and ETag incremental sync.
 - ⚠️ Initial full-text search is slower (no complete local index).
@@ -63,16 +67,19 @@ We studied 10 of the most successful package management systems to extract their
 ## 3. 3 Candidate Solutions from Early Research
 
 ### Solution A: Aqua-Inspired — YAML Blueprints + SQLite Local Cache (Score: 17)
+
 - **Concept**: A YAML file describes the installation map, hosted on Git/HTTP, queried locally via SQLite.
 - **Pros**: Human-readable, highly extensible, fast parsing, suitable as a carrier for lightweight packages.
 - **Cons**: Searching heavily relies on local cache sync.
 
 ### Solution B: OCI-Native — Reusing Container Registry Infrastructure (Score: 17)
+
 - **Concept**: Package as an OCI Artifact and push to Docker Hub / GHCR image registries.
 - **Pros**: No need to build backend infrastructure; native support for Sigstore signing.
 - **Cons**: Slow queries (no native search), relies on complex ORAS client logic.
 
 ### Solution C: Nix-Inspired — Content Addressing + Functional Immutability (Score: 13)
+
 - **Concept**: Hash-based immutable storage, perfectly realizing dependency isolation and deduplication.
 - **Pros**: Theoretically purest, completely tamper-proof.
 - **Cons**: Extremely steep learning curve, infrastructure must be built from scratch, too heavy.
@@ -80,7 +87,7 @@ We studied 10 of the most successful package management systems to extract their
 ---
 ---
 
-# 🎯 Part 2: Final Design Solution (v3)
+## 🎯 Part 2: Final Design Solution (v3)
 
 > Based on multiple rounds of decision-making discussions with users, the following pragmatic approach based on **archives + built-in indexing** was finalized.
 
@@ -142,6 +149,7 @@ dependencies:
 ```
 
 **Meta Package Installation Flow**:
+
 1. **Dependency Resolution**: Check the `dependencies` list and find corresponding single software packages in the registry.
 2. **Batch Installation**: Parallel download and sequential execution.
 3. **Execution Bypass**: The meta package's own tasks are typically empty or bypassed.
@@ -171,9 +179,11 @@ unistack repo build /opt/my-registry
 Directly host the `/opt/my-registry` directory using Nginx, or `rsync` to S3/GitHub Pages. Because a pre-built SQLite index exists, even a static server allows advanced searching.
 
 **Method B: UniStack Built-in Service**
+
 ```bash
 unistack repo serve /opt/my-registry --port 8080
 ```
+
 Starts a built-in lightweight HTTP server, supporting ETag incremental sync and private registry BasicAuth/Bearer authentication.
 
 ---
@@ -213,6 +223,7 @@ The architecture design ensures backward compatibility. Older clients automatica
 ## 6. Embedded Strategy (`go:embed`)
 
 In the Go codebase:
+
 ```go
 // internal/registry/embedded.go
 // Top 50 core foundational packages are compiled directly into the binary, achieving an offline, out-of-the-box, lightning-fast installation experience.
@@ -221,6 +232,7 @@ In the Go codebase:
 //go:embed builtin/vim builtin/curl builtin/foundation ...
 var BuiltinPackages embed.FS
 ```
+
 The vast long-tail of software packages are retrieved online by syncing the cloud index via `unistack update`.
 
 ---
@@ -235,6 +247,7 @@ The vast long-tail of software packages are retrieved online by syncing the clou
 > **Q2: What format are Ansible Galaxy packages? Do they meet our needs?**
 
 **Answer**: Ansible Galaxy content (Roles and Collections) are essentially standard `.tar.gz` (or just a Git Repo). They **completely fail to meet UniStack's distribution requirements**:
+
 1. **Lack of Native OS Routing**: Galaxy Roles often branch by hardcoding `when: ansible_os_family == 'Debian'`, leading to bloated code. Our `vars/{{ platform }}.yml` fallback mechanism is far more elegant.
 2. **Lack of Multiple Delivery Modes**: Galaxy only knows how to run scripts. Our packages, via `delivery_mode` (native/archive/container), allow the Go layer to intelligently choose whether to call the system package manager, download binaries directly, or spin up a container.
 3. **Lack of High-Speed Local Indexing**: Galaxy client queries are very slow (heavily reliant on full API network requests). Our DNF mode (SQLite client index) achieves millisecond-level offline and online searches.
@@ -246,11 +259,14 @@ The vast long-tail of software packages are retrieved online by syncing the clou
 To solve the "cold start" dilemma of the initial package management ecosystem, we conceptualized an auxiliary ecosystem project independent of the UniStack core: **`unistack-harvester`**.
 
 ### 8.1 "Borrow Rules, Precipitate Data" Strategy
+
 Utilize **Repology (repology.org)**, the industry's most authoritative cross-platform package metadata project, as our initial "Rosetta Stone".
+
 1. **No-Chokehold Design**: Never set the Repology API as a runtime dependency. We periodically download their final Data Dumps or directly parse official source codes (like Debian `Packages`, Alpine `APKINDEX`) to independently generate UniStack's `synonyms.yml` dictionary locally.
 2. **Legal and Open-Source Compliance (Clean Room)**: Repology's source rules are under GPL. By "extracting only the computed factual data (facts are not copyrightable)" and open-sourcing our independently written parser scripts under MIT / CC-BY-SA, we perfectly circumvent GPL viral infection.
 
 ### 8.2 Ecosystem Evolution Roadmap
+
 * **Phase 1 (Current Best)**: Write minimalist Go scripts, purely parsing external JSON Data Dumps to assemble `package.yml`.
 * **Phase 2 (Server-side Isolation)**: If complex Python/Database parsing engines are needed, isolate them entirely within CI/CD (Docker containers), destroying the environment after yielding clean data. Prevent any Python dependencies from creeping into the user-facing Go project.
 * **Phase 3 (Native Rule Evolution)**: Once the project scales up, consider developing pure Go-native regex and YAML rule engines (High difficulty, currently lowest priority).
@@ -262,13 +278,17 @@ Utilize **Repology (repology.org)**, the industry's most authoritative cross-pla
 Based on our research into large-scale collaboration ecosystems, we finalized a **"Git for Collaboration, HTTP for Distribution"** dual-track architecture, introducing the following enterprise-grade security and ecosystem designs:
 
 ### 9.1 Strict Namespacing & Dependency Confusion Prevention
+
 To completely crush "dependency confusion" attacks (where malicious high-version packages overwrite core packages), we enforce a strict naming red line:
+
 1. **Core Packages**: Exclusively occupy the global top-level namespace and are **strictly forbidden** from having any prefixes (e.g., `vim`, `nginx`).
 2. **Community / Third-Party Packages**: **MUST** have an author or organization namespace prefix (e.g., `community/vim`, `snowdreamtech/nginx`).
 During the build phase (`unistack repo build`), if a third-party repository attempts to submit an unprefixed core package, the builder will throw a fatal error and reject the package.
 
 ### 9.2 Priority Pinning
+
 In the client configuration file (e.g., `~/.unistack/config.yaml`), every registry must be assigned a `priority`:
+
 ```yaml
 registries:
   - name: "core"
@@ -278,12 +298,15 @@ registries:
     url: "https://community.unistack.org"
     priority: 20
 ```
+
 Client queries strictly follow the priority order. Even if a community repository contains a malicious package with an absurdly high version (e.g., `v99.9.9`), as long as a package with the same name (or prefix) is found in a higher-priority registry, the search terminates immediately, ensuring the absolute safety of the official defense line.
 
 ### 9.3 Multi-Source Mirroring & Physical Isolation
+
 * **Native Mirror Support**: By ditching backend APIs in favor of a purely static distribution model (DNF style), CDNs or open-source mirrors only need to sync (`rsync`) the static files. Users can enjoy gigabit download speeds simply by modifying the `url` in their configuration.
 * **Local Sandboxed Indexes**: To prevent `packages.db` files from multiple sources from overwriting each other locally, the client uses the `name` field from the configuration as the local filename upon download (saving them as `core.db`, `community.db`). All local SQLite queries are executed concurrently across these physically isolated copies, completely avoiding file conflicts.
 
 ### 9.4 Restrained Protocols & Branch Management
+
 * **Deprecating Edge Branches**: Unlike Alpine and Debian, UniStack focuses on providing an "absolutely stable cross-platform environment." To prevent extreme system bloat, the official Core registry **only contains main/stable versions**. All demands for aggressive updates (Edge/Testing) are shifted to community registries managed by enthusiasts.
 * **Minimalist Network Protocols**: The system strictly supports ONLY `http(s)://` and `file://` protocols, proactively cutting off `ftp://` and `git://` downloads. Relying on the powerful native mounting capabilities of operating systems, users can configure `file:///mnt/nfs_share/` to achieve fully offline enterprise-grade NFS/SMB private deployments. This not only avoids the disaster of SQLite file lock crashes on network drives but also minimizes the dependencies and footprint of the Go core code to the extreme.

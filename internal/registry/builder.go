@@ -1,3 +1,6 @@
+// Copyright (c) 2026 SnowdreamTech. All rights reserved.
+// Licensed under the MIT License. See LICENSE file in the project root for full license information.
+
 package registry
 
 import (
@@ -8,8 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	_ "modernc.org/sqlite"
 	"gopkg.in/yaml.v3"
+	_ "modernc.org/sqlite"
 )
 
 // Builder defines the registry builder instance
@@ -117,7 +120,7 @@ func (b *Builder) insertPackages(ctx context.Context, packages []*Package) error
 
 	for _, pkg := range packages {
 		authors := strings.Join(pkg.Metadata.Authors, ",")
-		
+
 		_, err := pkgStmt.ExecContext(ctx,
 			pkg.Metadata.Name,
 			pkg.Metadata.Version,

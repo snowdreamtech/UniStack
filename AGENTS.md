@@ -35,4 +35,3 @@ All AI slash commands and standard operating procedures (SOPs) are located in `.
 <!-- SPECKIT START -->
 Active Plan: specs/004-local-package-installation/plan.md
 <!-- SPECKIT END -->
-

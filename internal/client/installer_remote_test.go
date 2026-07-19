@@ -18,7 +18,7 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	// 1. Setup local registry DB and server
 	tmpDir := t.TempDir()
 	tarballPath := filepath.Join(tmpDir, "hello-1.0.0.tar.gz")
-	
+
 	files := map[string]string{
 		"bin/hello": "#!/bin/sh\necho 'hello from remote'",
 	}
@@ -27,7 +27,7 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read created tarball: %v", err)
 	}
-	
+
 	// Create a test server to serve the tarball
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path == "/hello-1.0.0.tar.gz" {
@@ -41,7 +41,7 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	// 2. Setup Installer
 	packagesDir := filepath.Join(tmpDir, "packages")
 	binDir := filepath.Join(tmpDir, "bin")
-	
+
 	installer := &Installer{
 		PackagesDir: packagesDir,
 		BinDir:      binDir,
@@ -61,7 +61,7 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	if err != nil {
 		t.Fatalf("DownloadPackage failed: %v", err)
 	}
-	
+
 	if err := installer.InstallFromLocal(downloadedPath); err != nil {
 		t.Fatalf("InstallFromLocal failed: %v", err)
 	}
@@ -71,13 +71,13 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 	if _, err := os.Stat(extractedFile); os.IsNotExist(err) {
 		t.Errorf("extracted file %s does not exist", extractedFile)
 	}
-	
+
 	linkPath := filepath.Join(binDir, "hello")
 	linkTarget, err := os.Readlink(linkPath)
 	if err != nil {
 		t.Fatalf("failed to read symlink %s: %v", linkPath, err)
 	}
-	
+
 	if linkTarget != extractedFile {
 		t.Errorf("symlink target mismatch: expected %q, got %q", extractedFile, linkTarget)
 	}

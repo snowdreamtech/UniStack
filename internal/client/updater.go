@@ -27,7 +27,7 @@ func UpdateRegistry(ctx context.Context, registryURL string) error {
 	}
 
 	dbPath := env.GetRegistryDatabasePath()
-	
+
 	// Create a temporary file for atomic write
 	tmpPath := dbPath + ".tmp"
 	defer os.Remove(tmpPath)

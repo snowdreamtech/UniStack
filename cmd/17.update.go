@@ -16,10 +16,10 @@ var updateCmd = &cobra.Command{
 	Long:  `Downloads the latest packages.db.zst from the remote registry and updates the local cache.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		// In a real application, this URL might be configurable via ~/.unistack.toml or env vars.
-		// For now, we will default to a local test server if UNISTACK_REGISTRY_URL is not set, 
+		// For now, we will default to a local test server if UNISTACK_REGISTRY_URL is not set,
 		// but ideally it should point to the production registry.
 		// We'll let the user provide it via an environment variable for testing.
-		
+
 		registryURL := "http://localhost:8080/packages.db.zst"
 		if envURL := cmd.Flags().Lookup("url").Value.String(); envURL != "" {
 			registryURL = envURL

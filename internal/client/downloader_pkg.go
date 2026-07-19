@@ -31,7 +31,7 @@ func (d *Downloader) DownloadPackage(ctx context.Context, registryBaseURL string
 
 	finalPath := filepath.Join(downloadsDir, pkgFilename)
 	tmpPath := finalPath + ".tmp"
-	
+
 	// Clean up tmp file in case of failure
 	defer os.Remove(tmpPath)
 
@@ -60,10 +60,10 @@ func (d *Downloader) DownloadPackage(ctx context.Context, registryBaseURL string
 		if err != nil {
 			return "", fmt.Errorf("failed to open downloaded file for hashing: %w", err)
 		}
-		
+
 		err = ValidateFileHash(tmpFile, meta.Hash)
 		tmpFile.Close() // Close immediately after hashing
-		
+
 		if err != nil {
 			// Hash mismatch, tmpPath is removed by defer
 			return "", fmt.Errorf("security validation failed for %s: %w", pkgFilename, err)

@@ -36,7 +36,7 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 	// Extract name and version from file name (e.g. hello-1.0.0.tar.gz -> hello-1.0.0)
 	base := filepath.Base(pkgPath)
 	pkgID := strings.TrimSuffix(base, ".tar.gz")
-	
+
 	// Try to guess the executable name (e.g., hello from hello-1.0.0)
 	parts := strings.Split(pkgID, "-")
 	execName := parts[0]

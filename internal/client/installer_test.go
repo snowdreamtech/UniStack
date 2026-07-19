@@ -11,7 +11,7 @@ import (
 
 func TestInstaller_InstallFromLocal(t *testing.T) {
 	tmpDir := t.TempDir()
-	
+
 	packagesDir := filepath.Join(tmpDir, "packages")
 	binDir := filepath.Join(tmpDir, "bin")
 
@@ -21,7 +21,7 @@ func TestInstaller_InstallFromLocal(t *testing.T) {
 	}
 
 	tarballPath := filepath.Join(tmpDir, "hello-1.0.0.tar.gz")
-	
+
 	files := map[string]string{
 		"bin/hello": "#!/bin/sh\necho 'hello'",
 	}
@@ -44,7 +44,7 @@ func TestInstaller_InstallFromLocal(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to read symlink %s: %v", linkPath, err)
 	}
-	
+
 	if linkTarget != extractedFile {
 		t.Errorf("symlink target mismatch: expected %q, got %q", extractedFile, linkTarget)
 	}

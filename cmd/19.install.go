@@ -57,10 +57,10 @@ Examples:
 
 		// 2. Download the package
 		downloader := client.NewDownloader()
-		// Hardcoded registry URL for now, or from config. Let's use a default localhost for testing or 
+		// Hardcoded registry URL for now, or from config. Let's use a default localhost for testing or
 		// "http://localhost:8080" as used in downloader tests
-		registryURL := "http://localhost:8080" 
-		
+		registryURL := "http://localhost:8080"
+
 		fmt.Printf("Downloading %s version %s...\n", meta.Name, meta.Version)
 		downloadedPath, err := downloader.DownloadPackage(ctx, registryURL, meta)
 		if err != nil {
@@ -72,7 +72,7 @@ Examples:
 		if err := installer.InstallFromLocal(downloadedPath); err != nil {
 			return fmt.Errorf("installation failed: %w", err)
 		}
-		
+
 		fmt.Println("Installation completed successfully.")
 		return nil
 	},

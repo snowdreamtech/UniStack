@@ -9,6 +9,7 @@
 免费包主要面向开源社区分发，主打**高兼容性、高透明度与零学习成本**。
 
 ### 1.1 物理封装
+
 * **扩展名**：**强制统一为 `.tar.gz`**。
   * *架构考量*：绝不使用 `.zip`。因为 `.tar` 能够完美原生保留 Linux/Unix 的 POSIX 文件权限（如可执行权限 `0755`）以及软链接（Symlinks），这对基础设施和代码部署是致命且必需的。
 * **压缩算法**：标准的 gzip。
@@ -17,6 +18,7 @@
   * **Local 本地模式**：为了支持用户自定义包的安装，当用户通过本地路径安装（如 `unistack install ./my-tool.tar.gz`）时，引擎将自动跳过 Registry 校验，仅在终端打印警告提示（类似 `Warning: Installing untrusted local package`），确保系统保持极致的开放性。
 
 ### 1.2 内部目录结构 (Ansible Role 原生兼容)
+
 解压后的根目录即为该包的作用域，其内部结构**严格兼容 Ansible Role 标准目录树**。这使得任何熟悉 Ansible 的开发者都能零门槛制作 UniStack 免费包。
 
 ```text
@@ -35,6 +37,7 @@
 ```
 
 ### 1.3 元数据规范 (`package.yml`)
+
 为了保证系统未来的极强扩展性、向下兼容性以及健壮处理，`package.yml` 摒弃了扁平化的简单结构，引入了类似 Kubernetes/Helm 的强类型和分层规范。
 
 ```yaml
@@ -44,30 +47,30 @@ apiVersion: "v1alpha1"
 # 包类型：
 #  - package: 标准的独立功能包（如 vim, nginx）
 #  - meta: 元包，作为虚拟依赖聚合器（如 foundation）
-kind: "package" 
+kind: "package"
 
 # 核心元数据
 metadata:
   name: "nginx"
-  
+
   # 【配方版本号】(必须是严格的 SemVer 字符串)：
   # 仅用于 UniStack 客户端判断“安装脚本”本身是否需要更新升级（例如修复了某个 Ansible bug）。
   # 注意：必须使用字符串（如 "1.0.1"）防止 YAML 浮点数解析陷阱。
   # [技术选型]：Go 后端强制采用 `github.com/Masterminds/semver/v3` 进行版本解析，
   # 完美兼容带与不带 `v` 前缀的写法。
   version: "1.0.1"
-  
+
   # 【真实软件版本号 / App Version】：
   # 为了彻底消除用户的懵逼感，这里单独剥离出真正的软件版本。
   # 针对 Linux 各大发行版自带版本严重碎片化（如 Debian 是 1.18，Alpine 是 1.24）的现状，
   # 这个字段不仅可以是单字符串，还原生支持数组或 SemVer 范围语法！
   # [技术选型]：得益于 `Masterminds/semver/v3` 强大的 Constraint 引擎，
   # Go 客户端能原生解析并处理复杂的依赖范围约束。
-  appVersion: 
+  appVersion:
     - "1.18.x"
     - "1.24.x"
     # 或者写成单一字符串区间：">= 1.18.0, < 1.25.0"
-    
+
   description: "High performance web server"
   authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
   homepage: "https://nginx.org"
@@ -99,9 +102,11 @@ dependencies:
 ```
 
 ### 1.4 元包规范 (Meta Package)
+
 元包（`kind: meta`）是生态系统中用于“一键安装套餐”的特殊规范（例如一键安装 `foundation`，它会自动装上 vim, git, curl 等）。
 
 **元包的特殊约束：**
+
 1. **执行旁路 (Execution Bypass)**：当 UniStack 识别到 `kind: meta` 时，**将不会执行**该包里的 `tasks/main.yml`。它的存在仅仅是为了声明依赖。
 2. **依赖展开**：引擎会将元包的 `dependencies` 字段压入安装队列，通过拓扑排序（Topology Sort）先解析并安装所有子包。
 3. **极简目录**：元包的 `.tar.gz` 内部通常只有一个干瘪的 `package.yml`，没有庞大的 Ansible Task 和 Files 目录，极其轻量。
@@ -127,4 +132,3 @@ dependencies:
   git: {}
   jq: {}
 ```
-

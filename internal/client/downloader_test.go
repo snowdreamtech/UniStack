@@ -19,7 +19,7 @@ import (
 func TestDownloadPackage(t *testing.T) {
 	// 1. Prepare dummy package data
 	pkgData := []byte("hello world package content")
-	
+
 	// Calculate true hash
 	hasher := sha256.New()
 	hasher.Write(pkgData)
@@ -33,7 +33,7 @@ func TestDownloadPackage(t *testing.T) {
 
 	// Override env directories for testing so we don't mess up real data
 	tempDir := t.TempDir()
-	
+
 	// Temporarily override env config
 	originalDataDir := os.Getenv("XDG_DATA_HOME")
 	os.Setenv("XDG_DATA_HOME", tempDir)

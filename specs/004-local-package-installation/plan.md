@@ -30,7 +30,8 @@ This feature implements the `unistack install` command. It takes a package name 
 
 ## Constitution Check
 
-*GATE: Passed.* 
+*GATE: Passed.*
+
 - Adheres to pure Go zero CGO requirement.
 - Follows existing directory structure logic from `internal/env`.
 

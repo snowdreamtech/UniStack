@@ -5,3 +5,7 @@
 # https://google.github.io/osv-scanner/configuration/
 
 # Minimal valid configuration - no experimental features
+
+[[IgnoredVulns]]
+id = "GO-2026-5856"
+reason = "Waiting for the new toolchain to be globally available"

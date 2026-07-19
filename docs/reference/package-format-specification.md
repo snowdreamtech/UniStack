@@ -9,6 +9,7 @@ This document details the package format specification in the UniStack ecosystem
 Packages are primarily distributed to the open-source community, focusing on **high compatibility, high transparency, and zero learning curve**.
 
 ### 1.1 Physical Packaging
+
 * **Extension**: **Strictly unified as `.tar.gz`**.
   * *Architectural consideration*: Never use `.zip`. `.tar` perfectly preserves POSIX file permissions natively (like executable `0755`) and Symlinks, which is critical and necessary for infrastructure and code deployment.
 * **Compression Algorithm**: Standard gzip.
@@ -17,6 +18,7 @@ Packages are primarily distributed to the open-source community, focusing on **h
   * **Local Mode**: To support users installing custom packages via local paths (e.g., `unistack install ./my-tool.tar.gz`), the engine will automatically bypass the Registry check and only print a warning prompt (like `Warning: Installing untrusted local package`), ensuring ultimate openness.
 
 ### 1.2 Internal Directory Structure (Ansible Role Native Compatibility)
+
 The uncompressed root directory is the scope of the package, and its internal structure is **strictly compatible with the standard Ansible Role directory tree**. This allows any developer familiar with Ansible to create UniStack packages with zero learning curve.
 
 ```text
@@ -35,6 +37,7 @@ The uncompressed root directory is the scope of the package, and its internal st
 ```
 
 ### 1.3 Metadata Specification (`package.yml`)
+
 To ensure robust future extensibility, backward compatibility, and robust handling, `package.yml` discards a flat, simple structure and introduces a strong-typed and layered specification similar to Kubernetes/Helm.
 
 ```yaml
@@ -44,30 +47,30 @@ apiVersion: "v1alpha1"
 # Package kind:
 #  - package: Standard independent functional package (e.g., vim, nginx)
 #  - meta: Meta package, acting as a virtual dependency aggregator (e.g., foundation)
-kind: "package" 
+kind: "package"
 
 # Core metadata
 metadata:
   name: "nginx"
-  
+
   # [Recipe Version] (Must be a strict SemVer string):
   # Used only for the UniStack client to determine if the "installation script" itself needs an upgrade (e.g., fixing an Ansible bug).
   # Note: Must use a string (e.g., "1.0.1") to prevent YAML float parsing traps.
   # [Tech Selection]: The Go backend strictly uses `github.com/Masterminds/semver/v3` for version parsing,
   # perfectly accommodating versions with or without the 'v' prefix.
   version: "1.0.1"
-  
+
   # [App Version / Real Software Version]:
   # To completely eliminate user confusion, the real software version is separated out here.
   # Given the severe fragmentation of built-in versions across Linux distros (e.g., Debian has 1.18, Alpine has 1.24),
   # this field can not only be a single string but natively supports arrays or SemVer range syntax!
   # [Tech Selection]: Thanks to the powerful Constraint engine in `Masterminds/semver/v3`,
   # the Go client can natively parse and process complex dependency range constraints.
-  appVersion: 
+  appVersion:
     - "1.18.x"
     - "1.24.x"
     # Or write as a single string range: ">= 1.18.0, < 1.25.0"
-    
+
   description: "High performance web server"
   authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
   homepage: "https://nginx.org"
@@ -99,9 +102,11 @@ dependencies:
 ```
 
 ### 1.4 Meta Package Specification (Meta Package)
+
 A Meta package (`kind: meta`) is a special specification in the ecosystem used for "one-click installation bundles" (e.g., installing `foundation` automatically installs vim, git, curl, etc.).
 
 **Special Constraints for Meta Packages:**
+
 1. **Execution Bypass**: When UniStack identifies a `kind: meta`, it **will NOT execute** the `tasks/main.yml` in that package. Its existence is purely to declare dependencies.
 2. **Dependency Unrolling**: The engine pushes the meta package's `dependencies` field into the installation queue and uses Topology Sort to resolve and install all sub-packages first.
 3. **Minimalist Directory**: A meta package's `.tar.gz` usually contains only a barebones `package.yml`, without massive Ansible Task and Files directories, making it extremely lightweight.
