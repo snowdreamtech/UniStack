@@ -3,27 +3,25 @@
 **Feature**: [006-lifecycle-cli]
 **Status**: Ready
 
-## Phase 1: List Command
+## Phase 1: Setup
 
-- [x] T001 Implement `ListInstalledPackages` in `internal/client/installer.go` (or `client.go`) that scans `~/.local/share/unistack/packages` and extracts names and versions.
-- [x] T002 Add `cmd/unistack/14.list.go` to provide the `unistack list` command, invoking the client logic and printing a table.
+- [x] T001 Initialize tasks definition in specs/006-lifecycle-cli/tasks.md
 
-## Phase 2: Uninstall Command
+## Phase 2: User Story 1 (List Command)
 
-- [x] T003 Implement `Uninstall(pkgName)` in `internal/client/installer.go`. It should locate the active version of the package.
-- [x] T004 In `Uninstall`, check for `app_loader.yml`. If present, use `os/exec` to run `ansible-playbook -i localhost, -c local app_loader.yml -e app_source_path=<path> -e state=absent`.
-- [x] T005 In `Uninstall`, remove the binary symlink from `~/.local/share/unistack/bin`.
-- [x] T006 In `Uninstall`, delete the package directory from `~/.local/share/unistack/packages`.
-- [x] T007 Add `cmd/unistack/15.uninstall.go` to expose the `uninstall` command.
+- [x] T002 [US1] Implement ListInstalledPackages in internal/client/installer.go
+- [x] T003 [US1] Add unistack list command in cmd/14.list.go
 
-## Phase 3: Upgrade Command
+## Phase 3: User Story 2 (Uninstall Command)
 
-- [x] T008 Implement `GetHighestVersion(pkgName)` querying the SQLite database in `internal/repository`. (used registry.QueryPackage)
-- [x] T009 Implement `Upgrade(pkgName)` in `internal/client/installer.go`. It should compare the current version with the highest version. (implemented in 16.upgrade.go)
-- [x] T010 If `highest > current`, invoke `Uninstall(pkgName)` then `Install(pkgName, highest_version)`.
-- [x] T011 Add `cmd/unistack/16.upgrade.go` to expose the `upgrade` command.
+- [x] T004 [US2] Implement Uninstall(pkgName) in internal/client/installer.go
+- [x] T005 [US2] Add unistack uninstall command in cmd/15.uninstall.go
 
-## Verification
+## Phase 4: User Story 3 (Upgrade Command)
 
-- [x] T012 Run End-to-End manual testing of `list`, `uninstall`, and `upgrade`.
-- [x] T013 Verify tests pass (`go test ./...`).
+- [x] T006 [US3] Implement registry.QueryPackage logic integration in cmd/16.upgrade.go
+- [x] T007 [US3] Add unistack upgrade command in cmd/16.upgrade.go
+
+## Phase 5: Polish & Cross-Cutting Concerns
+
+- [x] T008 Verify test pass with go test ./... in root
