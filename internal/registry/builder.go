@@ -17,6 +17,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/hashicorp/go-version"
 	"gopkg.in/yaml.v3"
 	_ "modernc.org/sqlite"
 )
@@ -31,6 +32,13 @@ type PackageEntry struct {
 	Pkg          *Package
 	Hash         string
 	RelativePath string
+}
+
+type scannedFile struct {
+	Path     string
+	Checksum string
+	Pkg      Package
+	Version  *version.Version
 }
 
 // NewBuilder initializes a new registry builder
@@ -74,23 +82,22 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 	var entries []*PackageEntry
 	packagesDir := filepath.Join(destDir, "packages")
 
-	// Create destDir/packages if it doesn't exist
 	if err := os.MkdirAll(packagesDir, 0755); err != nil {
 		return nil, fmt.Errorf("failed to create packages directory: %w", err)
 	}
 
-	// We scan the source directory for any tarballs
+	// 1. Collect all tarballs
+	scanned := make(map[string][]*scannedFile)
+
 	err := filepath.WalkDir(sourceDir, func(path string, d os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
-
 		if d.IsDir() {
 			return nil
 		}
 
-		isTarball := strings.HasSuffix(d.Name(), ".tar.gz") || strings.HasSuffix(d.Name(), ".uspkg")
-		if !isTarball {
+		if !strings.HasSuffix(d.Name(), ".tar.gz") && !strings.HasSuffix(d.Name(), ".uspkg") {
 			return nil
 		}
 
@@ -106,13 +113,9 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 		}
 		checksum := "sha256:" + hex.EncodeToString(h.Sum(nil))
 
-		if _, err := f.Seek(0, 0); err != nil {
-			return fmt.Errorf("failed to rewind %s: %w", path, err)
-		}
-
+		f.Seek(0, 0)
 		gzr, err := gzip.NewReader(f)
 		if err != nil {
-			slog.Warn("failed to read gzip", "path", path, "error", err)
 			return nil
 		}
 		defer gzr.Close()
@@ -125,10 +128,8 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 				break
 			}
 			if err != nil {
-				slog.Warn("failed to read tar", "path", path, "error", err)
 				return nil
 			}
-
 			if filepath.Base(header.Name) == "package.yml" {
 				pkgContent, err = io.ReadAll(tr)
 				if err != nil {
@@ -139,63 +140,103 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 		}
 
 		if pkgContent == nil {
-			slog.Warn("no package.yml found in archive", "path", path)
 			return nil
 		}
 
 		var pkg Package
 		if err := yaml.Unmarshal(pkgContent, &pkg); err != nil {
-			slog.Warn("failed to parse package.yml", "path", path, "error", err)
 			return nil
 		}
-
 		if err := Validate(&pkg); err != nil {
-			slog.Warn("validation failed for package.yml", "path", path, "error", err)
 			return nil
 		}
 
 		name := pkg.Metadata.Name
-		version := pkg.Metadata.Version
+		verStr := pkg.Metadata.Version
 		if len(name) == 0 {
-			slog.Warn("package name is empty, skipping", "path", path)
 			return nil
 		}
 
+		ver, err := version.NewVersion(verStr)
+		if err != nil {
+			slog.Warn("invalid semver, skipping", "path", path, "version", verStr)
+			return nil
+		}
+
+		scanned[name] = append(scanned[name], &scannedFile{
+			Path:     path,
+			Checksum: checksum,
+			Pkg:      pkg,
+			Version:  ver,
+		})
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Determine max version and arrange
+	for name, files := range scanned {
+		var maxFile *scannedFile
+		for _, sf := range files {
+			if maxFile == nil || sf.Version.GreaterThan(maxFile.Version) {
+				maxFile = sf
+			}
+		}
+
+		// Delete losers from sourceDir if sourceDir == destDir
+		if sourceDir == destDir {
+			for _, sf := range files {
+				if sf != maxFile {
+					slog.Info("Deleting old version", "path", sf.Path)
+					os.Remove(sf.Path)
+				}
+			}
+		}
+
+		// Calculate target path for maxFile
 		firstChar := strings.ToLower(string(name[0]))
-		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", name, version))
+		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", name, maxFile.Pkg.Metadata.Version))
 		expectedAbsPath := filepath.Join(destDir, expectedRelPath)
 
-		// Close the file before doing any potential moves
-		f.Close()
+		// Before moving/copying, glob the destDir for old versions of THIS package and delete them
+		globPattern := filepath.Join(packagesDir, firstChar, name+"-*.tar.gz")
+		matches, _ := filepath.Glob(globPattern)
+		for _, match := range matches {
+			if filepath.Clean(match) == filepath.Clean(expectedAbsPath) {
+				continue // Don't delete the file if it's already exactly the max file
+			}
+			slog.Info("Deleting existing older version in registry", "path", match)
+			os.Remove(match)
+		}
 
-		if filepath.Clean(path) != filepath.Clean(expectedAbsPath) {
-			slog.Info("Arranging package", "name", name, "version", version, "from", path, "to", expectedAbsPath)
+		// Now move/copy the maxFile to expectedAbsPath if it's not already there
+		if filepath.Clean(maxFile.Path) != filepath.Clean(expectedAbsPath) {
+			slog.Info("Arranging package", "name", name, "version", maxFile.Pkg.Metadata.Version, "from", maxFile.Path, "to", expectedAbsPath)
 			if err := os.MkdirAll(filepath.Dir(expectedAbsPath), 0755); err != nil {
-				return fmt.Errorf("failed to create directory for arranged package: %w", err)
+				return nil, fmt.Errorf("failed to create directory for arranged package: %w", err)
 			}
 
 			if sourceDir == destDir {
-				// Move file if source and dest are the same
-				if err := os.Rename(path, expectedAbsPath); err != nil {
-					return fmt.Errorf("failed to move package %s: %w", path, err)
+				if err := os.Rename(maxFile.Path, expectedAbsPath); err != nil {
+					return nil, fmt.Errorf("failed to move package %s: %w", maxFile.Path, err)
 				}
 			} else {
-				// Copy file if source and dest are different
-				if err := copyFile(path, expectedAbsPath); err != nil {
-					return fmt.Errorf("failed to copy package %s: %w", path, err)
+				if err := copyFile(maxFile.Path, expectedAbsPath); err != nil {
+					return nil, fmt.Errorf("failed to copy package %s: %w", maxFile.Path, err)
 				}
 			}
 		}
 
 		entries = append(entries, &PackageEntry{
-			Pkg:          &pkg,
-			Hash:         checksum,
+			Pkg:          &maxFile.Pkg,
+			Hash:         maxFile.Checksum,
 			RelativePath: filepath.ToSlash(expectedRelPath),
 		})
-		return nil
-	})
+	}
 
-	return entries, err
+	return entries, nil
 }
 
 func copyFile(src, dst string) error {
