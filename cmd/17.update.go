@@ -15,19 +15,18 @@ var updateCmd = &cobra.Command{
 	Short: "Update the local package registry database",
 	Long:  `Downloads the latest packages.db.zst from the remote registry and updates the local cache.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// In a real application, this URL might be configurable via ~/.unistack.toml or env vars.
-		// For now, we will default to a local test server if UNISTACK_REGISTRY_URL is not set,
-		// but ideally it should point to the production registry.
-		// We'll let the user provide it via an environment variable for testing.
-
-		registryURL := "https://registry.unistack.org"
-		if envURL := cmd.Flags().Lookup("url").Value.String(); envURL != "" {
-			registryURL = envURL
+		urlFlag := cmd.Flags().Lookup("url").Value.String()
+		if urlFlag != "https://registry.unistack.org" && urlFlag != "" {
+			slog.Info("Starting single-source registry update", "url", urlFlag)
+			if err := client.UpdateSource(cmd.Context(), "default", urlFlag); err != nil {
+				slog.Error("Failed to update registry", "error", err)
+				return err
+			}
+			return nil
 		}
 
-		slog.Info("Starting registry update", "url", registryURL)
-
-		if err := client.UpdateRegistry(cmd.Context(), registryURL); err != nil {
+		slog.Info("Starting registry update from all configured sources")
+		if err := client.UpdateRegistry(cmd.Context()); err != nil {
 			slog.Error("Failed to update registry", "error", err)
 			return err
 		}

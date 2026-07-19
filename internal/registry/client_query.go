@@ -7,7 +7,11 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
+	"os"
+	"strings"
 
+	"github.com/snowdreamtech/unistack/internal/config"
 	"github.com/snowdreamtech/unistack/internal/env"
 	// SQLite driver
 	_ "modernc.org/sqlite"
@@ -20,38 +24,71 @@ type PackageMetadata struct {
 	Hash    string
 }
 
-// QueryPackage retrieves the metadata of the latest version of a package from the local registry DB.
-// Since we don't have version resolution logic fully defined yet, we'll fetch the first matching package.
-func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
-	dbPath := env.GetRegistryDatabasePath()
-
-	// Open in read-only mode if possible, but standard open is fine for query.
-	// We use modernc.org/sqlite driver directly
-	dsn := fmt.Sprintf("file:%s?mode=ro", dbPath)
-	db, err := sql.Open("sqlite", dsn)
+// OpenRegistryDB opens an in-memory SQLite connection that attaches all configured registry sources
+// and creates unified views (packages, dependencies) for transparent querying across all sources.
+func OpenRegistryDB() (*sql.DB, error) {
+	db, err := sql.Open("sqlite", "file::memory:?cache=shared")
 	if err != nil {
-		return nil, fmt.Errorf("failed to open registry database: %w", err)
+		return nil, fmt.Errorf("failed to open memory db: %w", err)
+	}
+
+	sources, err := config.LoadSources()
+	if err != nil {
+		db.Close()
+		return nil, fmt.Errorf("failed to load sources: %w", err)
+	}
+
+	var packagesSelects []string
+	var dependenciesSelects []string
+
+	for i, s := range sources {
+		dbPath := env.GetSourceDatabasePath(s.Name)
+		if _, err := os.Stat(dbPath); err != nil {
+			continue // Source db not downloaded yet
+		}
+
+		dbAlias := fmt.Sprintf("db_%d", i)
+		attachQuery := fmt.Sprintf("ATTACH DATABASE 'file:%s?mode=ro' AS %s;", dbPath, dbAlias)
+		if _, err := db.Exec(attachQuery); err != nil {
+			slog.Warn("Failed to attach source database", "source", s.Name, "error", err)
+			continue
+		}
+
+		packagesSelects = append(packagesSelects, fmt.Sprintf("SELECT *, '%s' as source FROM %s.packages", s.Name, dbAlias))
+		dependenciesSelects = append(dependenciesSelects, fmt.Sprintf("SELECT *, '%s' as source FROM %s.dependencies", s.Name, dbAlias))
+	}
+
+	if len(packagesSelects) > 0 {
+		viewQuery := "CREATE TEMP VIEW packages AS " + strings.Join(packagesSelects, " UNION ALL ")
+		if _, err := db.Exec(viewQuery); err != nil {
+			db.Close()
+			return nil, fmt.Errorf("failed to create packages view: %w", err)
+		}
+	} else {
+		db.Exec("CREATE TEMP TABLE packages (id INTEGER, name TEXT, version TEXT, description TEXT, homepage TEXT, license TEXT, hash TEXT)")
+	}
+
+	if len(dependenciesSelects) > 0 {
+		viewQuery := "CREATE TEMP VIEW dependencies AS " + strings.Join(dependenciesSelects, " UNION ALL ")
+		if _, err := db.Exec(viewQuery); err != nil {
+			db.Close()
+			return nil, fmt.Errorf("failed to create dependencies view: %w", err)
+		}
+	} else {
+		db.Exec("CREATE TEMP TABLE dependencies (id INTEGER, package_name TEXT, package_version TEXT, dependency_name TEXT, is_recommended INTEGER)")
+	}
+
+	return db, nil
+}
+
+// QueryPackage retrieves the metadata of the latest version of a package from the unified local registry DB.
+func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
+	db, err := OpenRegistryDB()
+	if err != nil {
+		return nil, err
 	}
 	defer db.Close()
 
-	// Query for the package.
-	// Our builder schema has a 'packages' table.
-	// In the real schema we built:
-	// CREATE TABLE IF NOT EXISTS packages (
-	//		id INTEGER PRIMARY KEY AUTOINCREMENT,
-	//		name TEXT NOT NULL,
-	//		version TEXT NOT NULL,
-	//		description TEXT,
-	//		homepage TEXT,
-	//		license TEXT,
-	//      hash TEXT
-	//	)
-	// (Note: hash wasn't explicitly added to the schema in previous tasks, but spec says we need it.
-	// If it doesn't exist, this query will fail or return empty. We should handle it gracefully or ensure it's selected if exists.)
-
-	// Assuming schema from our spec:
-	// For now we'll try to select name and version. If hash doesn't exist, we'll just not query it,
-	// but the spec for 003 says "实现包哈希与签名校验". We assume the `hash` column exists.
 	row := db.QueryRowContext(ctx, "SELECT name, version, COALESCE(hash, '') FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1", name)
 
 	var meta PackageMetadata
@@ -73,18 +110,8 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 	return &meta, nil
 }
 
-// OpenRegistryDB opens a read-only connection to the registry database.
-func OpenRegistryDB() (*sql.DB, error) {
-	dbPath := env.GetRegistryDatabasePath()
-	dsn := fmt.Sprintf("file:%s?mode=ro", dbPath)
-	return sql.Open("sqlite", dsn)
-}
-
 // GetDependencies fetches the direct required dependencies for a given package.
-// It returns a list of dependency package names.
 func GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error) {
-	// For simplicity, we just fetch dependencies of the latest version of the package.
-	// In a real scenario, we should resolve the exact version first.
 	query := `
 		SELECT dependency_name 
 		FROM dependencies 

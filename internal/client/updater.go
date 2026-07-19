@@ -16,13 +16,30 @@ import (
 	"strings"
 
 	"github.com/klauspost/compress/zstd"
+	"github.com/snowdreamtech/unistack/internal/config"
 	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/snowdreamtech/unistack/internal/registry"
 )
 
-// UpdateRegistry fetches repomd.json, checks for updates, and downloads/extracts the registry database if needed.
-func UpdateRegistry(ctx context.Context, registryURL string) error {
-	slog.Info("Checking for registry updates...")
+// UpdateRegistry fetches repomd.json and databases for all configured sources.
+func UpdateRegistry(ctx context.Context) error {
+	sources, err := config.LoadSources()
+	if err != nil {
+		return fmt.Errorf("failed to load sources: %w", err)
+	}
+
+	for _, source := range sources {
+		if err := UpdateSource(ctx, source.Name, source.URL); err != nil {
+			slog.Error("Failed to update source", "source", source.Name, "error", err)
+			// Continue with other sources even if one fails
+		}
+	}
+	return nil
+}
+
+// UpdateSource fetches repomd.json, checks for updates, and downloads/extracts the registry database for a specific source.
+func UpdateSource(ctx context.Context, sourceName, registryURL string) error {
+	slog.Info("Checking for source updates...", "source", sourceName)
 
 	downloader := NewDownloader()
 
@@ -45,7 +62,7 @@ func UpdateRegistry(ctx context.Context, registryURL string) error {
 	}
 
 	// 2. Read local repomd.json (if exists)
-	localRepomdPath := filepath.Join(registryDir, "repomd.json")
+	localRepomdPath := filepath.Join(registryDir, sourceName+"_repomd.json")
 	var localRepomd registry.RepoMd
 	localBytes, err := os.ReadFile(localRepomdPath)
 	if err == nil {
@@ -58,8 +75,8 @@ func UpdateRegistry(ctx context.Context, registryURL string) error {
 	}
 
 	// 3. Download the actual database
-	slog.Info("Downloading updated package registry...")
-	dbPath := env.GetRegistryDatabasePath()
+	slog.Info("Downloading updated package registry...", "source", sourceName)
+	dbPath := env.GetSourceDatabasePath(sourceName)
 	zstPath := dbPath + ".zst.tmp"
 	defer os.Remove(zstPath)
 
@@ -132,6 +149,6 @@ func UpdateRegistry(ctx context.Context, registryURL string) error {
 		slog.Warn("Failed to save local repomd.json, update succeeded but next run may re-download", "error", err)
 	}
 
-	slog.Info("Successfully updated package registry", "path", dbPath)
+	slog.Info("Successfully updated package source", "source", sourceName, "path", dbPath)
 	return nil
 }

@@ -753,3 +753,4 @@ manpages/
 # Temporary test files
 local_repo/
 unistack_bin
+unistack_test

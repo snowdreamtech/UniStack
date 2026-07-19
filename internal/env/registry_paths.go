@@ -10,7 +10,7 @@ func GetRegistryCacheDir() string {
 	return filepath.Join(GetCacheDir(), "registry")
 }
 
-// GetRegistryDatabasePath returns the path to the registry packages.db file.
-func GetRegistryDatabasePath() string {
-	return filepath.Join(GetRegistryCacheDir(), "packages.db")
+// GetSourceDatabasePath returns the path to the registry database for a specific source.
+func GetSourceDatabasePath(name string) string {
+	return filepath.Join(GetRegistryCacheDir(), name+".db")
 }
