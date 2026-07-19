@@ -47,7 +47,7 @@ var updateCmd = &cobra.Command{
 
 		if urlFlag != "" {
 			// One-off url flag overriding
-			name := "default"
+			name := "core"
 			if nameFlag != "" {
 				name = nameFlag
 			}
