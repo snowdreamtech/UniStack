@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 )
 
@@ -27,10 +29,20 @@ func NewDownloader() *Downloader {
 	}
 }
 
-// Download stream-downloads a file from the URL. It executes the provided callback
-// with the HTTP response body on success. The caller is responsible for reading and
-// not closing the body (the Download method closes it).
-func (d *Downloader) Download(ctx context.Context, url string, handleBody func(io.Reader) error) error {
+// Download stream-downloads a file from the URL or local file path. 
+// It executes the provided callback with the stream body on success. 
+// The caller is responsible for reading and not closing the body.
+func (d *Downloader) Download(ctx context.Context, uri string, handleBody func(io.Reader) error) error {
+	if strings.HasPrefix(uri, "file://") {
+		path := strings.TrimPrefix(uri, "file://")
+		f, err := os.Open(path)
+		if err != nil {
+			return fmt.Errorf("failed to open local file: %w", err)
+		}
+		defer f.Close()
+		return handleBody(f)
+	}
+
 	var lastErr error
 	backoff := 1 * time.Second
 
@@ -45,7 +57,7 @@ func (d *Downloader) Download(ctx context.Context, url string, handleBody func(i
 			backoff *= 2
 		}
 
-		req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+		req, err := http.NewRequestWithContext(ctx, http.MethodGet, uri, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create request: %w", err)
 		}

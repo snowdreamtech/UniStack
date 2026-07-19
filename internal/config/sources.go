@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/snowdreamtech/unistack/internal/env"
 )
@@ -84,8 +85,20 @@ func saveSources(sources []Source) error {
 	return nil
 }
 
+func normalizeURL(u string) string {
+	if strings.HasPrefix(u, "http://") || strings.HasPrefix(u, "https://") || strings.HasPrefix(u, "file://") {
+		return u
+	}
+	abs, err := filepath.Abs(u)
+	if err == nil {
+		return "file://" + abs
+	}
+	return u
+}
+
 // AddSource adds a new registry source.
 func AddSource(name, url string) error {
+	url = normalizeURL(url)
 	sources, err := LoadSources()
 	if err != nil {
 		return err
@@ -103,6 +116,7 @@ func AddSource(name, url string) error {
 
 // UpdateSource updates the URL of an existing registry source.
 func UpdateSource(name, newURL string) error {
+	newURL = normalizeURL(newURL)
 	sources, err := LoadSources()
 	if err != nil {
 		return err
