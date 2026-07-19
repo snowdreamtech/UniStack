@@ -20,7 +20,7 @@ var updateCmd = &cobra.Command{
 		// but ideally it should point to the production registry.
 		// We'll let the user provide it via an environment variable for testing.
 
-		registryURL := "http://localhost:8080/packages.db.zst"
+		registryURL := "https://registry.unistack.org"
 		if envURL := cmd.Flags().Lookup("url").Value.String(); envURL != "" {
 			registryURL = envURL
 		}
@@ -38,6 +38,6 @@ var updateCmd = &cobra.Command{
 }
 
 func init() {
-	updateCmd.Flags().String("url", "http://localhost:8080/packages.db.zst", "Registry URL")
+	updateCmd.Flags().String("url", "https://registry.unistack.org", "Registry Base URL")
 	rootCmd.AddCommand(updateCmd)
 }

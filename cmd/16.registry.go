@@ -24,11 +24,7 @@ var registryCmd = &cobra.Command{
 	Short: "Manage the local package registry",
 }
 
-type RepoMd struct {
-	Timestamp int64  `json:"timestamp"`
-	Hash      string `json:"hash"`
-	Path      string `json:"path"`
-}
+
 
 var registryBuildCmd = &cobra.Command{
 	Use:   "build [SOURCE_DIR] [DEST_DIR]",
@@ -149,7 +145,7 @@ func buildRegistry(absSource, absDest string, start time.Time) error {
 
 	// Write repomd.json
 	repomdPath := filepath.Join(repodataDir, "repomd.json")
-	repomd := RepoMd{
+	repomd := registry.RepoMd{
 		Timestamp: time.Now().Unix(),
 		Hash:      zstHash,
 		Path:      "repodata/packages.db.zst",
