@@ -20,7 +20,7 @@ description: "Task list for Ansible Execution Hook implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Setup Phase: Ensure nothing is blocking since this feature only modifies existing code.
+- [x] T001 Setup Phase: Ensure nothing is blocking since this feature only modifies existing code.
 
 ---
 
@@ -28,7 +28,7 @@ description: "Task list for Ansible Execution Hook implementation"
 
 **Purpose**: Core infrastructure that MUST be complete before ANY user story can be implemented
 
-- [ ] T002 Update `internal/client/installer.go` to import `"os/exec"`
+- [x] T002 Update `internal/client/installer.go` to import `"os/exec"`
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -42,11 +42,11 @@ description: "Task list for Ansible Execution Hook implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Create a helper function `runAnsiblePlaybook(pkgPath string)` in `internal/client/installer.go` that uses `os/exec` to execute `ansible-playbook -i localhost, -c local app_loader.yml -e app_source_path=<path>` and pipes Output to os.Stdout/os.Stderr.
-- [ ] T004 [US1] In `internal/client/installer.go`, modify `InstallFromLocal(pkgPath string)` to detect if `app_loader.yml` exists in `finalDir`.
-- [ ] T005 [US1] In `InstallFromLocal`, if `app_loader.yml` exists, call `runAnsiblePlaybook(finalDir)`. Handle errors properly.
-- [ ] T006 [US1] Ensure if `app_loader.yml` does *not* exist, the installation proceeds as a pure binary (skip Ansible).
-- [ ] T007 [US1] Add a unit test or adjust `internal/client/installer_test.go` to mock or skip Ansible if not present in testing environments.
+- [x] T003 [US1] Create a helper function `runAnsiblePlaybook(pkgPath string)` in `internal/client/installer.go` that uses `os/exec` to execute `ansible-playbook -i localhost, -c local app_loader.yml -e app_source_path=<path>` and pipes Output to os.Stdout/os.Stderr.
+- [x] T004 [US1] In `internal/client/installer.go`, modify `InstallFromLocal(pkgPath string)` to detect if `app_loader.yml` exists in `finalDir`.
+- [x] T005 [US1] In `InstallFromLocal`, if `app_loader.yml` exists, call `runAnsiblePlaybook(finalDir)`. Handle errors properly.
+- [x] T006 [US1] Ensure if `app_loader.yml` does *not* exist, the installation proceeds as a pure binary (skip Ansible).
+- [x] T007 [US1] Add a unit test or adjust `internal/client/installer_test.go` to mock or skip Ansible if not present in testing environments.
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -56,8 +56,8 @@ description: "Task list for Ansible Execution Hook implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T008 Run quickstart.md manual validation steps to verify End-to-End behavior.
-- [ ] T009 Refactor any overly complex Go methods.
+- [x] T008 Run quickstart.md manual validation steps to verify End-to-End behavior.
+- [x] T009 Refactor any overly complex Go methods.
 
 ---
 

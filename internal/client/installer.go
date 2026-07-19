@@ -6,6 +6,7 @@ package client
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -70,7 +71,15 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 		return fmt.Errorf("failed to move package to final directory: %w", err)
 	}
 
-	// 2. Symlink
+	// 2. Execute Ansible if app_loader.yml exists
+	appLoaderPath := filepath.Join(finalDir, "app_loader.yml")
+	if _, err := os.Stat(appLoaderPath); err == nil {
+		if err := runAnsiblePlaybook(finalDir); err != nil {
+			return fmt.Errorf("ansible-playbook failed: %w", err)
+		}
+	}
+
+	// 3. Symlink
 	// Try to find the executable: either in bin/ or root
 	execPath := filepath.Join(finalDir, "bin", execName)
 	if _, err := os.Stat(execPath); os.IsNotExist(err) {
@@ -86,4 +95,14 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 	}
 
 	return nil
+}
+
+// runAnsiblePlaybook executes the app_loader.yml playbook located in the package path.
+func runAnsiblePlaybook(pkgPath string) error {
+	appLoaderPath := filepath.Join(pkgPath, "app_loader.yml")
+	fmt.Printf("Detected Ansible playbook %s. Executing...\n", appLoaderPath)
+	cmd := exec.Command("ansible-playbook", "-i", "localhost,", "-c", "local", appLoaderPath, "-e", fmt.Sprintf("app_source_path=%s", pkgPath))
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
