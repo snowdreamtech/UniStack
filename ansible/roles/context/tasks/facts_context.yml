@@ -27,7 +27,7 @@
 # ---------------------------------------------------------------------
 - name: "Build is_root_user"
   ansible.builtin.set_fact:
-    is_root_user: "{{ (ansible_user_id | default(ansible_env.USER | default(unistack_root_user, true), true)) == unistack_root_user }}"
+    is_root_user: "{{ (ansible_user_id | default(ansible_env.USER | default('unknown', true), true)) == unistack_root_user }}"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

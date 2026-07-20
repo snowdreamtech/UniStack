@@ -6,12 +6,16 @@
 #   Install and secure the OpenSSH daemon.
 # =====================================================================
 
+- name: "DEBUG init_openssh_packages"
+  ansible.builtin.debug:
+    msg: "init_openssh_packages IS {{ init_openssh_packages | default('NOT_DEFINED') }}"
+
 - name: "Install OpenSSH Packages via Native Engine"
   ansible.builtin.include_role:
     name: native
   vars:
     native_app_name: "openssh"
-    native_packages: "{{ init_openssh_packages | default([], true) }}"
+    native_app_packages: "{{ init_openssh_packages | default([], true) }}"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
@@ -62,25 +66,25 @@
     validate: "/usr/sbin/sshd -t -f %s"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
-  notify: restart_sshd
+  register: sshd_config_main
 
 - name: "Deploy OpenSSH hardening configuration"
   ansible.builtin.template:
-    src: "99-hardening.conf.j2"
+    src: "../templates/99-hardening.conf.j2"
     dest: "/etc/ssh/sshd_config.d/99-hardening.conf"
     owner: "{{ unistack_root_user }}"
     group: "{{ unistack_root_group }}"
     mode: "0600"
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
-  notify: restart_sshd
+  register: sshd_config_hardening
 
 - name: "Manage OpenSSH Service via Native Engine"
   ansible.builtin.include_role:
     name: native
   vars:
     native_app_name: "openssh"
-    native_services:
-      - name: "{{ init_sshd_service | default('sshd', true) }}"
-        state: "started"
-        enabled: true
+    native_app_packages: "{{ init_openssh_packages | default([], true) }}"
+    native_app_state: "{{ 'restarted' if (sshd_config_main is changed or sshd_config_hardening is changed) else 'started' }}"
+    native_app_service: "{{ init_sshd_service | default('sshd', true) }}"
+    native_app_service_enabled: true

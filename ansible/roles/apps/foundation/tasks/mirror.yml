@@ -13,7 +13,7 @@
 # ---------------------------------------------------------------------
 - name: "Configure Alpine mirrors"
   ansible.builtin.template:
-    src: "alpine_repositories.j2"
+    src: "../templates/alpine_repositories.j2"
     dest: "/etc/apk/repositories"
     mode: "0644"
   when: os_family == 'alpine'
@@ -37,7 +37,7 @@
 
 - name: "Configure Debian/Ubuntu mirrors (DEB822 format)"
   ansible.builtin.template:
-    src: "{{ os_distribution }}.sources.j2"
+    src: "../templates/{{ os_distribution }}.sources.j2"
     dest: "/etc/apt/sources.list.d/{{ os_distribution }}.sources"
     mode: "0644"
   when:
@@ -47,7 +47,7 @@
 
 - name: "Configure Debian/Ubuntu mirrors (Legacy format)"
   ansible.builtin.template:
-    src: "apt_sources.list.j2"
+    src: "../templates/apt_sources.list.j2"
     dest: "/etc/apt/sources.list"
     mode: "0644"
   when:
@@ -66,7 +66,7 @@
 # ---------------------------------------------------------------------
 - name: "Configure RedHat base mirrors"
   ansible.builtin.template:
-    src: "yum_repos.d/CentOS-Base.repo.j2"
+    src: "../templates/yum_repos.d/CentOS-Base.repo.j2"
     dest: "/etc/yum.repos.d/CentOS-Base.repo"
     mode: "0644"
   when: os_family == 'redhat'
@@ -74,7 +74,7 @@
 
 - name: "Configure RedHat EPEL mirrors"
   ansible.builtin.template:
-    src: "yum_repos.d/epel.repo.j2"
+    src: "../templates/yum_repos.d/epel.repo.j2"
     dest: "/etc/yum.repos.d/epel.repo"
     mode: "0644"
   when: os_family == 'redhat'
