@@ -1,0 +1,3 @@
+init_openssh_packages:
+init_sshd_service: sshd
+init_sshd_use_pam: "yes"

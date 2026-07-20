@@ -1,0 +1,2 @@
+init_openssh_packages:
+init_sshd_service: com.openssh.sshd

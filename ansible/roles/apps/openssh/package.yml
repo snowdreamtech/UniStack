@@ -1,0 +1,9 @@
+apiVersion: "v1alpha1"
+kind: "app"
+metadata:
+  name: "openssh"
+  version: "1.0.0"
+  description: "SSH daemon configuration and hardening"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"

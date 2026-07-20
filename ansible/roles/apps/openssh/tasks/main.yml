@@ -70,7 +70,7 @@
 
 - name: "Deploy OpenSSH hardening configuration"
   ansible.builtin.template:
-    src: "../templates/99-hardening.conf.j2"
+    src: "99-hardening.conf.j2"
     dest: "/etc/ssh/sshd_config.d/99-hardening.conf"
     owner: "{{ unistack_root_user }}"
     group: "{{ unistack_root_group }}"
