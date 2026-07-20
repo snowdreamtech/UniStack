@@ -16,7 +16,7 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Initialize package namespace feature branch
+- [x] T001 Initialize package namespace feature branch
 
 ---
 
@@ -26,7 +26,7 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Implement safe string transformation helper for namespace flattening (if needed as a shared util, otherwise inline)
+- [x] T002 Implement safe string transformation helper for namespace flattening (if needed as a shared util, otherwise inline)
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -40,7 +40,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T003 [US1] Modify `scanAndArrangePackages` in `internal/registry/builder.go` to apply `strings.ReplaceAll(name, "/", "_")` when creating output archives.
+- [x] T003 [US1] Modify `scanAndArrangePackages` in `internal/registry/builder.go` to apply `strings.ReplaceAll(name, "/", "_")` when creating output archives.
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently.
 
@@ -54,8 +54,8 @@
 
 ### Implementation for User Story 2
 
-- [ ] T004 [US2] Modify package extraction logic in `internal/client/installer.go` to use flattened safe names for local folder paths.
-- [ ] T005 [US2] Ensure `pkgID` assignment in installer logic correctly handles the flat name format for idempotency checks.
+- [x] T004 [US2] Modify package extraction logic in `internal/client/installer.go` to use flattened safe names for local folder paths.
+- [x] T005 [US2] Ensure `pkgID` assignment in installer logic correctly handles the flat name format for idempotency checks.
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently.
 
@@ -65,7 +65,7 @@
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T006 Run quickstart.md validation locally to verify E2E workflow
+- [x] T006 Run quickstart.md validation locally to verify E2E workflow
 
 ---
 

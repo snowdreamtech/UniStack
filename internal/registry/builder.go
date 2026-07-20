@@ -196,12 +196,13 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 		}
 
 		// Calculate target path for maxFile
-		firstChar := strings.ToLower(string(name[0]))
-		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", name, maxFile.Pkg.Metadata.Version))
+		safeName := strings.ReplaceAll(name, "/", "_")
+		firstChar := strings.ToLower(string(safeName[0]))
+		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", safeName, maxFile.Pkg.Metadata.Version))
 		expectedAbsPath := filepath.Join(destDir, expectedRelPath)
 
 		// Before moving/copying, glob the destDir for old versions of THIS package and delete them
-		globPattern := filepath.Join(packagesDir, firstChar, name+"-*.tar.gz")
+		globPattern := filepath.Join(packagesDir, firstChar, safeName+"-*.tar.gz")
 		matches, _ := filepath.Glob(globPattern)
 		for _, match := range matches {
 			if filepath.Clean(match) == filepath.Clean(expectedAbsPath) {

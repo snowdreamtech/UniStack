@@ -86,7 +86,8 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 		return fmt.Errorf("package.yml is missing metadata.name")
 	}
 
-	pkgID := fmt.Sprintf("%s-%s", manifest.Metadata.Name, manifest.Metadata.Version)
+	safeName := strings.ReplaceAll(manifest.Metadata.Name, "/", "_")
+	pkgID := fmt.Sprintf("%s-%s", safeName, manifest.Metadata.Version)
 	finalDir := filepath.Join(i.PackagesDir, pkgID)
 
 	// Check if already installed
@@ -109,7 +110,8 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 	}
 
 	// 4. Symlink
-	execName := manifest.Metadata.Name
+	// Use filepath.Base so that namespaced packages like "snowdreamtech/hello" create a symlink named "hello"
+	execName := filepath.Base(manifest.Metadata.Name)
 	execPath := filepath.Join(finalDir, "bin", execName)
 	if _, err := os.Stat(execPath); os.IsNotExist(err) {
 		execPath = filepath.Join(finalDir, execName)
@@ -195,7 +197,8 @@ func (i *Installer) Uninstall(pkgName string) error {
 	for _, p := range pkgs {
 		if p.Metadata.Name == pkgName {
 			installedPkg = &p
-			pkgID := fmt.Sprintf("%s-%s", p.Metadata.Name, p.Metadata.Version)
+			safeName := strings.ReplaceAll(p.Metadata.Name, "/", "_")
+			pkgID := fmt.Sprintf("%s-%s", safeName, p.Metadata.Version)
 			finalDir = filepath.Join(i.PackagesDir, pkgID)
 			break
 		}
@@ -241,9 +244,10 @@ func (i *Installer) Uninstall(pkgName string) error {
 	}
 
 	// 2. Remove symlink
-	linkPath := filepath.Join(i.BinDir, pkgName)
+	execName := filepath.Base(pkgName)
+	linkPath := filepath.Join(i.BinDir, execName)
 	if err := os.Remove(linkPath); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to remove symlink for %s: %w", pkgName, err)
+		return fmt.Errorf("failed to remove symlink for %s: %w", execName, err)
 	}
 
 	// 3. Remove package directory
