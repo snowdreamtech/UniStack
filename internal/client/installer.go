@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/snowdreamtech/unistack/internal/config"
 	"github.com/snowdreamtech/unistack/internal/env"
 	"github.com/snowdreamtech/unistack/internal/registry"
 	"gopkg.in/yaml.v3"
@@ -254,7 +255,7 @@ func (i *Installer) Uninstall(pkgName string) error {
 }
 
 // InstallPackage resolves dependencies, downloads, and installs a package and its dependencies.
-func (i *Installer) InstallPackage(ctx context.Context, targetPkg string, registryURL string) error {
+func (i *Installer) InstallPackage(ctx context.Context, targetPkg string) error {
 	// 1. Open registry database
 	db, err := registry.OpenRegistryDB()
 	if err != nil {
@@ -305,7 +306,23 @@ func (i *Installer) InstallPackage(ctx context.Context, targetPkg string, regist
 			return fmt.Errorf("package %q not found in registry", pkgName)
 		}
 
-		fmt.Printf("Downloading %s version %s...\n", meta.Name, meta.Version)
+		// Resolve source URL
+		sources, err := config.LoadSources()
+		if err != nil {
+			return fmt.Errorf("failed to load sources config: %w", err)
+		}
+		var registryURL string
+		for _, s := range sources {
+			if s.Name == meta.Source {
+				registryURL = s.URL
+				break
+			}
+		}
+		if registryURL == "" {
+			return fmt.Errorf("registry source %q for package %s not found in configuration", meta.Source, pkgName)
+		}
+
+		fmt.Printf("Downloading %s version %s from %s...\n", meta.Name, meta.Version, meta.Source)
 		downloadedPath, err := downloader.DownloadPackage(ctx, registryURL, meta)
 		if err != nil {
 			return fmt.Errorf("failed to download package %s: %w", pkgName, err)

@@ -44,9 +44,8 @@ Examples:
 
 		// Remote registry installation (Phase 3)
 		ctx := context.Background()
-		registryURL := "http://localhost:8080" // Default for now
 
-		if err := installer.InstallPackage(ctx, target, registryURL); err != nil {
+		if err := installer.InstallPackage(ctx, target); err != nil {
 			if err.Error() == client.ErrCircularDependency.Error() {
 				return fmt.Errorf("installation aborted: %w", err)
 			}

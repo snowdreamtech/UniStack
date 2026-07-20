@@ -22,6 +22,7 @@ type PackageMetadata struct {
 	Name    string
 	Version string
 	Hash    string
+	Source  string
 }
 
 // OpenRegistryDB opens an in-memory SQLite connection that attaches all configured registry sources
@@ -65,7 +66,7 @@ func OpenRegistryDB() (*sql.DB, error) {
 			return nil, fmt.Errorf("failed to create packages view: %w", err)
 		}
 	} else {
-		db.Exec("CREATE TEMP TABLE packages (id INTEGER, name TEXT, version TEXT, description TEXT, homepage TEXT, license TEXT, hash TEXT)")
+		db.Exec("CREATE TEMP TABLE packages (id INTEGER, name TEXT, version TEXT, description TEXT, homepage TEXT, license TEXT, hash TEXT, source TEXT)")
 	}
 
 	if len(dependenciesSelects) > 0 {
@@ -75,7 +76,7 @@ func OpenRegistryDB() (*sql.DB, error) {
 			return nil, fmt.Errorf("failed to create dependencies view: %w", err)
 		}
 	} else {
-		db.Exec("CREATE TEMP TABLE dependencies (id INTEGER, package_name TEXT, package_version TEXT, dependency_name TEXT, is_recommended INTEGER)")
+		db.Exec("CREATE TEMP TABLE dependencies (id INTEGER, package_name TEXT, package_version TEXT, dependency_name TEXT, is_recommended INTEGER, source TEXT)")
 	}
 
 	return db, nil
@@ -89,15 +90,15 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 	}
 	defer db.Close()
 
-	row := db.QueryRowContext(ctx, "SELECT name, version, COALESCE(hash, '') FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1", name)
+	row := db.QueryRowContext(ctx, "SELECT name, version, COALESCE(hash, ''), source FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1", name)
 
 	var meta PackageMetadata
-	err = row.Scan(&meta.Name, &meta.Version, &meta.Hash)
+	err = row.Scan(&meta.Name, &meta.Version, &meta.Hash, &meta.Source)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("package '%s' not found in registry", name)
 		}
-		// Fallback: the hash column might not exist in the older schema.
+		// Fallback: the hash or source column might not exist in the older schema.
 		rowFallback := db.QueryRowContext(ctx, "SELECT name, version FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1", name)
 		var metaFallback PackageMetadata
 		errFallback := rowFallback.Scan(&metaFallback.Name, &metaFallback.Version)

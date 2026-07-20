@@ -1,0 +1,23 @@
+---
+# tasks file for hello
+
+- name: Install hello (Debian/Ubuntu)
+  ansible.builtin.apt:
+    name: hello
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+  become: yes
+
+- name: Install hello (RedHat/CentOS/Fedora)
+  ansible.builtin.yum:
+    name: hello
+    state: present
+  when: ansible_os_family == "RedHat"
+  become: yes
+
+- name: Install hello (macOS via Homebrew)
+  community.general.homebrew:
+    name: hello
+    state: present
+  when: ansible_os_family == "Darwin"
