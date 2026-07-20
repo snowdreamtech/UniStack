@@ -64,6 +64,13 @@
   when: _systemctl_check.rc | default(1) != 0
   tags: ["always"]
 
+# WHY: Check if systemd is actually running as PID 1 (e.g., skips in standard Docker containers).
+- name: "Service (Systemd): Check if systemd is running as init"
+  ansible.builtin.stat:
+    path: "/run/systemd/system"
+  register: _systemd_running
+  tags: ["always"]
+
 # WHY: Detect if the unit file exists to avoid 'not-found' errors during state changes.
 - name: "Service (Systemd): Detect unit existence"
   ansible.builtin.command: "systemctl list-unit-files {{ service_name }}.service"
@@ -97,6 +104,7 @@
   when:
     - _service_unit_exists | default(false) | bool
     - (service_state | default('started', true)) != 'stopped'
+    - _systemd_running.stat.exists | default(false) | bool
   become: "{{ become_enabled | default(false, true) | bool }}"
 
 # WHY: Standard systemd module for state and enablement control.
@@ -109,10 +117,17 @@
   retries: 3
   delay: 2
   until: _systemd_result is succeeded
-  when: _service_unit_exists | default(false) | bool
+  when: 
+    - _service_unit_exists | default(false) | bool
+    - _systemd_running.stat.exists | default(false) | bool
   become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "service_systemd_exec_{{ service_name }}"
+
+- name: "Service (Systemd): Warn if skipping state change due to missing systemd init"
+  ansible.builtin.debug:
+    msg: "WARNING: Systemd is not running as PID 1 (e.g. standard container). Skipping service state change for '{{ service_name }}'."
+  when: not (_systemd_running.stat.exists | default(false) | bool)
 
 # ---------------------------------------------------------------------
 # --- Audit ---
