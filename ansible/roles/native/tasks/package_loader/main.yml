@@ -370,7 +370,8 @@
     name: "core"
     tasks_from: "os_loader"
   vars:
-    module_name: "package_loader"
+    core_loader_type: "tasks"
+    core_loader_path: "tasks/package_loader"
 
 # ---------------------------------------------------------------------
 # Registration: Set common result fact

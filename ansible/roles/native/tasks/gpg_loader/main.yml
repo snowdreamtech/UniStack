@@ -32,4 +32,5 @@
     name: "core"
     tasks_from: "os_loader"
   vars:
-    module_name: "gpg_loader"
+    core_loader_type: "tasks"
+    core_loader_path: "tasks/gpg_loader"

@@ -38,4 +38,5 @@
     name: "core"
     tasks_from: "os_loader"
   vars:
-    module_name: "repo_loader"
+    core_loader_type: "tasks"
+    core_loader_path: "tasks/repo_loader"

@@ -68,4 +68,5 @@
     name: "core"
     tasks_from: "os_loader"
   vars:
-    module_name: "service_loader"
+    core_loader_type: "tasks"
+    core_loader_path: "tasks/service_loader"
