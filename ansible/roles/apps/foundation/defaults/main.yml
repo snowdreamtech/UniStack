@@ -30,7 +30,6 @@ init_user_name: "ansible"
 init_sshd_port: 22
 init_sshd_permit_root_login: "no"
 init_sshd_password_authentication: "yes"
----
 # =====================================================================
 # roles/base/defaults/main.yml
 #
