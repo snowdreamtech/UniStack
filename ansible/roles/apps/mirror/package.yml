@@ -1,0 +1,17 @@
+apiVersion: "v1alpha1"
+kind: "app"
+metadata:
+  name: "mirror"
+  version: "1.0.0"
+  description: "Configures package manager mirrors (apt/yum/apk/etc.)"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"
+compatibility:
+  - os: "debian"
+  - os: "ubuntu"
+  - os: "alpine"
+  - os: "centos"
+  - os: "rocky"
+  - os: "almalinux"
+  - os: "oracle"
