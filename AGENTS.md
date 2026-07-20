@@ -33,5 +33,5 @@ the actual rules live in `.agent/rules/` as the Single Source of Truth.
 All AI slash commands and standard operating procedures (SOPs) are located in `.agent/workflows/`. If the user invokes a command like `/speckit.plan`, execute the corresponding markdown file in that directory.
 
 <!-- SPECKIT START -->
-Active Plan: specs/009-package-install/plan.md
+Active Plan: specs/010-package-namespaces/plan.md
 <!-- SPECKIT END -->
