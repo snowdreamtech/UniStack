@@ -1,0 +1,15 @@
+apiVersion: "v1alpha1"
+kind: "meta"
+metadata:
+  name: "foundation"
+  version: "1.0.0"
+  description: "The core foundation toolchain for all Linux nodes"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"
+dependencies:
+  mirror: {}
+  repositories: {}
+  sudo: {}
+  user: {}
+  openssh: {}

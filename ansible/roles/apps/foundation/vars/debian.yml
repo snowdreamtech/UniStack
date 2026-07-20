@@ -1,9 +1,4 @@
 ---
-init_openssh_packages:
-  - openssh-server
-  - openssh-client
-init_sshd_service: ssh
-init_sshd_use_pam: "yes"
 base_dev_packages: []
 foundation_packages:
   - age

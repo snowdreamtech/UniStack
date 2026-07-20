@@ -25,20 +25,25 @@
     native_app_state: "present"
 
 # ---------------------------------------------------------------------
-# Foundation Stages (formerly roles/init)
+# Foundation Stages (Metapackage Execution)
 # ---------------------------------------------------------------------
-- name: "Foundation: Configure Sudo"
-  ansible.builtin.include_tasks: "sudo.yml"
-
-- name: "Foundation: Configure Repositories"
-  ansible.builtin.include_tasks: "repositories.yml"
-
 - name: "Foundation: Configure Mirror"
-  ansible.builtin.include_tasks: "mirror.yml"
+  ansible.builtin.include_role:
+    name: "apps/mirror"
   when: init_mirror_enabled | default(false, true)
 
+- name: "Foundation: Configure Repositories"
+  ansible.builtin.include_role:
+    name: "apps/repositories"
+
+- name: "Foundation: Configure Sudo"
+  ansible.builtin.include_role:
+    name: "apps/sudo"
+
 - name: "Foundation: Provision User"
-  ansible.builtin.include_tasks: "user.yml"
+  ansible.builtin.include_role:
+    name: "apps/user"
 
 - name: "Foundation: Configure OpenSSH"
-  ansible.builtin.include_tasks: "openssh.yml"
+  ansible.builtin.include_role:
+    name: "apps/openssh"

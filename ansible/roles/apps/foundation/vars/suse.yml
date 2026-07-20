@@ -1,7 +1,5 @@
 ---
-init_openssh_packages:
   - openssh
-init_sshd_service: sshd
 base_dev_packages: []
 foundation_packages:
   - bash-completion

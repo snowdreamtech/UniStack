@@ -1,7 +1,5 @@
 ---
-init_openssh_packages:
   - openssh
-init_sshd_service: com.openssh.sshd
 _darwin_pkg_gnupg: "{{ 'gnupg2' if (os_pkg_mgr | default('', true) == 'macports')
   else 'gnupg' }}"
 _darwin_pkg_sed: "{{ 'gsed' if (os_pkg_mgr | default('', true) == 'macports')
