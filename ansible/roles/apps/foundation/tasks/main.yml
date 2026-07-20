@@ -20,8 +20,9 @@
   ansible.builtin.include_role:
     name: native
   vars:
-    unistack_action: install
-    unistack_packages: "{{ foundation_packages | default([]) }}"
+    native_app_name: "foundation"
+    native_app_packages: "{{ foundation_packages | default([]) }}"
+    native_app_state: "present"
 
 # ---------------------------------------------------------------------
 # Foundation Stages (formerly roles/init)
