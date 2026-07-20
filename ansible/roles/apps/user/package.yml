@@ -1,0 +1,9 @@
+apiVersion: "v1alpha1"
+kind: "app"
+metadata:
+  name: "user"
+  version: "1.0.0"
+  description: "Creates and configures the core deployment user"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"
