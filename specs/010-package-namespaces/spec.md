@@ -8,6 +8,12 @@
 
 **Input**: User description: "Add namespace prefix support to community packages to prevent naming collisions"
 
+## Clarifications
+
+### Session 2026-07-20
+
+- Q: 在 pack 和 build 的时候，有 namespace 和没有 namespace 的包怎么区分对待？ → A: 无需特殊区分对待。核心逻辑通过字符串映射函数统一处理（例如 `strings.ReplaceAll(PackageName, "/", "_")`）。没有 namespace 的包（如 `hello`）映射后仍为 `hello`；有 namespace 的包（如 `snowdreamtech/hello`）映射为 `snowdreamtech_hello`。这确保了向下兼容，且不增加代码逻辑分支。
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Publish a namespaced package (Priority: P1)
