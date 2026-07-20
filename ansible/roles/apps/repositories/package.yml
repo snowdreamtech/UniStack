@@ -1,0 +1,9 @@
+apiVersion: "v1alpha1"
+kind: "app"
+metadata:
+  name: "repositories"
+  version: "1.0.0"
+  description: "Installs essential core repositories"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"
