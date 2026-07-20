@@ -117,7 +117,7 @@
   retries: 3
   delay: 2
   until: _systemd_result is succeeded
-  when: 
+  when:
     - _service_unit_exists | default(false) | bool
     - _systemd_running.stat.exists | default(false) | bool
   become: "{{ become_enabled | default(false, true) | bool }}"

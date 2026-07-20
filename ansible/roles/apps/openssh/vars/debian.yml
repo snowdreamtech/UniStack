@@ -1,3 +1,6 @@
-init_openssh_packages:
-init_sshd_service: ssh
-init_sshd_use_pam: "yes"
+---
+openssh_packages:
+  - openssh-server
+  - openssh-client
+openssh_sshd_service: ssh
+openssh_sshd_use_pam: "yes"

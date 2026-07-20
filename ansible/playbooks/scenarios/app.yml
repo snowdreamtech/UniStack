@@ -1,0 +1,12 @@
+- name: Playbook to deploy a single application
+  hosts: all
+  gather_facts: false
+  tasks:
+    - name: Ensure app_name is provided
+      ansible.builtin.assert:
+        that: app_name is defined
+        msg: "You must provide an app_name variable, e.g. -e app_name=openssh"
+
+    - name: Run app_loader
+      ansible.builtin.include_role:
+        name: "app"

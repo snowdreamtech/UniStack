@@ -6,16 +6,16 @@
 #   Install and secure the OpenSSH daemon.
 # =====================================================================
 
-- name: "DEBUG init_openssh_packages"
+- name: "DEBUG openssh_packages"
   ansible.builtin.debug:
-    msg: "init_openssh_packages IS {{ init_openssh_packages | default('NOT_DEFINED') }}"
+    msg: "openssh_packages IS {{ openssh_packages | default('NOT_DEFINED') }}"
 
 - name: "Install OpenSSH Packages via Native Engine"
   ansible.builtin.include_role:
     name: native
   vars:
     native_app_name: "openssh"
-    native_app_packages: "{{ init_openssh_packages | default([], true) }}"
+    native_app_packages: "{{ openssh_packages | default([], true) }}"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
@@ -39,7 +39,7 @@
 
 - name: "Add controller keys to authorized_keys"
   ansible.builtin.authorized_key:
-    user: "{{ init_user_name }}"
+    user: "{{ unistack_user_name | default('ansible') }}"
     key: "{{ item }}"
     state: "present"
     exclusive: false
@@ -84,7 +84,7 @@
     name: native
   vars:
     native_app_name: "openssh"
-    native_app_packages: "{{ init_openssh_packages | default([], true) }}"
+    native_app_packages: "{{ openssh_packages | default([], true) }}"
     native_app_state: "{{ 'restarted' if (sshd_config_main is changed or sshd_config_hardening is changed) else 'started' }}"
-    native_app_service: "{{ init_sshd_service | default('sshd', true) }}"
+    native_app_service: "{{ openssh_sshd_service | default('sshd', true) }}"
     native_app_service_enabled: true

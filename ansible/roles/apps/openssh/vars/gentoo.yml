@@ -1,2 +1,4 @@
-init_openssh_packages:
-init_sshd_service: sshd
+---
+openssh_packages:
+  - net-misc/openssh
+openssh_sshd_service: sshd

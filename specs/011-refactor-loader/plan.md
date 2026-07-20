@@ -42,11 +42,11 @@ Refactor the `app` loader to use `ansible.builtin.include_role` instead of `ansi
 
 ```text
 specs/011-refactor-loader/
-├── plan.md              
-├── research.md          
-├── data-model.md        
-├── quickstart.md        
-└── tasks.md             
+├── plan.md
+├── research.md
+├── data-model.md
+├── quickstart.md
+└── tasks.md
 ```
 
 ### Source Code (repository root)
