@@ -1,0 +1,37 @@
+---
+# =====================================================================
+# roles/native/tasks/log_loader.yml
+#
+# Purpose:
+#   High-level native component observability engine.
+#   Provides a standardized mechanism for logging abstract deployment
+#   events and architectural state transitions to the controller console.
+#
+# Simple Usage:
+#   - include_tasks: "log_loader.yml"
+#     vars:
+#       label: "NATIVE"
+#       msg: "Native operations started"
+#
+# Comprehensive Usage:
+#   - include_tasks: "log_loader.yml"
+#     vars:
+#       label: "NATIVE_SERVICE"
+#       msg: "Starting service"
+#       fingerprint: "native_service_start"
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# Output: Emit a structured audit log message to localhost.
+# Includes optional labels and unique execution fingerprints.
+# ---------------------------------------------------------------------
+- name: "Native audit log output"
+  ansible.builtin.debug:
+    msg: |
+      {% if label is defined %}[{{ label }}] {% endif -%}
+      {{ msg | default('', true) | trim }}
+      {%- if fingerprint is defined %} fingerprint={{ fingerprint }}{% endif %}
+  delegate_to: "localhost"
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
