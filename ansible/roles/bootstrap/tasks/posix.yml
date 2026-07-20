@@ -23,6 +23,11 @@
   become: false
   tags: ["always"]
 
+- name: "Set OS specific probe facts"
+  ansible.builtin.set_fact:
+    is_macos: "{{ 'Darwin' in raw_uname_probe.stdout | default('') }}"
+  tags: ["always"]
+
 - name: "Set UniStack cache paths"
   ansible.builtin.set_fact:
     resolved_home: "{{ raw_home_probe.stdout | trim }}"
