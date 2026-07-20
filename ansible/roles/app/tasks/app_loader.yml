@@ -66,6 +66,14 @@
       }}
   tags: ["always"]
 
+- name: "Resolve apps role name"
+  ansible.builtin.set_fact:
+    resolved_app_role_name: >-
+      {{
+        app_source_path | default('apps/' ~ app_name, true)
+      }}
+  tags: ["always"]
+
 - name: "Log base path resolution for {{ app_name }}"
   ansible.builtin.debug:
     msg: "App Source Path selected: {{ resolved_app_source_path }}"
@@ -314,7 +322,7 @@
 # ---------------------------------------------------------------------
 - name: "Execute resolved tasks for {{ app_name }}"
   ansible.builtin.include_role:
-    name: "{{ resolved_app_source_path }}"
+    name: "{{ resolved_app_role_name }}"
     tasks_from: "{{ app_tasks_file | relpath(app_tasks_path) }}"
   when:
     - app_tasks_file is defined
