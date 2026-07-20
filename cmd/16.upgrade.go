@@ -78,18 +78,9 @@ Examples:
 			return fmt.Errorf("failed to uninstall old version: %w", err)
 		}
 
-		// 2. Download and install new version
-		downloader := client.NewDownloader()
-		registryURL := "http://localhost:8080" // Default for now
-
-		fmt.Printf("Downloading %s version %s...\n", meta.Name, meta.Version)
-		downloadedPath, err := downloader.DownloadPackage(ctx, registryURL, meta)
-		if err != nil {
-			return fmt.Errorf("failed to download new package: %w", err)
-		}
-
+		// 2. Install new version using the unified installer logic
 		fmt.Printf("Installing %s...\n", meta.Name)
-		if err := installer.InstallFromLocal(downloadedPath); err != nil {
+		if err := installer.InstallPackage(ctx, pkgName); err != nil {
 			return fmt.Errorf("failed to install new package: %w", err)
 		}
 
