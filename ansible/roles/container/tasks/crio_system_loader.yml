@@ -44,7 +44,7 @@
 
       Received:
         - Value: {{ crio_sys_action | default('UNDEFINED') }}
-    success_msg: "crio_system_loader: crio_sys_action validated ({{ crio_sys_action }})"
+    success_msg: "crio_system_loader: crio_sys_action validated ({{ crio_sys_action | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables (ensure all parameters are defined)

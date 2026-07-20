@@ -44,7 +44,7 @@
       Received:
         - Type: {{ lxc_net_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_net_name | default('UNDEFINED') }}
-    success_msg: "lxc_network_loader: lxc_net_name validated ({{ lxc_net_name }})"
+    success_msg: "lxc_network_loader: lxc_net_name validated ({{ lxc_net_name | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:
@@ -56,7 +56,7 @@
 
       Received:
         - Value: {{ lxc_net_state | default('present') }}
-    success_msg: "lxc_network_loader: lxc_net_state validated ({{ lxc_net_state }})"
+    success_msg: "lxc_network_loader: lxc_net_state validated ({{ lxc_net_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables

@@ -84,7 +84,7 @@
           vars:
             native_app_name: "nginx"
             native_app_state: "started"  # present|latest|started|stopped|restarted|absent|purged
-    success_msg: "native_loader: native_app_name validated ({{ native_app_name }})"
+    success_msg: "native_loader: native_app_name validated ({{ native_app_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:

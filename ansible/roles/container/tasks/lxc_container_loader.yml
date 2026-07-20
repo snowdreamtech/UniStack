@@ -59,7 +59,7 @@
       Received:
         - Type: {{ lxc_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_name | default('UNDEFINED') }}
-    success_msg: "lxc_container_loader: lxc_name validated ({{ lxc_name }})"
+    success_msg: "lxc_container_loader: lxc_name validated ({{ lxc_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:
@@ -72,7 +72,7 @@
 
       Received:
         - Value: {{ lxc_state | default('present') }}
-    success_msg: "lxc_container_loader: lxc_state validated ({{ lxc_state }})"
+    success_msg: "lxc_container_loader: lxc_state validated ({{ lxc_state | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

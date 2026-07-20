@@ -44,7 +44,7 @@
       Received:
         - Type: {{ container_name | default('UNDEFINED') | type_debug }}
         - Value: {{ container_name | default('UNDEFINED') }}
-    success_msg: "podman_container_loader: container_name validated ({{ container_name }})"
+    success_msg: "podman_container_loader: container_name validated ({{ container_name | default('UNDEFINED') }})"
 
 - name: "Assert container_state for Podman"
   ansible.builtin.assert:

@@ -40,7 +40,7 @@
       Received:
         - Type: {{ lxc_image_alias | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_image_alias | default('UNDEFINED') }}
-    success_msg: "lxc_image_loader: lxc_image_alias validated ({{ lxc_image_alias }})"
+    success_msg: "lxc_image_loader: lxc_image_alias validated ({{ lxc_image_alias | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:
@@ -53,7 +53,7 @@
 
       Received:
         - Value: {{ lxc_image_state | default('present') }}
-    success_msg: "lxc_image_loader: lxc_image_state validated ({{ lxc_image_state }})"
+    success_msg: "lxc_image_loader: lxc_image_state validated ({{ lxc_image_state | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

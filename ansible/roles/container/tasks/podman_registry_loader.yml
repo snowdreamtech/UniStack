@@ -60,7 +60,7 @@
 
       Received:
         - Value: {{ registry_action | default('UNDEFINED') }}
-    success_msg: "podman_registry_loader: registry_action validated ({{ registry_action }})"
+    success_msg: "podman_registry_loader: registry_action validated ({{ registry_action | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables

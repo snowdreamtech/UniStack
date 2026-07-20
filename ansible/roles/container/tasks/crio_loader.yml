@@ -71,7 +71,7 @@
         - rm: Remove container
         - inspect: Inspect container/image
         - run: Run new container
-    success_msg: "crio_loader: crio_action validated ({{ crio_action }})"
+    success_msg: "crio_loader: crio_action validated ({{ crio_action | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

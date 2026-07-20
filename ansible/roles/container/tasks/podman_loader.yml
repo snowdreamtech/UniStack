@@ -65,7 +65,7 @@
             podman_name: "web-server"
             podman_image: "nginx:latest"
             podman_state: "started"
-    success_msg: "podman_loader: podman_name validated ({{ podman_name }})"
+    success_msg: "podman_loader: podman_name validated ({{ podman_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:

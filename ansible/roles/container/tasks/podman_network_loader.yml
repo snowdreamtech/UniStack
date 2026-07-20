@@ -51,7 +51,7 @@
       Received:
         - Type: {{ network_name | default('UNDEFINED') | type_debug }}
         - Value: {{ network_name | default('UNDEFINED') }}
-    success_msg: "podman_network_loader: network_name validated ({{ network_name }})"
+    success_msg: "podman_network_loader: network_name validated ({{ network_name | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:
@@ -63,7 +63,7 @@
 
       Received:
         - Value: {{ network_state | default('present') }}
-    success_msg: "podman_network_loader: network_state validated ({{ network_state }})"
+    success_msg: "podman_network_loader: network_state validated ({{ network_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables (ensure all parameters are defined)

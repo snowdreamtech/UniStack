@@ -48,7 +48,7 @@
       Received:
         - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
         - Value: {{ compose_project_src | default('UNDEFINED') }}
-    success_msg: "podman_compose_loader: compose_project_src validated ({{ compose_project_src }})"
+    success_msg: "podman_compose_loader: compose_project_src validated ({{ compose_project_src | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:

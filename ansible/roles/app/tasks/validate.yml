@@ -41,7 +41,7 @@
       validate: app_name must be a non-empty string
       Received type: {{ app_name | type_debug if app_name is defined else 'undefined' }}
       Received value: {{ app_name | default('UNDEFINED', true) }}
-    success_msg: "validate: app_name validated ({{ app_name }})"
+    success_msg: "validate: app_name validated ({{ app_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 - name: "Validate app_state"
@@ -73,7 +73,7 @@
         - native: Native package/binary installation
         - compose: Docker Compose multi-container
         - kube: Kubernetes manifest deployment
-    success_msg: "validate: app_delivery_mode validated ({{ app_delivery_mode }})"
+    success_msg: "validate: app_delivery_mode validated ({{ app_delivery_mode | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

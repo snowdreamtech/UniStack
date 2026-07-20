@@ -30,7 +30,7 @@
       Received:
         - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
         - Value: {{ kube_manifest | default('UNDEFINED') }}
-    success_msg: "kubectl_loader: kube_manifest validated ({{ kube_manifest }})"
+    success_msg: "kubectl_loader: kube_manifest validated ({{ kube_manifest | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

@@ -44,7 +44,7 @@
       Received:
         - Type: {{ lxc_profile_name | default('UNDEFINED') | type_debug }}
         - Value: {{ lxc_profile_name | default('UNDEFINED') }}
-    success_msg: "lxc_profile_loader: lxc_profile_name validated ({{ lxc_profile_name }})"
+    success_msg: "lxc_profile_loader: lxc_profile_name validated ({{ lxc_profile_name | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:
@@ -56,7 +56,7 @@
 
       Received:
         - Value: {{ lxc_profile_state | default('present') }}
-    success_msg: "lxc_profile_loader: lxc_profile_state validated ({{ lxc_profile_state }})"
+    success_msg: "lxc_profile_loader: lxc_profile_state validated ({{ lxc_profile_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables

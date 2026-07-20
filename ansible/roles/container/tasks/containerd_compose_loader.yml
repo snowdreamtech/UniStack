@@ -45,7 +45,7 @@
       Received:
         - Type: {{ compose_project_src | default('UNDEFINED') | type_debug }}
         - Value: {{ compose_project_src | default('UNDEFINED') }}
-    success_msg: "containerd_compose_loader: compose_project_src validated ({{ compose_project_src }})"
+    success_msg: "containerd_compose_loader: compose_project_src validated ({{ compose_project_src | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:

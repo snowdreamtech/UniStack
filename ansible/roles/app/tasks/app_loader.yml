@@ -27,7 +27,7 @@
       app_loader: app_name must be a non-empty string
       Received type: {{ app_name | type_debug if app_name is defined else 'undefined' }}
       Received value: {{ app_name | default('UNDEFINED', true) }}
-    success_msg: "app_loader: app_name validated ({{ app_name }})"
+    success_msg: "app_loader: app_name validated ({{ app_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 # 1.5 Load API Schema Variables

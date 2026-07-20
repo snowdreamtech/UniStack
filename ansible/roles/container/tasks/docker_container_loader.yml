@@ -60,7 +60,7 @@
           vars:
             container_name: "web-server"
             container_image: "nginx:latest"
-    success_msg: "docker_container_loader: container_name validated ({{ container_name }})"
+    success_msg: "docker_container_loader: container_name validated ({{ container_name | default('UNDEFINED') }})"
 
 - name: "Assert container_state for Docker"
   ansible.builtin.assert:
@@ -80,7 +80,7 @@
         - stopped: Stop container
         - restarted: Restart container
         - absent: Remove container
-    success_msg: "docker_container_loader: container_state validated ({{ container_state }})"
+    success_msg: "docker_container_loader: container_state validated ({{ container_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Execution Phase: Invoke the Docker container module with all

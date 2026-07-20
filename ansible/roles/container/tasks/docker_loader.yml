@@ -69,7 +69,7 @@
             docker_name: "web-server"
             docker_image: "nginx:latest"
             docker_state: "started"
-    success_msg: "docker_loader: docker_name validated ({{ docker_name }})"
+    success_msg: "docker_loader: docker_name validated ({{ docker_name | default('UNDEFINED') }})"
   tags: ["always"]
 
 - name: "Assert docker_state for Docker"

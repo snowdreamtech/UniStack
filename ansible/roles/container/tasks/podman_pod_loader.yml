@@ -54,7 +54,7 @@
       Received:
         - Type: {{ pod_name | default('UNDEFINED') | type_debug }}
         - Value: {{ pod_name | default('UNDEFINED') }}
-    success_msg: "podman_pod_loader: pod_name validated ({{ pod_name }})"
+    success_msg: "podman_pod_loader: pod_name validated ({{ pod_name | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:
@@ -66,7 +66,7 @@
 
       Received:
         - Value: {{ pod_state | default('present') }}
-    success_msg: "podman_pod_loader: pod_state validated ({{ pod_state }})"
+    success_msg: "podman_pod_loader: pod_state validated ({{ pod_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables (ensure all parameters are defined)

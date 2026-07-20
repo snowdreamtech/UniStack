@@ -48,7 +48,7 @@
 
       Received:
         - Value: {{ system_action | default('UNDEFINED') }}
-    success_msg: "podman_system_loader: system_action validated ({{ system_action }})"
+    success_msg: "podman_system_loader: system_action validated ({{ system_action | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables (ensure all parameters are defined)

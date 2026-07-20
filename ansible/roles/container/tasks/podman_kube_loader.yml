@@ -54,7 +54,7 @@
       Received:
         - Type: {{ kube_manifest | default('UNDEFINED') | type_debug }}
         - Value: {{ kube_manifest | default('UNDEFINED') }}
-    success_msg: "podman_kube_loader: kube_manifest validated ({{ kube_manifest }})"
+    success_msg: "podman_kube_loader: kube_manifest validated ({{ kube_manifest | default('UNDEFINED') }})"
   tags: ["always"]
 
 - ansible.builtin.assert:
@@ -67,7 +67,7 @@
 
       Received:
         - Value: {{ kube_state | default('present') }}
-    success_msg: "podman_kube_loader: kube_state validated ({{ kube_state }})"
+    success_msg: "podman_kube_loader: kube_state validated ({{ kube_state | default('UNDEFINED') }})"
   tags: ["always"]
 
 # ---------------------------------------------------------------------

@@ -57,7 +57,7 @@
       Received:
         - Type: {{ image_name | default('UNDEFINED') | type_debug }}
         - Value: {{ image_name | default('UNDEFINED') }}
-    success_msg: "podman_image_loader: image_name validated ({{ image_name }})"
+    success_msg: "podman_image_loader: image_name validated ({{ image_name | default('UNDEFINED') }})"
 
 - ansible.builtin.assert:
     that:
@@ -69,7 +69,7 @@
 
       Received:
         - Value: {{ image_state | default('present') }}
-    success_msg: "podman_image_loader: image_state validated ({{ image_state }})"
+    success_msg: "podman_image_loader: image_state validated ({{ image_state | default('UNDEFINED') }})"
 
 # ---------------------------------------------------------------------
 # Normalize optional variables (ensure all parameters are defined)
