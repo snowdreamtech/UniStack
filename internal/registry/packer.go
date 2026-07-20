@@ -79,7 +79,7 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 			version = globalVersion
 			pkg.Metadata.Version = globalVersion
 		}
-		
+
 		if len(name) == 0 {
 			slog.Warn("package name is empty, skipping", "path", path)
 			return nil
@@ -87,7 +87,7 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 
 		// First character of the package name
 		firstChar := strings.ToLower(string(name[0]))
-		
+
 		// Target filename: packages/<first_char>/<name>-<version>.tar.gz
 		targetDir := filepath.Join(packagesDir, firstChar)
 		if err := os.MkdirAll(targetDir, 0755); err != nil {
@@ -144,7 +144,7 @@ func tarGzDir(sourceDir, targetFile, overrideVersion string) error {
 		if err != nil {
 			return err
 		}
-		
+
 		// Use relative path
 		header.Name = relPath
 
@@ -192,7 +192,7 @@ func tarGzDir(sourceDir, targetFile, overrideVersion string) error {
 				return err
 			}
 		}
-		
+
 		return nil
 	})
 }

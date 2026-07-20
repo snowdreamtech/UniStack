@@ -17,15 +17,18 @@
 ## Implementation Phases
 
 ### Phase 1: Query Enhancement & Data Model
+
 - Update `PackageMetadata` in `internal/registry/client_query.go` to include `Source string`.
 - Update the SQLite query string in `QueryPackage` to select the `source` column.
 
 ### Phase 2: Installer Transformation
+
 - Modify `InstallPackage` signature in `internal/client/installer.go` to drop `registryURL`.
 - Within `InstallPackage`, use `config.LoadSources()` to map the `meta.Source` string back to the actual URL of the source.
 - Update `cmd/19.install.go` to match the new signature of `InstallPackage`.
 
 ### Phase 3: Validation (E2E)
+
 - Build a local registry from `/Users/snowdream/Workspace/snowdreamtech/UniStack/ansible/roles/apps/hello`.
 - Add it via `unistack source add local ./local_repo`.
 - Run `unistack install hello` and verify successful symlink generation and Ansible playbook execution.

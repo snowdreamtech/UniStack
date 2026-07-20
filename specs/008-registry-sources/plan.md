@@ -12,7 +12,8 @@ This feature provides client-side "Source/Repo" management for UniStack. The use
 
 **Language/Version**: Go 1.22+
 
-**Primary Dependencies**: 
+**Primary Dependencies**:
+
 - `github.com/spf13/cobra` (CLI)
 - `modernc.org/sqlite` (Database)
 
@@ -60,7 +61,7 @@ internal/
 │   └── sources.go          # New: sources.json configuration loader
 ├── client/
 │   ├── updater.go          # Modified: sync all sources into separate .db files
-│   └── updater_test.go     
+│   └── updater_test.go
 └── registry/
     ├── client_query.go     # Modified: dynamic SQLite ATTACH DATABASE for all .db files
     └── client_query_test.go

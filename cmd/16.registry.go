@@ -24,8 +24,6 @@ var registryCmd = &cobra.Command{
 	Short: "Manage the local package registry",
 }
 
-
-
 var registryBuildCmd = &cobra.Command{
 	Use:   "build [SOURCE_DIR] [DEST_DIR]",
 	Short: "Build the registry SQLite database from a directory of package archives, auto-arranging them",

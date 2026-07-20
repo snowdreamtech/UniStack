@@ -24,7 +24,7 @@ var updateCmd = &cobra.Command{
 			if err != nil {
 				return fmt.Errorf("failed to load sources: %w", err)
 			}
-			
+
 			var targetURL string
 			for _, s := range sources {
 				if s.Name == nameFlag {
@@ -32,11 +32,11 @@ var updateCmd = &cobra.Command{
 					break
 				}
 			}
-			
+
 			if targetURL == "" {
 				return fmt.Errorf("source '%s' not found in configuration", nameFlag)
 			}
-			
+
 			slog.Info("Starting update for specific source", "name", nameFlag, "url", targetURL)
 			if err := client.UpdateSource(cmd.Context(), nameFlag, targetURL); err != nil {
 				slog.Error("Failed to update source", "name", nameFlag, "error", err)

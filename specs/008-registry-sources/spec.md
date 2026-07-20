@@ -20,7 +20,7 @@ As a user, I want to add new package sources (such as private mirrors or interna
 
 **Acceptance Scenarios**:
 
-1. **Given** a default setup, **When** the user runs the command to add a new source named "private" with URL "http://private.repo", **Then** the source is successfully saved.
+1. **Given** a default setup, **When** the user runs the command to add a new source named "private" with URL "<http://private.repo>", **Then** the source is successfully saved.
 2. **Given** multiple configured sources, **When** the user runs the list command, **Then** a clear list of all sources (name and URL) is presented.
 
 ---
@@ -35,7 +35,7 @@ As a user, I want to update the URL of an existing source if the domain changes,
 
 **Acceptance Scenarios**:
 
-1. **Given** a source named "mirror" with URL "http://old.com", **When** the user runs the update command for "mirror" with "http://new.com", **Then** the source's URL is updated successfully.
+1. **Given** a source named "mirror" with URL "<http://old.com>", **When** the user runs the update command for "mirror" with "<http://new.com>", **Then** the source's URL is updated successfully.
 2. **Given** a non-existent source, **When** the user attempts to update it, **Then** a clear error message is shown indicating the source does not exist.
 
 ---
@@ -82,4 +82,4 @@ As a user, I want to remove sources that are no longer maintained, so that I do 
 
 - Users have write permissions to their local configuration directory.
 - The URLs provided by the user are valid endpoints.
-- The default registry provided out-of-the-box is "https://registry.unistack.org".
+- The default registry provided out-of-the-box is "<https://registry.unistack.org>".

@@ -55,7 +55,7 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 	// 1. Extract to a temporary directory first to read package.yml
 	base := filepath.Base(pkgPath)
 	tmpExtractDir := filepath.Join(i.PackagesDir, ".tmp-"+base)
-	
+
 	if err := os.MkdirAll(i.PackagesDir, 0755); err != nil {
 		return fmt.Errorf("failed to create packages directory: %w", err)
 	}
@@ -116,7 +116,7 @@ func (i *Installer) InstallFromLocal(pkgPath string) error {
 	if _, err := os.Stat(execPath); os.IsNotExist(err) {
 		execPath = filepath.Join(finalDir, execName)
 	}
-	
+
 	// We do not fail if executable is not found, because meta packages or Ansible-only packages might not have a direct binary in bin/
 	if _, err := os.Stat(execPath); err == nil {
 		linkPath := filepath.Join(i.BinDir, execName)
@@ -144,12 +144,12 @@ func runAnsibleRole(pkgPath string, state string) error {
 	defer os.Remove(playbookPath)
 
 	fmt.Printf("Detected Ansible role in %s. Executing (state=%s)...\n", pkgPath, state)
-	
+
 	args := []string{"-i", "localhost,", "-c", "local", playbookPath, "-e", fmt.Sprintf("app_source_path=%s", pkgPath)}
 	if state != "" {
 		args = append(args, "-e", fmt.Sprintf("state=%s", state))
 	}
-	
+
 	cmd := exec.Command("ansible-playbook", args...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -165,7 +165,7 @@ func (i *Installer) ListInstalledPackages() ([]PackageManifest, error) {
 		}
 		return nil, err
 	}
-	
+
 	var manifests []PackageManifest
 	for _, e := range entries {
 		if e.IsDir() && !strings.HasPrefix(e.Name(), ".") {
@@ -174,7 +174,7 @@ func (i *Installer) ListInstalledPackages() ([]PackageManifest, error) {
 			if err != nil {
 				continue // skip invalid directories without package.yml
 			}
-			
+
 			var manifest PackageManifest
 			if err := yaml.Unmarshal(data, &manifest); err == nil && manifest.Metadata.Name != "" {
 				manifests = append(manifests, manifest)
@@ -190,10 +190,10 @@ func (i *Installer) Uninstall(pkgName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	var installedPkg *PackageManifest
 	var finalDir string
-	
+
 	for _, p := range pkgs {
 		if p.Metadata.Name == pkgName {
 			installedPkg = &p
@@ -203,7 +203,7 @@ func (i *Installer) Uninstall(pkgName string) error {
 			break
 		}
 	}
-	
+
 	if installedPkg == nil {
 		return fmt.Errorf("package %s is not installed", pkgName)
 	}

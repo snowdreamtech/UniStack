@@ -30,8 +30,8 @@ func NewDownloader() *Downloader {
 	}
 }
 
-// Download stream-downloads a file from the URL or local file path. 
-// It executes the provided callback with the stream body on success. 
+// Download stream-downloads a file from the URL or local file path.
+// It executes the provided callback with the stream body on success.
 // The caller is responsible for reading and not closing the body.
 func (d *Downloader) Download(ctx context.Context, uri string, handleBody func(io.Reader) error) error {
 	if strings.HasPrefix(uri, "file://") {

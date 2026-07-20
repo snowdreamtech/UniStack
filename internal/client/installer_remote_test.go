@@ -31,7 +31,7 @@ func TestInstaller_InstallFromRemote(t *testing.T) {
 
 	// Create a test server to serve the tarball
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/hello-1.0.0.tar.gz" {
+		if r.URL.Path == "/packages/h/hello-1.0.0.tar.gz" {
 			w.Write(tarBytes)
 		} else {
 			w.WriteHeader(http.StatusNotFound)

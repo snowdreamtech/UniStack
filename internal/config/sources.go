@@ -67,7 +67,7 @@ func LoadSources() ([]Source, error) {
 // saveSources writes the given sources back to the JSON configuration file.
 func saveSources(sources []Source) error {
 	file := GetSourcesFile()
-	
+
 	// Ensure config directory exists
 	dir := filepath.Dir(file)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -82,7 +82,7 @@ func saveSources(sources []Source) error {
 	if err := os.WriteFile(file, data, 0644); err != nil {
 		return fmt.Errorf("failed to write sources config: %w", err)
 	}
-	
+
 	return nil
 }
 

@@ -25,9 +25,9 @@ Stored at `~/.config/unistack/sources.json`.
 When reading databases dynamically from multiple sources, the runtime generates a view attached in memory:
 
 ```sql
-CREATE TEMP VIEW all_packages AS 
-SELECT *, 'default' as source FROM default_db.packages 
-UNION ALL 
+CREATE TEMP VIEW all_packages AS
+SELECT *, 'default' as source FROM default_db.packages
+UNION ALL
 SELECT *, 'private' as source FROM private_db.packages;
 ```
 

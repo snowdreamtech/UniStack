@@ -47,6 +47,7 @@ specs/005-ansible-execution-hook/
 ```
 
 ### Source Code (repository root)
+
 ```text
 internal/
 └── client/

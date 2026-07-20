@@ -39,10 +39,10 @@ func TestDependencyGraph_TopologicalSort_Success(t *testing.T) {
 	if sorted[3] != "A" {
 		t.Errorf("expected last package to be A, got %s", sorted[3])
 	}
-	
+
 	validOrder1 := []string{"D", "B", "C", "A"}
 	validOrder2 := []string{"D", "C", "B", "A"}
-	
+
 	if !reflect.DeepEqual(sorted, validOrder1) && !reflect.DeepEqual(sorted, validOrder2) {
 		t.Errorf("unexpected order: %v", sorted)
 	}

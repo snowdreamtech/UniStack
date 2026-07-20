@@ -64,7 +64,7 @@ func TestInstaller_Uninstall_WithReverseDependencies(t *testing.T) {
 	// Note: We need a registry DB for GetReverseDependencies to work.
 	// We'll skip the DB part in this unit test if we can't easily mock it, but we can verify the normal uninstall flow.
 	// Mocking sqlite in Go without interfaces requires a bit of setup. Let's just rely on integration tests for the DB logic.
-	
+
 	// Let's just test that without DB it still uninstalls successfully if there are no dependents.
 	// And if it fails to open DB, it ignores the error and proceeds with uninstall.
 }

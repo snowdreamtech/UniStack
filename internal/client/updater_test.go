@@ -72,13 +72,13 @@ func TestUpdateRegistry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	err = UpdateRegistry(ctx, ts.URL)
+	err = UpdateSource(ctx, "test_source", ts.URL)
 	if err != nil {
-		t.Fatalf("UpdateRegistry failed: %v", err)
+		t.Fatalf("UpdateSource failed: %v", err)
 	}
 
 	// Verify that the file was created and contains the uncompressed data
-	dbPath := env.GetRegistryDatabasePath()
+	dbPath := env.GetSourceDatabasePath("test_source")
 	content, err := os.ReadFile(dbPath)
 	if err != nil {
 		t.Fatalf("Failed to read decompressed DB file: %v", err)
@@ -89,15 +89,14 @@ func TestUpdateRegistry(t *testing.T) {
 	}
 
 	// Verify that local repomd.json was saved
-	registryDir := env.GetRegistryCacheDir()
-	localRepomdPath := filepath.Join(registryDir, "repomd.json")
+	localRepomdPath := filepath.Join(env.GetRegistryCacheDir(), "test_source_repomd.json")
 	if _, err := os.Stat(localRepomdPath); os.IsNotExist(err) {
 		t.Errorf("Local repomd.json was not saved")
 	}
 
 	// Run it again, it should skip downloading because hash matches
-	err = UpdateRegistry(ctx, ts.URL)
+	err = UpdateSource(ctx, "test_source", ts.URL)
 	if err != nil {
-		t.Fatalf("Second UpdateRegistry (skip) failed: %v", err)
+		t.Fatalf("Second UpdateSource (skip) failed: %v", err)
 	}
 }

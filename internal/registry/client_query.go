@@ -13,6 +13,7 @@ import (
 
 	"github.com/snowdreamtech/unistack/internal/config"
 	"github.com/snowdreamtech/unistack/internal/env"
+
 	// SQLite driver
 	_ "modernc.org/sqlite"
 )
@@ -114,14 +115,14 @@ func QueryPackage(ctx context.Context, name string) (*PackageMetadata, error) {
 // GetDependencies fetches the direct required dependencies for a given package.
 func GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error) {
 	query := `
-		SELECT dependency_name 
-		FROM dependencies 
+		SELECT dependency_name
+		FROM dependencies
 		WHERE package_name = ? AND is_recommended = 0
 		AND package_version = (
 			SELECT version FROM packages WHERE name = ? ORDER BY version DESC LIMIT 1
 		)
 	`
-	
+
 	rows, err := db.QueryContext(ctx, query, pkgName, pkgName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query dependencies for package %s: %w", pkgName, err)
@@ -147,11 +148,11 @@ func GetDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string,
 // GetReverseDependencies fetches packages that depend on the given package.
 func GetReverseDependencies(ctx context.Context, db *sql.DB, pkgName string) ([]string, error) {
 	query := `
-		SELECT DISTINCT package_name 
-		FROM dependencies 
+		SELECT DISTINCT package_name
+		FROM dependencies
 		WHERE dependency_name = ?
 	`
-	
+
 	rows, err := db.QueryContext(ctx, query, pkgName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to query reverse dependencies for package %s: %w", pkgName, err)

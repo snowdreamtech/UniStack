@@ -5,16 +5,16 @@
   ansible.builtin.apt:
     name: hello
     state: present
-    update_cache: yes
+    update_cache: true
   when: ansible_os_family == "Debian"
-  become: yes
+  become: true
 
 - name: Install hello (RedHat/CentOS/Fedora)
   ansible.builtin.yum:
     name: hello
     state: present
   when: ansible_os_family == "RedHat"
-  become: yes
+  become: true
 
 - name: Install hello (macOS via Homebrew)
   community.general.homebrew:
