@@ -1,4 +1,13 @@
 ---
+
+- name: "Load OS-specific variables for this role"
+  ansible.builtin.include_role:
+    name: core
+    tasks_from: os_loader
+  vars:
+    core_loader_type: "vars"
+    core_loader_path: "vars"
+
 # =====================================================================
 # roles/init/tasks/user.yml
 #
