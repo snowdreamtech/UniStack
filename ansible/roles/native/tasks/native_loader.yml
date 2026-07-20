@@ -165,7 +165,9 @@
 # ---------------------------------------------------------------------
 
 # WHY: Ensure required binaries exist if a script installation is requested.
-- ansible.builtin.include_tasks: "package_loader/main.yml"
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "package_loader/main.yml"
   vars:
     package_name: "{{ 'curl' if 'curl' in (native_install_cmd | default('', true) | string) else ('wget' if 'wget' in (native_install_cmd | default('', true) | string) else omit) }}"
     package_state: "present"
@@ -207,7 +209,9 @@
     fingerprint: "native_script_install_{{ native_app_name }}"
 
 # WHY: Use package_loader ONLY if no manual install command is provided.
-- ansible.builtin.include_tasks: "package_loader/main.yml"
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "package_loader/main.yml"
   vars:
     package_name: "{{ native_package_name }}"
     package_list: "{{ native_package_list }}"
@@ -234,7 +238,9 @@
 # ---------------------------------------------------------------------
 
 - name: "Service (Start): App {{ native_app_name }}"
-  ansible.builtin.include_tasks: "service_loader/main.yml"
+  ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "service_loader/main.yml"
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "started"
@@ -246,7 +252,9 @@
     - (native_app_state | default('present', true)) in ['present', 'latest', 'started']
 
 - name: "Service (Stop): App {{ native_app_name }}"
-  ansible.builtin.include_tasks: "service_loader/main.yml"
+  ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "service_loader/main.yml"
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "stopped"
@@ -256,7 +264,9 @@
     - (native_app_state | default('present', true)) == 'stopped'
 
 - name: "Service (Restart): App {{ native_app_name }}"
-  ansible.builtin.include_tasks: "service_loader/main.yml"
+  ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "service_loader/main.yml"
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "restarted"
@@ -270,7 +280,9 @@
 # ---------------------------------------------------------------------
 
 # WHY: Ensure service is stopped before package removal.
-- ansible.builtin.include_tasks: "service_loader/main.yml"
+- ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "service_loader/main.yml"
   vars:
     service_name: "{{ native_service_name }}"
     service_state: "stopped"
@@ -304,7 +316,9 @@
 
 # WHY: Use package_loader removal fallback ONLY if no manual uninstall command is provided.
 - name: "Teardown: Remove package for {{ native_app_name }}"
-  ansible.builtin.include_tasks: "package_loader/main.yml"
+  ansible.builtin.include_role:
+    name: "native"
+    tasks_from: "package_loader/main.yml"
   vars:
     package_name: "{{ native_package_name }}"
     package_list: "{{ native_package_list }}"

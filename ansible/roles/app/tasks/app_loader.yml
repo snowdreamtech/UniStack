@@ -313,7 +313,9 @@
 # 15. Execution
 # ---------------------------------------------------------------------
 - name: "Execute resolved tasks for {{ app_name }}"
-  ansible.builtin.include_tasks: "{{ app_tasks_file }}"
+  ansible.builtin.include_role:
+    name: "{{ resolved_app_source_path }}"
+    tasks_from: "{{ app_tasks_file | relpath(app_tasks_path) }}"
   when:
     - app_tasks_file is defined
     - app_tasks_file | default('', true) | length > 0
