@@ -21,14 +21,6 @@
       ansible.builtin.include_role:
         name: context
 
-    - name: DEBUG become_enabled
-      ansible.builtin.debug:
-        msg:
-          - "become_enabled is: {{ become_enabled }}"
-          - "type: {{ become_enabled | type_debug }}"
-          - "is_root_user: {{ is_root_user | default('UNDEFINED') }}"
-          - "os_family: {{ ansible_facts.os_family | default('UNDEFINED') }}"
-
     - name: "Scenario: Execute Foundation via App Dispatcher"
       ansible.builtin.include_role:
         name: app

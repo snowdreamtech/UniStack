@@ -28,7 +28,7 @@
     state: present
     create_home: true
   register: _init_user_info
-  become: "{{ become_enabled | bool }}"
+  become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
   environment:
     PATH: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:{{ ansible_env.PATH | default('') }}"

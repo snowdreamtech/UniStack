@@ -40,5 +40,12 @@
     # 1. Not already running as root.
     # 2. Not running macOS with Homebrew (Homebrew strictly forbids sudo).
     # -----------------------------------------------------------------
-    become_enabled: "{{ not (is_root_user | default(false, true)) and not ((ansible_facts.os_family | default('') | lower) == 'darwin' and (ansible_pkg_mgr | default('homebrew') | lower) == 'homebrew') }}"
+    become_enabled: >-
+      {{
+        (not (is_root_user | default(false, true)))
+        and not (
+          (ansible_facts.os_family | default('') | lower) == 'darwin'
+          and (ansible_pkg_mgr | default('homebrew') | lower) == 'homebrew'
+        )
+      }}
   tags: ["always"]
