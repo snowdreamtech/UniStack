@@ -1,5 +1,4 @@
 ---
-  - openssh
 base_dev_packages: []
 foundation_packages:
   - ca-certificates

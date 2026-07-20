@@ -1,5 +1,4 @@
 ---
-  - net-misc/openssh
 base_dev_packages: []
 foundation_packages:
   - app-admin/sudo

@@ -1,3 +1,4 @@
+---
 - name: Playbook to deploy a single application
   hosts: all
   gather_facts: false
