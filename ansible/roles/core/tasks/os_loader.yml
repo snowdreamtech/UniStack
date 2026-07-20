@@ -26,7 +26,7 @@
         - "{{ os_distribution | default('default', true) }}.yml"
         - "default.yml"
       paths:
-        - "{{ (ansible_parent_role_paths | default([role_path], true))[-1] }}/{{ core_loader_path | default('vars', true) }}"
+        - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('vars', true) }}"
       skip: true
   when: core_loader_type | default('vars', true) == 'vars'
   tags: ["always"]
@@ -40,7 +40,7 @@
         - "{{ os_distribution | default('default', true) }}.yml"
         - "default.yml"
       paths:
-        - "{{ (ansible_parent_role_paths | default([role_path], true))[-1] }}/{{ core_loader_path | default('tasks', true) }}"
+        - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('tasks', true) }}"
       skip: true
   when: core_loader_type | default('vars', true) == 'tasks'
   tags: ["always"]
