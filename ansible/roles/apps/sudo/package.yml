@@ -1,0 +1,9 @@
+apiVersion: "v1alpha1"
+kind: "app"
+metadata:
+  name: "sudo"
+  version: "1.0.0"
+  description: "Configures sudoers and privileges"
+  authors: ["SnowdreamTech <snowdreamtech@qq.com>"]
+  homepage: "https://github.com/snowdreamtech/unistack"
+  license: "MIT"
