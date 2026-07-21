@@ -145,26 +145,68 @@
   ansible.builtin.include_vars:
     file: "{{ loader_item.path }}/{{ loader_item.file }}"
   loop:
+    # Lowest Priority
     - { path: "{{ app_defaults_path | default('', true) }}", file: "main.yml" }
     - { path: "{{ app_defaults_path | default('', true) }}", file: "default.yml" }
     - { path: "{{ app_defaults_path | default('', true) }}", file: "{{ app_name }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "main.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "default.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ app_name }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}-{{ version }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}-{{ version }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}.yml" }
+    # 17. Ultimate Fallback (App context)
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/default.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}.yml" }
+    # 16. Architecture Only
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ arch }}.yml" }
+    # 14. OS Family
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}-{{ version }}.yml" }
+    # 13. Distro ID
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}-{{ version }}.yml" }
+    # 12. OS Family + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ arch }}.yml" }
+    # 11. Distro ID + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ arch }}.yml" }
+    # 10. OS Family + Major Version
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ version_major }}.yml" }
+    # 9. OS Family + Full Version
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}.{{ version_minor }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}.yml" }
+    # 8. Distro ID + Major Version
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_major }}.yml" }
+    # 7. Distro ID + Full Version
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}.{{ version_minor }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}.yml" }
+    # 6. Distro ID + Version Code
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_code }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_code }}.yml" }
+    # 5. OS Family + Major Version + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ version_major }}_{{ arch }}.yml" }
+    # 4. OS Family + Full Version + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml" }
+    # 3. Distro ID + Major Version + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_major }}_{{ arch }}.yml" }
+    # 2. Distro ID + Full Version + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml" }
+    # 1. Distro ID + Version Code + Arch
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_code }}_{{ arch }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml" }
   vars:
-    distro: "{{ os_distribution_id | default('unknown', true) }}"
-    family: "{{ os_family | default('unknown', true) }}"
-    version: "{{ os_version_major | default('0', true) }}"
+    distro: "{{ os_distribution_id | default('unknown', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('unknown', true) | lower | replace(' ', '_') }}"
+    version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
+    version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
+    version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('unknown', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
   when:
     - app_loader_custom_exists | default(false, true)
@@ -257,26 +299,68 @@
   ansible.builtin.set_fact:
     app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
   vars:
-    distro: "{{ os_distribution_id | default('unknown', true) }}"
-    family: "{{ os_family | default('unknown', true) }}"
-    version: "{{ os_version_major | default('0', true) }}"
+    distro: "{{ os_distribution_id | default('unknown', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('unknown', true) | lower | replace(' ', '_') }}"
+    version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
+    version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
+    version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('unknown', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
     params_tasks:
       paths: ["{{ app_tasks_path | default('', true) }}"]
       files:
-        - "{{ mode }}/{{ distro }}-{{ version }}.yml"
+        # 1. Exact Match: Distro ID + Version Code + Arch
+        - "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml"
+        - "{{ distro }}_{{ version_code }}_{{ arch }}.yml"
+        # 2. Exact Match: Distro ID + Full Version + Arch
+        - "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+        - "{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+        # 3. Exact Match: Distro ID + Major Version + Arch
+        - "{{ mode }}/{{ distro }}_{{ version_major }}_{{ arch }}.yml"
+        - "{{ distro }}_{{ version_major }}_{{ arch }}.yml"
+        # 4. Exact Match: OS Family + Full Version + Arch
+        - "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+        - "{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+        # 5. Exact Match: OS Family + Major Version + Arch
+        - "{{ mode }}/{{ family }}_{{ version_major }}_{{ arch }}.yml"
+        - "{{ family }}_{{ version_major }}_{{ arch }}.yml"
+        # 6. Partial Match: Distro ID + Version Code
+        - "{{ mode }}/{{ distro }}_{{ version_code }}.yml"
+        - "{{ distro }}_{{ version_code }}.yml"
+        # 7. Partial Match: Distro ID + Full Version
+        - "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
+        - "{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
+        # 8. Partial Match: Distro ID + Major Version
+        - "{{ mode }}/{{ distro }}_{{ version_major }}.yml"
+        - "{{ distro }}_{{ version_major }}.yml"
+        # 9. Partial Match: OS Family + Full Version
+        - "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
+        - "{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
+        # 10. Partial Match: OS Family + Major Version
+        - "{{ mode }}/{{ family }}_{{ version_major }}.yml"
+        - "{{ family }}_{{ version_major }}.yml"
+        # 11. Partial Match: Distro ID + Arch
+        - "{{ mode }}/{{ distro }}_{{ arch }}.yml"
+        - "{{ distro }}_{{ arch }}.yml"
+        # 12. Partial Match: OS Family + Arch
+        - "{{ mode }}/{{ family }}_{{ arch }}.yml"
+        - "{{ family }}_{{ arch }}.yml"
+        # 13. Generic Match: Distro ID
         - "{{ mode }}/{{ distro }}.yml"
-        - "{{ mode }}/{{ family }}-{{ version }}.yml"
+        - "{{ distro }}.yml"
+        # 14. Generic Match: OS Family
         - "{{ mode }}/{{ family }}.yml"
+        - "{{ family }}.yml"
+        # 16. Generic Match: Architecture only
+        - "{{ mode }}/{{ arch }}.yml"
+        - "{{ arch }}.yml"
+        # App Name Match
         - "{{ mode }}/{{ app_name }}.yml"
-        - "{{ mode }}/main.yml"
         - "{{ app_name }}.yml"
+        # 17. Ultimate Fallback
+        - "{{ mode }}/main.yml"
         - "{{ mode }}/default.yml"
         - "{{ mode }}.yml"
-        - "{{ distro }}-{{ version }}.yml"
-        - "{{ distro }}.yml"
-        - "{{ family }}-{{ version }}.yml"
-        - "{{ family }}.yml"
         - "main.yml"
         - "default.yml"
   when:
