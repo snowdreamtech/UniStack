@@ -1,5 +1,4 @@
 ---
-
 - name: "Load OS-specific variables for this role"
   ansible.builtin.include_role:
     name: core
