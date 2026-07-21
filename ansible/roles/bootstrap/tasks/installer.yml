@@ -14,7 +14,7 @@
 
     PY_BIN=""
     for p in python3 python3.12 python3.13 python3.11 python3.10 python; do
-      if command -v $p >/dev/null 2>&1 && $p -c 'import venv' >/dev/null 2>&1; then
+      if command -v $p >/dev/null 2>&1 && $p -c 'import venv, ensurepip' >/dev/null 2>&1; then
         PY_BIN=$p
         break
       fi
