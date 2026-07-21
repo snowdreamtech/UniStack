@@ -1,4 +1,4 @@
 ---
 openssh_packages:
   - openssh
-openssh_sshd_service: "ssh"
+openssh_sshd_service: ""

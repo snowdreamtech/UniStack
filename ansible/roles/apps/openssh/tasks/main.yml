@@ -95,5 +95,5 @@
     native_app_name: "openssh"
     native_app_packages: "{{ openssh_packages | default([], true) }}"
     native_app_state: "{{ 'restarted' if (sshd_config_main is changed or sshd_config_hardening is changed) else 'started' }}"
-    native_app_service: "{{ openssh_sshd_service | default('sshd', true) }}"
+    native_app_service: "{{ openssh_sshd_service | default('sshd') }}"
     native_app_service_enabled: true
