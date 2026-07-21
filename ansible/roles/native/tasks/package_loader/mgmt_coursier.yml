@@ -13,8 +13,10 @@
     fail_msg: "Coursier (cs) is required for this action but was not found."
 
 - name: "Package (Coursier): Install requested packages"
-  ansible.builtin.shell: "PATH={{ os_paths }} cs install {{ item }}"
+  ansible.builtin.shell: "PATH={{ os_paths }} cs install {{ _cs_pkg }}"
   loop: "{{ pkg_cs_list }}"
+  loop_control:
+    loop_var: _cs_pkg
   register: _cs_install_res
   changed_when: "'already installed' not in _cs_install_res.stdout"
   when: pkg_cs_list | length > 0

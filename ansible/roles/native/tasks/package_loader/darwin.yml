@@ -48,8 +48,10 @@
 
 ---
 - name: "Package (Darwin): Detect Homebrew and MacPorts presence"
-  ansible.builtin.shell: "PATH={{ os_paths }} command -v {{ item }}"
+  ansible.builtin.shell: "PATH={{ os_paths }} command -v {{ _darwin_mgr }}"
   loop: ["brew", "port"]
+  loop_control:
+    loop_var: _darwin_mgr
   register: _darwin_mgr_check
   failed_when: false
   changed_when: false
@@ -404,15 +406,19 @@
           register: _dmg_content
 
         - name: "Package (Darwin): Install found .app from DMG"
-          ansible.builtin.command: "cp -R {{ item.path }} /Applications/"
+          ansible.builtin.command: "cp -R {{ _dmg_app.path }} /Applications/"
           loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.app$') | list }}"
+          loop_control:
+            loop_var: _dmg_app
           when: _dmg_content.matched > 0
           changed_when: true
           become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Install found .pkg/.mpkg from DMG"
-          ansible.builtin.command: "installer -pkg {{ item.path }} -target /"
+          ansible.builtin.command: "installer -pkg {{ _dmg_pkg.path }} -target /"
           loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.(pkg|mpkg)$') | list }}"
+          loop_control:
+            loop_var: _dmg_pkg
           when: _dmg_content.matched > 0
           changed_when: true
           become: "{{ become_enabled | default(false, true) | bool }}"

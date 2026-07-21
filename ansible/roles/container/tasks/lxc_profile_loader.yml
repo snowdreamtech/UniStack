@@ -99,8 +99,11 @@
 - name: "Apply LXC profile config"
   become: "{{ become_enabled }}"
   ansible.builtin.command: >
-    lxc profile set {{ lxc_profile_name }} {{ item.key }} "{{ item.value }}"
+    lxc profile set {{ lxc_profile_name }} {{ _lxc_cfg.key }} "{{ _lxc_cfg.value }}"
   loop: "{{ lxc_profile_config | dict2items }}"
+  loop_control:
+    loop_var: _lxc_cfg
+    label: "{{ _lxc_cfg.key }}"
   when:
     - lxc_profile_state == 'present'
     - lxc_profile_config is defined
@@ -115,9 +118,12 @@
 - name: "Apply LXC profile devices"
   become: "{{ become_enabled }}"
   ansible.builtin.command: >
-    lxc profile device add {{ lxc_profile_name }} {{ item.key }} {{ item.value.type }}
-    {% for k, v in item.value.items() if k != 'type' %}{{ k }}={{ v }} {% endfor %}
+    lxc profile device add {{ lxc_profile_name }} {{ _lxc_dev.key }} {{ _lxc_dev.value.type }}
+    {% for k, v in _lxc_dev.value.items() if k != 'type' %}{{ k }}={{ v }} {% endfor %}
   loop: "{{ lxc_profile_devices | dict2items }}"
+  loop_control:
+    loop_var: _lxc_dev
+    label: "{{ _lxc_dev.key }}"
   when:
     - lxc_profile_state == 'present'
     - lxc_profile_devices is defined

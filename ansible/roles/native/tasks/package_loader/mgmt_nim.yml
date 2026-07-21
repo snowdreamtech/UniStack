@@ -13,8 +13,10 @@
     fail_msg: "Nimble (nim) is required for this action but was not found."
 
 - name: "Package (Nimble): Install requested packages"
-  ansible.builtin.shell: "PATH={{ os_paths }} nimble install -y {{ item }}"
+  ansible.builtin.shell: "PATH={{ os_paths }} nimble install -y {{ _nim_pkg }}"
   loop: "{{ pkg_nim_list }}"
+  loop_control:
+    loop_var: _nim_pkg
   register: _nim_install_res
   changed_when: "'is already installed' not in _nim_install_res.stdout"
   when: pkg_nim_list | length > 0

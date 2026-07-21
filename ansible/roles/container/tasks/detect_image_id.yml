@@ -158,15 +158,16 @@
 
 - name: "Detection: Query knowledge database for pattern match"
   ansible.builtin.set_fact:
-    _kb_pattern_match: "{{ item }}"
+    _kb_pattern_match: "{{ _img_pattern }}"
   loop: "{{ image_uid_gid_patterns | default([]) }}"
+  loop_control:
+    loop_var: _img_pattern
+    label: "{{ _img_pattern.description }}"
   when:
     - _runtime_supported | default(false) | bool
     - container_app_volume_owner is not defined or container_app_volume_owner | length == 0
     - _kb_match is not defined or _kb_match is none
-    - container_app_image | regex_search(item.regex)
-  loop_control:
-    label: "{{ item.description }}"
+    - container_app_image | regex_search(_img_pattern.regex)
 
 - name: "Detection: Apply knowledge database pattern match"
   ansible.builtin.set_fact:

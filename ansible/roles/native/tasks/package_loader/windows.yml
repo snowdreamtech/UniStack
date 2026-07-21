@@ -103,7 +103,7 @@
 
 # Re-verify and update facts if installation was attempted
 - name: "Package (Windows): Re-verify manager availability after installation"
-  ansible.windows.win_command: "{{ item.cmd }}"
+  ansible.windows.win_command: "{{ _win_mgr.cmd }}"
   loop:
     - { name: "winget", cmd: "winget --version" }
     - { name: "choco", cmd: "choco --version" }
@@ -116,7 +116,7 @@
       (_choco_install_result is defined and _choco_install_result is changed) or
       (_scoop_install_result is defined and _scoop_install_result is changed)
   loop_control:
-    loop_var: item
+    loop_var: _win_mgr
 
 - name: "Package (Windows): Update installation facts after attempts"
   ansible.builtin.set_fact:
@@ -203,9 +203,11 @@
 
 - name: "Package (Windows): Install/Uninstall via Winget"
   community.windows.win_winget:
-    name: "{{ item }}"
+    name: "{{ _winget_pkg }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_winget_list | default([], true) }}"
+  loop_control:
+    loop_var: _winget_pkg
   when:
     - pkg_winget_list | length > 0
     - is_winget_installed | bool
@@ -213,10 +215,12 @@
 
 - name: "Package (Windows): Install/Uninstall via Winget (MS Store)"
   community.windows.win_winget:
-    name: "{{ item }}"
+    name: "{{ _msstore_pkg }}"
     state: "{{ package_state | default('present', true) }}"
     source: msstore
   loop: "{{ pkg_msstore_list | default([], true) }}"
+  loop_control:
+    loop_var: _msstore_pkg
   when:
     - pkg_msstore_list | length > 0
     - is_winget_installed | bool
@@ -231,9 +235,11 @@
 
 - name: "Package (Windows): Install/Uninstall via Chocolatey"
   chocolatey.chocolatey.win_chocolatey:
-    name: "{{ item }}"
+    name: "{{ _choco_pkg }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_choco_list | default([], true) }}"
+  loop_control:
+    loop_var: _choco_pkg
   when:
     - pkg_choco_list | length > 0
     - is_choco_installed | bool
@@ -270,9 +276,11 @@
 
 - name: "Package (Windows): Install/Uninstall via Scoop"
   community.windows.win_scoop:
-    name: "{{ item }}"
+    name: "{{ _scoop_pkg }}"
     state: "{{ package_state | default('present', true) }}"
   loop: "{{ pkg_scoop_list | default([], true) }}"
+  loop_control:
+    loop_var: _scoop_pkg
   when:
     - pkg_scoop_list | length > 0
     - is_scoop_installed | bool

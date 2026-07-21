@@ -37,10 +37,11 @@
   tags: ["always"]
 
 - ansible.builtin.set_fact:
-    "{{ item }}": null
+    "{{ _container_var }}": null
   loop: "{{ container_loader_internal_vars }}"
   loop_control:
-    label: "reset {{ item }} (null)"
+    loop_var: _container_var
+    label: "reset {{ _container_var }} (null)"
   tags: ["always"]
 
 # ---------------------------------------------------------------------
@@ -116,20 +117,21 @@
 
 - name: "Container: Ensure application bind-mount directories exist"
   ansible.builtin.file:
-    path: "{{ item.split(':')[0] }}"
+    path: "{{ _vol_entry.split(':')[0] }}"
     state: directory
     mode: "0755"
     owner: "{{ container_app_volume_owner | default(docker_volume_default_owner) }}"
     group: "{{ container_app_volume_group | default(docker_volume_default_group) }}"
   loop: "{{ container_volumes | default([], true) }}"
   loop_control:
-    label: "{{ item.split(':')[0] }}"
+    loop_var: _vol_entry
+    label: "{{ _vol_entry.split(':')[0] }}"
   become: "{{ become_enabled }}"
   when:
     - container_volumes is defined
-    - item is string
-    - item | length > 0
-    - (item.startswith('/') or (item | length > 1 and item[1] == ':')) # Matches unix paths (/) and windows paths (C:)
+    - _vol_entry is string
+    - _vol_entry | length > 0
+    - (_vol_entry.startswith('/') or (_vol_entry | length > 1 and _vol_entry[1] == ':')) # Matches unix paths (/) and windows paths (C:)
   tags: ["container", "volumes"]
 
 # ---------------------------------------------------------------------

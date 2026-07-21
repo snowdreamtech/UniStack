@@ -104,8 +104,10 @@
 
 - name: "Check compose files exist"
   ansible.builtin.stat:
-    path: "{{ compose_project_src }}/{{ item }}"
+    path: "{{ compose_project_src }}/{{ _compose_file }}"
   loop: "{{ compose_files }}"
+  loop_control:
+    loop_var: _compose_file
   register: compose_file_stats
   tags: ["always"]
 

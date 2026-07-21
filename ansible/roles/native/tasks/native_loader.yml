@@ -121,10 +121,11 @@
   tags: ["always"]
 
 - ansible.builtin.set_fact:
-    "{{ item }}": null
+    "{{ _internal_var }}": null
   loop: "{{ native_loader_internal_vars }}"
   loop_control:
-    label: "reset {{ item }} (null)"
+    loop_var: _internal_var
+    label: "reset {{ _internal_var }} (null)"
   tags: ["always"]
 
 - name: "Normalize native variables"

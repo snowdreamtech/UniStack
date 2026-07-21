@@ -13,7 +13,7 @@
 
 ---
 - name: "Package (Universal): Detect all available managers"
-  ansible.builtin.command: "command -v {{ item }} >/dev/null 2>&1"
+  ansible.builtin.command: "command -v {{ _univ_mgr }} >/dev/null 2>&1"
   loop:
     [
       "snap",
@@ -39,6 +39,8 @@
       "sdk",
       "gem",
     ]
+  loop_control:
+    loop_var: _univ_mgr
   register: _universal_mgr_collect
   failed_when: false
   changed_when: false

@@ -37,7 +37,7 @@
 # =====================================================================
 
 - name: "[Core] Load OS-specific variables"
-  ansible.builtin.include_vars: "{{ item }}"
+  ansible.builtin.include_vars: "{{ _first_found_item }}"
   with_first_found:
     - files:
         # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
@@ -93,11 +93,13 @@
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('vars', true) }}"
       skip: true
+  loop_control:
+    loop_var: _first_found_item
   when: core_loader_type | default('vars', true) == 'vars'
   tags: ["always"]
 
 - name: "[Core] Load OS-specific tasks"
-  ansible.builtin.include_tasks: "{{ item }}"
+  ansible.builtin.include_tasks: "{{ _first_found_item }}"
   with_first_found:
     - files:
         # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
@@ -153,5 +155,7 @@
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('tasks', true) }}"
       skip: true
+  loop_control:
+    loop_var: _first_found_item
   when: core_loader_type | default('vars', true) == 'tasks'
   tags: ["always"]

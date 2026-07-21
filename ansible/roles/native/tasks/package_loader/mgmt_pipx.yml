@@ -42,13 +42,15 @@
 - name: "Package (Pipx): Install Python applications"
   ansible.builtin.shell: |
     PATH={{ os_paths }}
-    pipx install {{ item }}
+    pipx install {{ _pipx_pkg }}
   loop: "{{ pkg_pipx_list }}"
+  loop_control:
+    loop_var: _pipx_pkg
   register: _pipx_res
   become: false # Pipx installs to user home
   changed_when: "'is already installed' not in _pipx_res.stdout and 'not installed' not in _pipx_res.stderr"
   vars:
-    fingerprint: "package_pipx_exec_{{ item }}"
+    fingerprint: "package_pipx_exec_{{ _pipx_pkg }}"
 
 # 3. Cache Marking
 - name: "Package (Pipx): Mark cache as updated"

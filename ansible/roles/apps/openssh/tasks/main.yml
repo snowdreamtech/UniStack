@@ -48,10 +48,12 @@
 - name: "Add controller keys to authorized_keys"
   ansible.builtin.authorized_key:
     user: "{{ unistack_user_name | default('ansible') }}"
-    key: "{{ item }}"
+    key: "{{ _ssh_key }}"
     state: "present"
     exclusive: false
   loop: "{{ controller_public_keys | reject('equalto', '') | list }}"
+  loop_control:
+    loop_var: _ssh_key
   become: "{{ become_enabled }}"
   when: "(os_family | default('') | lower) != 'darwin'"
 
