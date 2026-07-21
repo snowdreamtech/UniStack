@@ -40,7 +40,7 @@
 
       }}
     state: "present"
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_src_list | length) > 0
 
 # ---------------------------------------------------------------------
@@ -82,7 +82,7 @@
         {{ package_src_install_cmd | default('make install', true) }}
       args:
         chdir: "{{ _extracted_dir.files[0].path }}"
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
       changed_when: true
 
     - name: "Clean up build directory"

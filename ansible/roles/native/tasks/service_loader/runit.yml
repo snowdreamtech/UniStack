@@ -49,9 +49,15 @@
   register: _runit_svc_check
   tags: ["always"]
 
-- name: "Service (Runit): Fault if sv missing"
-  ansible.builtin.fail:
-    msg: "System reports 'runit' but 'sv' binary was not found."
+- name: "Service (Runit): Check if runit is running as init"
+  ansible.builtin.stat:
+    path: "/run/runit/runsvdir/current"
+  register: _runit_running
+  tags: ["always"]
+
+- name: "Service (Runit): Warn if sv missing"
+  ansible.builtin.debug:
+    msg: "WARNING: System reports 'runit' but 'sv' binary was not found (e.g. minimal container). Skipping service state change for '{{ service_name }}'."
   when: _runit_check.rc | default(1) != 0
   tags: ["always"]
 
@@ -59,6 +65,8 @@
   ansible.builtin.fail:
     msg: "Runit service directory '/etc/sv/{{ service_name }}' not found. Cannot start/restart."
   when:
+    - _runit_check.rc | default(1) == 0
+    - _runit_running.stat.exists | default(false) | bool
     - not _runit_svc_check.stat.exists | default(false)
     - (service_state | default('started', true)) in ['started', 'restarted']
   tags: ["always"]
@@ -75,9 +83,17 @@
     enabled: "{{ service_enabled | default(true, true) | bool }}"
   register: _runit_result
   become: "{{ become_enabled | default(false, true) | bool }}"
-  when: _runit_svc_check.stat.exists | default(false)
+  when:
+    - _runit_check.rc | default(1) == 0
+    - _runit_svc_check.stat.exists | default(false)
+    - _runit_running.stat.exists | default(false) | bool
   vars:
     fingerprint: "service_runit_exec_{{ service_name }}"
+
+- name: "Service (Runit): Warn if skipping state change due to missing runit init"
+  ansible.builtin.debug:
+    msg: "WARNING: Runit is not running (e.g. standard container). Skipping service state change for '{{ service_name }}'."
+  when: not (_runit_running.stat.exists | default(false) | bool)
 
 # ---------------------------------------------------------------------
 # --- Audit ---

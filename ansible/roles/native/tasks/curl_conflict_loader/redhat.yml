@@ -44,4 +44,4 @@
     - ansible_facts.package_mgr | default('', true) == 'dnf'
     - curl_minimal_installed | default(false, true)
     - not (curl_full_installed | default(false, true))
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"

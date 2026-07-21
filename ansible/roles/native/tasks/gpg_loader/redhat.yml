@@ -29,4 +29,4 @@
   retries: 3
   delay: 2
   until: gpg_rpm_result is succeeded
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"

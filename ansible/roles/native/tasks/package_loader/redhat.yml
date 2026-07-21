@@ -71,7 +71,7 @@
         package_result: "{{ package_result_ostree if (package_result_ostree is defined and not (package_result_ostree.skipped | default(false))) else package_result_dnf }}"
       tags: ["always"]
 
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
   vars:
     fingerprint: "package_rh_exec_{{ package_name | default('unknown', true) }}"

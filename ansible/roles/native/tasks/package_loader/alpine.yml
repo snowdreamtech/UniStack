@@ -40,7 +40,7 @@
       }}
   when: (pkg_repo_list | length) > 0
   register: package_repo_result
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "package_apk_repo_exec_{{ package_name | default('unknown', true) }}"
 
@@ -54,7 +54,7 @@
   when: (pkg_file_list + pkg_url_list) | length > 0
   register: package_apk_result
   changed_when: "'OK' in package_apk_result.stdout"
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "package_apk_file_exec_{{ package_name | default('unknown', true) }}"
 

@@ -14,7 +14,7 @@
   loop: "{{ pkg_repo_list }}"
   loop_control:
     loop_var: pkg_item
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0
   vars:
     fingerprint: "package_alt_exec_{{ package_name | default('unknown', true) }}"

@@ -26,7 +26,7 @@
     path: "/etc/apk/keys"
     state: "directory"
     mode: "0755"
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
 
 - name: "Download GPG key for apk"
   ansible.builtin.get_url:
@@ -38,4 +38,4 @@
   retries: 3
   delay: 2
   until: gpg_apk_result is succeeded
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"

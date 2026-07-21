@@ -18,7 +18,7 @@
     name: "{{ pkg_repo_list }}"
     state: "{{ package_state | default('present', true) }}"
   register: package_result
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0
   vars:
     fingerprint: "package_guix_exec_{{ package_name | default('unknown', true) }}"

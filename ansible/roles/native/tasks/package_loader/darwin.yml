@@ -271,7 +271,7 @@
   when:
     - (pkg_repo_list | length) > 0
     - os_pkg_mgr == 'macports'
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "package_darwin_port_{{ package_name | default('unknown', true) }}"
 
@@ -286,7 +286,7 @@
   when:
     - (pkg_port_list | length) > 0
     - is_macports_installed | bool
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "package_darwin_port_explicit_{{ package_name | default('unknown', true) }}"
 
@@ -304,7 +304,7 @@
   when:
     - (pkg_port_list | length) > 0
     - os_pkg_mgr == 'macports' or os_pkg_mgr == 'homebrew' # Allow cross-manager usage if installed
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "package_darwin_port_explicit_{{ package_name | default('unknown', true) }}"
 - name: "Package (Darwin): Mark Homebrew cache as updated"
@@ -408,14 +408,14 @@
           loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.app$') | list }}"
           when: _dmg_content.matched > 0
           changed_when: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Install found .pkg/.mpkg from DMG"
           ansible.builtin.command: "installer -pkg {{ item.path }} -target /"
           loop: "{{ _dmg_content.files | selectattr('path', 'match', '.*\\.(pkg|mpkg)$') | list }}"
           when: _dmg_content.matched > 0
           changed_when: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
       rescue:
         - name: "Package (Darwin): Log DMG installation failure"
@@ -438,7 +438,7 @@
         - package_state | default('present', true) in ['absent', 'purged']
         - package_dmg_app_name is defined
         - _dmg_app_stat.stat.exists | default(false, true)
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Purge DMG user data"
       ansible.builtin.file:
@@ -513,7 +513,7 @@
         - package_pkg_id is defined
         - _pkg_status.rc != 0
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall PKG via vendor script"
       ansible.builtin.command: "{{ package_pkg_uninstall_script }}"
@@ -524,7 +524,7 @@
         - package_pkg_uninstall_script is defined
         - package_pkg_uninstall_script | length > 0
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall PKG via file list (fallback)"
       when:
@@ -549,12 +549,12 @@
             - file_item is match('^(Applications|Library/Application Support|opt)/.*')
             - file_item is not match('^(usr/bin|System|usr/lib)/.*')
           failed_when: false
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Forget PKG receipt"
           ansible.builtin.command: "pkgutil --forget {{ package_pkg_id }}"
           changed_when: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 # ---------------------------------------------------------------------
 # Execution: MPKG Installation/Uninstallation
 # ---------------------------------------------------------------------
@@ -582,7 +582,7 @@
         - package_pkg_id is defined
         - _mpkg_status.rc != 0
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall MPKG (same as PKG)"
       ansible.builtin.command: "{{ package_pkg_uninstall_script }}"
@@ -593,7 +593,7 @@
         - package_pkg_uninstall_script is defined
         - package_pkg_uninstall_script | length > 0
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: APP Bundle Direct Copy
@@ -622,7 +622,7 @@
         - package_bundle_name is defined
         - not (_app_stat.stat.exists | default(false, true))
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall APP bundles"
       ansible.builtin.file:
@@ -632,7 +632,7 @@
         - package_state | default('present', true) in ['absent', 'purged']
         - package_bundle_name is defined
         - _app_stat.stat.exists | default(false, true)
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: ZIP Archive Extraction
@@ -684,7 +684,7 @@
           ansible.builtin.command: "cp -R {{ _unzipped_app.files[0].path }} /Applications/"
           when: _unzipped_app.matched > 0
           changed_when: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
       always:
         - name: "Package (Darwin): Cleanup temp directory"
@@ -701,7 +701,7 @@
         - package_state | default('present', true) in ['absent', 'purged']
         - package_bundle_name is defined
         - _zip_app_stat.stat.exists | default(false, true)
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: Framework Installation
@@ -729,7 +729,7 @@
         - package_framework_name is defined
         - not (_framework_stat.stat.exists | default(false, true))
       changed_when: true
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall Frameworks"
       ansible.builtin.file:
@@ -739,7 +739,7 @@
         - package_state | default('present', true) in ['absent', 'purged']
         - package_framework_name is defined
         - _framework_stat.stat.exists | default(false, true)
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: Dynamic Library Installation
@@ -769,7 +769,7 @@
         - package_state | default('present', true) in ['present', 'latest']
         - package_dylib_name is defined
         - not (_dylib_stat.stat.exists | default(false, true))
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall Dynamic Libraries"
       ansible.builtin.file:
@@ -779,7 +779,7 @@
         - package_state | default('present', true) in ['absent', 'purged']
         - package_dylib_name is defined
         - _dylib_stat.stat.exists | default(false, true)
-      become: "{{ become_enabled }}"
+      become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: Kernel Extension Installation
@@ -810,7 +810,7 @@
           loop_control:
             loop_var: kext_item
           changed_when: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Set Kext permissions"
           ansible.builtin.file:
@@ -819,14 +819,14 @@
             group: wheel
             mode: "0755"
             recurse: true
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Load Kext"
           ansible.builtin.command: "kextload /Library/Extensions/{{ package_kext_name }}.kext"
           register: _kext_load
           failed_when: false
           changed_when: _kext_load.rc == 0
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
     - name: "Package (Darwin): Uninstall Kernel Extensions"
       when:
@@ -839,13 +839,13 @@
           register: _kext_unload
           failed_when: false
           changed_when: _kext_unload.rc == 0
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
         - name: "Package (Darwin): Remove Kext"
           ansible.builtin.file:
             path: "/Library/Extensions/{{ package_kext_name }}.kext"
             state: absent
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
 
 # ---------------------------------------------------------------------
 # Execution: Mac App Store (MAS) Support
@@ -906,7 +906,7 @@
           when:
             - _brew_check.rc != 0
             - _port_check.rc == 0
-          become: "{{ become_enabled }}"
+          become: "{{ become_enabled | default(false, true) | bool }}"
           changed_when: true
 
         - name: "Package (Darwin): Fail if no package manager found for mas"

@@ -31,5 +31,5 @@
   retries: 3
   delay: 2
   until: repo_apk_result is succeeded
-  become: "{{ become_enabled }}"
+  become: "{{ become_enabled | default(false, true) | bool }}"
   when: repo_apk is defined
