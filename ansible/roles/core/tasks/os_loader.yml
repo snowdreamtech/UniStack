@@ -41,40 +41,40 @@
   with_first_found:
     - files:
         # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 2. Exact Match: Distro ID + Full Version + Arch (e.g., rocky_9.4_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
 
         # 3. Exact Match: Distro ID + Major Version + Arch (e.g., ubuntu_22_amd64.yml, rocky_9_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 4. Exact Match: OS Family + Full Version + Arch (e.g., redhat_9.4_amd64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
 
         # 5. Exact Match: OS Family + Major Version + Arch (e.g., redhat_9_amd64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 6. Partial Match: Distro ID + Version Code (e.g., ubuntu_jammy.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}.yml"
         
         # 7. Partial Match: Distro ID + Full Version (e.g., rocky_9.4.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
 
         # 8. Partial Match: Distro ID + Major Version (e.g., ubuntu_22.yml, rocky_9.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.yml"
         
         # 9. Partial Match: OS Family + Full Version (e.g., redhat_9.4.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
 
         # 10. Partial Match: OS Family + Major Version (e.g., redhat_9.yml, debian_12.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.yml"
         
         # 11. Partial Match: Distro ID + Arch (e.g., ubuntu_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 12. Partial Match: OS Family + Arch (e.g., redhat_arm64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 13. Generic Match: Distro ID (e.g., ubuntu.yml, rocky.yml)
         - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}.yml"
@@ -86,7 +86,7 @@
         - "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}.yml"
         
         # 16. Generic Match: Architecture only (e.g., arm64.yml)
-        - "{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 17. Ultimate Fallback
         - "default.yml"
@@ -101,40 +101,40 @@
   with_first_found:
     - files:
         # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 2. Exact Match: Distro ID + Full Version + Arch (e.g., rocky_9.4_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
 
         # 3. Exact Match: Distro ID + Major Version + Arch (e.g., ubuntu_22_amd64.yml, rocky_9_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 4. Exact Match: OS Family + Full Version + Arch (e.g., redhat_9.4_amd64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
 
         # 5. Exact Match: OS Family + Major Version + Arch (e.g., redhat_9_amd64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 6. Partial Match: Distro ID + Version Code (e.g., ubuntu_jammy.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}.yml"
         
         # 7. Partial Match: Distro ID + Full Version (e.g., rocky_9.4.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
 
         # 8. Partial Match: Distro ID + Major Version (e.g., ubuntu_22.yml, rocky_9.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.yml"
         
         # 9. Partial Match: OS Family + Full Version (e.g., redhat_9.4.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.{{ os_version_minor | default('0', true) | lower | replace(' ', '_') }}.yml"
 
         # 10. Partial Match: OS Family + Major Version (e.g., redhat_9.yml, debian_12.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('0', true) | lower | replace(' ', '_') }}.yml"
         
         # 11. Partial Match: Distro ID + Arch (e.g., ubuntu_arm64.yml)
-        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 12. Partial Match: OS Family + Arch (e.g., redhat_arm64.yml)
-        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 13. Generic Match: Distro ID (e.g., ubuntu.yml, rocky.yml)
         - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}.yml"
@@ -146,7 +146,7 @@
         - "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}.yml"
         
         # 16. Generic Match: Architecture only (e.g., arm64.yml)
-        - "{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        - "{{ os_architecture_oci | default('default', true) | lower }}.yml"
         
         # 17. Ultimate Fallback
         - "default.yml"

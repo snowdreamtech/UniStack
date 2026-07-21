@@ -209,8 +209,8 @@
     family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
-    version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
-    arch: "{{ os_architecture_oci | default('unknown', true) | lower }}"
+    version_code: "{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('default', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
   when:
     - app_loader_custom_exists | default(false, true)
@@ -308,8 +308,8 @@
     family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
-    version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
-    arch: "{{ os_architecture_oci | default('unknown', true) | lower }}"
+    version_code: "{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('default', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
     params_tasks:
       paths: ["{{ app_tasks_path | default('', true) }}"]
@@ -397,8 +397,8 @@
       - Resolved Task: {{ app_tasks_file | default('NONE', true) }}
 
       OS Context:
-      - Family: {{ os_family | default('unknown', true) }}
-      - Distribution: {{ os_distribution_id | default('unknown', true) }}
+      - Family: {{ os_family | default('default', true) }}
+      - Distribution: {{ os_distribution_id | default('default', true) }}
       - Major Version: {{ os_version_major | default('0', true) }}
 
 # ---------------------------------------------------------------------
