@@ -27,7 +27,11 @@
   register: package_result
   become: "{{ become_enabled | default(false, true) | bool }}"
 
-  when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
+  when:
+    - (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
+    # Some package managers do not support the 'update_cache' parameter;
+    # darwin should be handled by darwin.yml, but guard here as a safety net.
+    - ansible_pkg_mgr | default('') not in ['homebrew', 'macports', 'openbsd_pkg']
   vars:
     fingerprint: "package_exec_generic_{{ package_name | default('unknown', true) }}"
 

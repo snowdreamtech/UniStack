@@ -244,13 +244,13 @@
     - path: "{{ app_vars_path | default('', true) }}"
       file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml"
   vars:
-    distro: "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}"
-    distro_name: "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}"
-    family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
+    distro: "{{ os_distribution_id | default('__skip__', true) | lower | replace(' ', '_') }}"
+    distro_name: "{{ os_distribution | default('__skip__', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('__skip__', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
-    version_code: "{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}"
-    arch: "{{ os_architecture_oci | default('default', true) | lower }}"
+    version_code: "{{ os_version_code | default('__skip__', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('__skip__', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
   when:
     - app_loader_custom_exists | default(false, true)
@@ -343,13 +343,13 @@
   ansible.builtin.set_fact:
     app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
   vars:
-    distro: "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}"
-    distro_name: "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}"
-    family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
+    distro: "{{ os_distribution_id | default('__skip__', true) | lower | replace(' ', '_') }}"
+    distro_name: "{{ os_distribution | default('__skip__', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('__skip__', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
-    version_code: "{{ os_version_code | default('default', true) | lower | replace(' ', '_') }}"
-    arch: "{{ os_architecture_oci | default('default', true) | lower }}"
+    version_code: "{{ os_version_code | default('__skip__', true) | lower | replace(' ', '_') }}"
+    arch: "{{ os_architecture_oci | default('__skip__', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
     params_tasks:
       paths: ["{{ app_tasks_path | default('', true) }}"]
@@ -437,8 +437,8 @@
       - Resolved Task: {{ app_tasks_file | default('NONE', true) }}
 
       OS Context:
-      - Family: {{ os_family | default('default', true) }}
-      - Distribution: {{ os_distribution_id | default('default', true) }}
+      - Family: {{ os_family | default('__skip__', true) }}
+      - Distribution: {{ os_distribution_id | default('__skip__', true) }}
       - Major Version: {{ os_version_major | default('0', true) }}
 
 # ---------------------------------------------------------------------
