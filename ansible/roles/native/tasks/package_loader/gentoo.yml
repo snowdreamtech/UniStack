@@ -13,6 +13,20 @@
 # portage module for reliable state management.
 
 ---
+- name: "Package (Gentoo): Check if Portage tree exists"
+  ansible.builtin.stat:
+    path: /var/db/repos/gentoo
+  register: portage_tree
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when: (pkg_repo_list | length) > 0
+
+- name: "Package (Gentoo): Initialize Portage tree (emerge-webrsync)"
+  ansible.builtin.command:
+    cmd: emerge-webrsync
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when:
+    - (pkg_repo_list | length) > 0
+    - not portage_tree.stat.exists | default(true)
 - name: "Package (Gentoo): Portage execution"
   community.general.portage:
     package: "{{ pkg_repo_list }}"
