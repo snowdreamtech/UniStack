@@ -76,6 +76,13 @@
   environment:
     PATH: "{{ os_paths | default('/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin') }}"
 
+# WHY: Check if OpenRC is actually running (e.g., skips in standard Docker containers).
+- name: "Service (OpenRC): Check if OpenRC is running as init"
+  ansible.builtin.stat:
+    path: "/run/openrc/softlevel"
+  register: _openrc_running
+  tags: ["always"]
+
 - name: "Service (OpenRC): Set state facts"
   ansible.builtin.set_fact:
     _is_running: "{{ 'started' in (_openrc_status_raw.stdout | default('') | lower) }}"
@@ -93,6 +100,7 @@
   ansible.builtin.command: "rc-update {{ 'add' if (service_enabled | default(true, true) | bool) else 'del' }} {{ service_name }}"
   when:
     - _openrc_init_check.stat.exists | default(false)
+    - _openrc_running.stat.exists | default(false) | bool
     - (service_enabled | default(true, true) | bool) != (_is_enabled | default(false))
   become: "{{ become_enabled | default(false, true) | bool }}"
   environment:
@@ -104,6 +112,7 @@
   ansible.builtin.command: "rc-service {{ service_name }} {{ service_state | default('started', true) | replace('started', 'start') | replace('stopped', 'stop') }}"
   when:
     - _openrc_init_check.stat.exists | default(false)
+    - _openrc_running.stat.exists | default(false) | bool
     - (service_state | default('started', true)) in ['started', 'stopped', 'restarted']
     - (service_state | default('started', true) == 'restarted') or
       (service_state | default('started', true) == 'started' and not (_is_running | default(false))) or
@@ -119,8 +128,14 @@
     msg: "OpenRC service '{{ service_name }}' not found in /etc/init.d/. Cannot start/restart."
   when:
     - not _openrc_init_check.stat.exists | default(false)
+    - _openrc_running.stat.exists | default(false) | bool
     - (service_state | default('started', true)) in ['started', 'restarted']
   tags: ["always"]
+
+- name: "Service (OpenRC): Warn if skipping state change due to missing OpenRC init"
+  ansible.builtin.debug:
+    msg: "WARNING: OpenRC is not running (e.g. standard container). Skipping service state change for '{{ service_name }}'."
+  when: not (_openrc_running.stat.exists | default(false) | bool)
 
 # ---------------------------------------------------------------------
 # --- Audit ---
