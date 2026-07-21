@@ -4,9 +4,9 @@
 #
 # Purpose:
 #   A highly reusable multi-stage OS context loader.
-#   Dynamically sniffs the OS context (family, distribution, etc.) and
-#   loads the best-fit variables or tasks for the calling role.
-#   This eliminates hardcoded `when: ansible_os_family == '...'` logic.
+#   Dynamically sniffs the OS context (family, distribution, arch, etc.)
+#   and loads the best-fit variables or tasks for the calling role.
+#   This eliminates hardcoded conditional logic.
 #
 # Usage:
 #   - ansible.builtin.include_role:
@@ -15,17 +15,64 @@
 #     vars:
 #       core_loader_type: "vars" # "vars" or "tasks"
 #       core_loader_path: "vars" # directory to search in the calling role
+#
+# Fallback Matrix (from highest precision to broadest):
+#   1. Distro ID + Version Code + Arch     (e.g., ubuntu_jammy_arm64.yml)
+#   2. Distro ID + Major Version + Arch    (e.g., rocky_9_amd64.yml)
+#   3. OS Family + Major Version + Arch    (e.g., redhat_9_arm64.yml)
+#   4. Distro ID + Version Code            (e.g., ubuntu_jammy.yml)
+#   5. Distro ID + Major Version           (e.g., rocky_9.yml, ubuntu_22.yml)
+#   6. OS Family + Major Version           (e.g., redhat_9.yml, debian_12.yml)
+#   7. Distro ID + Arch                    (e.g., alpine_arm64.yml)
+#   8. OS Family + Arch                    (e.g., debian_arm64.yml)
+#   9. Distro ID                           (e.g., ubuntu.yml, rocky.yml)
+#  10. OS Family                           (e.g., debian.yml, redhat.yml)
+#  11. Distro Name Fallback                (e.g., 'rocky_linux.yml' - handles irregular naming)
+#  12. Architecture Only                   (e.g., arm64.yml - for generic binary downloads)
+#  13. Ultimate Fallback                   (e.g., default.yml)
 # =====================================================================
 
 - name: "[Core] Load OS-specific variables"
   ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ os_distribution_id | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
-        - "{{ os_family | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
-        - "{{ os_distribution_id | default('default', true) | lower }}.yml"
-        - "{{ os_family | default('default', true) | lower }}.yml"
-        - "{{ os_distribution | default('default', true) | lower }}.yml"
+        # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 2. Exact Match: Distro ID + Major Version + Arch (e.g., ubuntu_22_amd64.yml, rocky_9_arm64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 3. Exact Match: OS Family + Major Version + Arch (e.g., redhat_9_amd64.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 4. Partial Match: Distro ID + Version Code (e.g., ubuntu_jammy.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 5. Partial Match: Distro ID + Major Version (e.g., ubuntu_22.yml, rocky_9.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 6. Partial Match: OS Family + Major Version (e.g., redhat_9.yml, debian_12.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 7. Partial Match: Distro ID + Arch (e.g., ubuntu_arm64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 8. Partial Match: OS Family + Arch (e.g., redhat_arm64.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 9. Generic Match: Distro ID (e.g., ubuntu.yml, rocky.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 10. Generic Match: OS Family (e.g., debian.yml, redhat.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 11. Generic Match: Distribution Name (Fallback if ID differs)
+        - "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 12. Generic Match: Architecture only (e.g., arm64.yml)
+        - "{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 13. Ultimate Fallback
         - "default.yml"
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('vars', true) }}"
@@ -37,11 +84,43 @@
   ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ os_distribution_id | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
-        - "{{ os_family | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
-        - "{{ os_distribution_id | default('default', true) | lower }}.yml"
-        - "{{ os_family | default('default', true) | lower }}.yml"
-        - "{{ os_distribution | default('default', true) | lower }}.yml"
+        # 1. Exact Match: Distro ID + Version Code + Arch (e.g., ubuntu_jammy_amd64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 2. Exact Match: Distro ID + Major Version + Arch (e.g., ubuntu_22_amd64.yml, rocky_9_arm64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 3. Exact Match: OS Family + Major Version + Arch (e.g., redhat_9_amd64.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 4. Partial Match: Distro ID + Version Code (e.g., ubuntu_jammy.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 5. Partial Match: Distro ID + Major Version (e.g., ubuntu_22.yml, rocky_9.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 6. Partial Match: OS Family + Major Version (e.g., redhat_9.yml, debian_12.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_version_major | default('unknown', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 7. Partial Match: Distro ID + Arch (e.g., ubuntu_arm64.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 8. Partial Match: OS Family + Arch (e.g., redhat_arm64.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}_{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 9. Generic Match: Distro ID (e.g., ubuntu.yml, rocky.yml)
+        - "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 10. Generic Match: OS Family (e.g., debian.yml, redhat.yml)
+        - "{{ os_family | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 11. Generic Match: Distribution Name (Fallback if ID differs)
+        - "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}.yml"
+        
+        # 12. Generic Match: Architecture only (e.g., arm64.yml)
+        - "{{ os_architecture_oci | default('unknown', true) | lower }}.yml"
+        
+        # 13. Ultimate Fallback
         - "default.yml"
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('tasks', true) }}"
