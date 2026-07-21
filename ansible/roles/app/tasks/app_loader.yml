@@ -146,96 +146,103 @@
     file: "{{ loader_item.path }}/{{ loader_item.file }}"
   loop:
     # Lowest Priority
-    - { path: "{{ app_defaults_path | default('', true) }}", file: "main.yml" }
-    - { path: "{{ app_defaults_path | default('', true) }}", file: "default.yml" }
-    - { path: "{{ app_defaults_path | default('', true) }}", file: "{{ app_name }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "main.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "default.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ app_name }}.yml" }
+    - path: "{{ app_defaults_path | default('', true) }}"
+      file: "main.yml"
+    - path: "{{ app_defaults_path | default('', true) }}"
+      file: "default.yml"
+    - path: "{{ app_defaults_path | default('', true) }}"
+      file: "{{ app_name }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "main.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "default.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ app_name }}.yml"
     # 17. Ultimate Fallback (App context)
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/default.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/default.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}.yml"
     # 16. Architecture Only
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ arch }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ arch }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ arch }}.yml"
     # 15. Generic Match: Distribution Name (Fallback if ID differs)
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro_name }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro_name }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro_name }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro_name }}.yml"
     # 14. OS Family
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}.yml"
     # 13. Distro ID
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}.yml"
     # 12. OS Family + Arch
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ arch }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ arch }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}_{{ arch }}.yml"
     # 11. Distro ID + Arch
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ arch }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ arch }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ arch }}.yml"
     # 10. OS Family + Major Version
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}_{{ version_major }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}_{{ version_major }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}_{{ version_major }}.yml"
     # 9. OS Family + Full Version
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ family }}_{{ version_major }}.{{ version_minor }}.yml",
-      }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
     # 8. Distro ID + Major Version
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_major }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_major }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_major }}.yml"
     # 7. Distro ID + Full Version
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ distro }}_{{ version_major }}.{{ version_minor }}.yml",
-      }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
     # 6. Distro ID + Version Code
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_code }}.yml" }
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_code }}.yml" }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_code }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_code }}.yml"
     # 5. OS Family + Major Version + Arch
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}_{{ version_major }}_{{ arch }}.yml" }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ family }}_{{ version_major }}_{{ arch }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}_{{ version_major }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}_{{ version_major }}_{{ arch }}.yml"
     # 4. OS Family + Full Version + Arch
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml",
-      }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
     # 3. Distro ID + Major Version + Arch
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_major }}_{{ arch }}.yml" }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ distro }}_{{ version_major }}_{{ arch }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_major }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_major }}_{{ arch }}.yml"
     # 2. Distro ID + Full Version + Arch
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml",
-      }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
     # 1. Distro ID + Version Code + Arch
-    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_code }}_{{ arch }}.yml" }
-    - {
-        path: "{{ app_vars_path | default('', true) }}",
-        file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml",
-      }
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ distro }}_{{ version_code }}_{{ arch }}.yml"
+    - path: "{{ app_vars_path | default('', true) }}"
+      file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml"
   vars:
     distro: "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}"
     distro_name: "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}"
