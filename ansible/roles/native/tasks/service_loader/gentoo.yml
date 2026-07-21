@@ -1,0 +1,34 @@
+# =====================================================================
+# roles/native/tasks/service_loader/gentoo.yml
+#
+# Purpose:
+#   Gentoo Linux Service Loader.
+#   Entry point for OpenRC-based service management on Gentoo.
+#
+# Simple Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/gentoo"
+#     vars:
+#       service_name: "sshd"
+#
+# Comprehensive Usage:
+#   - ansible.builtin.include_role:
+#       name: native
+#       tasks_from: "service_loader/gentoo"
+#     vars:
+#       service_name: "sshd"
+#       service_state: "started"
+#       service_enabled: true
+#
+# =====================================================================
+
+# ---------------------------------------------------------------------
+# --- Execution ---
+# ---------------------------------------------------------------------
+
+# WHY: Gentoo Linux uses OpenRC as its default init system.
+# We include the specialized OpenRC handler from the same directory.
+
+---
+- ansible.builtin.include_tasks: "openrc.yml"
