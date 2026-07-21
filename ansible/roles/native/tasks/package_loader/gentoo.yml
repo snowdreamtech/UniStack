@@ -17,7 +17,7 @@
   community.general.portage:
     package: "{{ pkg_repo_list }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
+    sync: >-
       {{
         package_force_update_cache | default(false, true)
         or
