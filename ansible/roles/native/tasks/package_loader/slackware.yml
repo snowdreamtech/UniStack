@@ -18,12 +18,7 @@
   community.general.slackpkg:
     name: "{{ pkg_item }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.slackpkg | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   loop: "{{ pkg_repo_list }}"
   loop_control:
     loop_var: pkg_item

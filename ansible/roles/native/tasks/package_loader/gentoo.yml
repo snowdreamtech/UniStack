@@ -17,13 +17,16 @@
   community.general.portage:
     package: "{{ pkg_repo_list }}"
     state: "{{ package_state | default('present', true) }}"
-    sync: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.portage | default(false, true)))
-      }}
+    # WHY: Only sync the portage tree when EXPLICITLY requested.
+    # Defaulting to sync=true on first run causes failures in container
+    # environments (e.g., gentoo/stage3 Docker images) where the portage
+    # tree sync source is not configured. This mirrors the same defensive
+    # pattern used for update_cache in other package managers.
+    sync: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result
+  until: package_result is succeeded
+  retries: 3
+  delay: 5
   become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0
   vars:

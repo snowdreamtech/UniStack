@@ -200,12 +200,7 @@
   community.general.homebrew:
     name: "{{ pkg_brew_list }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.homebrew | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result_brew_explicit
   when:
     - (pkg_brew_list | length) > 0
@@ -218,12 +213,7 @@
   community.general.homebrew:
     name: "{{ pkg_brew_list }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.homebrew | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result_brew_explicit
   until: package_result_brew_explicit is succeeded
   retries: 3

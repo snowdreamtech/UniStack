@@ -32,12 +32,7 @@
   ansible.builtin.apk:
     name: "{{ pkg_repo_list }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.apk | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0
   register: package_repo_result
   retries: 5

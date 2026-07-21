@@ -191,7 +191,7 @@
   when:
     - (pkg_winget_list | length > 0 or pkg_msstore_list | length > 0)
     - is_winget_installed | bool
-    - package_force_update_cache | default(false, true) or not (package_caches_updated.winget | default(false, true))
+    - package_force_update_cache | default(false, true) | bool
   changed_when: false
 
 - name: "Package (Windows): Mark Winget as updated"
@@ -258,7 +258,7 @@
   when:
     - pkg_scoop_list | length > 0
     - is_scoop_installed | bool
-    - package_force_update_cache | default(false, true) or not (package_caches_updated.scoop | default(false, true))
+    - package_force_update_cache | default(false, true) | bool
   changed_when: false
 
 - name: "Package (Windows): Mark Scoop as updated"

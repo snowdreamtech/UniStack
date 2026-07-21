@@ -37,12 +37,7 @@
     name: "{{ pkg_repo_list }}"
     state: "{{ (package_state == 'purged') | ternary('absent', package_state | default('present', true)) }}"
     purge: "{{ (package_state == 'purged') | bool }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.apt | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0
   register: package_repo_result
   become: "{{ become_enabled | default(false, true) | bool }}"

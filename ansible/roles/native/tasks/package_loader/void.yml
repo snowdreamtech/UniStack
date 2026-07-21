@@ -15,12 +15,7 @@
   community.general.xbps:
     name: "{{ pkg_repo_list }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.xbps | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result
   become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list | length) > 0

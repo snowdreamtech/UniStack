@@ -18,12 +18,7 @@
   ansible.builtin.package:
     name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"
     state: "{{ (package_state == 'purged') | ternary('absent', package_state | default('present', true)) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.package | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result
   become: "{{ become_enabled | default(false, true) | bool }}"
 

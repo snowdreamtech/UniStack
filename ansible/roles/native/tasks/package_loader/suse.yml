@@ -17,12 +17,7 @@
   community.general.zypper:
     name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"
     state: "{{ package_state | default('present', true) }}"
-    update_cache: >-
-      {{
-        package_force_update_cache | default(false, true)
-        or
-        (not (package_caches_updated.zypper | default(false, true)))
-      }}
+    update_cache: "{{ package_force_update_cache | default(false, true) | bool }}"
   register: package_result
   become: "{{ become_enabled | default(false, true) | bool }}"
   when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
