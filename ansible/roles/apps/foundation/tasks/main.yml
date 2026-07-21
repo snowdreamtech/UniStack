@@ -16,14 +16,6 @@
     core_loader_type: "vars"
     core_loader_path: "vars"
 
-- name: "Foundation: Ensure base packages are installed via Native Engine"
-  ansible.builtin.include_role:
-    name: native
-  vars:
-    native_app_name: "foundation"
-    native_app_packages: "{{ foundation_packages | default([]) }}"
-    native_app_state: "present"
-
 # ---------------------------------------------------------------------
 # Foundation Stages (Metapackage Execution)
 # ---------------------------------------------------------------------
@@ -35,6 +27,14 @@
 - name: "Foundation: Configure Repositories"
   ansible.builtin.include_role:
     name: "apps/repositories"
+
+- name: "Foundation: Ensure base packages are installed via Native Engine"
+  ansible.builtin.include_role:
+    name: native
+  vars:
+    native_app_name: "foundation"
+    native_app_packages: "{{ foundation_packages | default([]) }}"
+    native_app_state: "present"
 
 - name: "Foundation: Configure Sudo"
   ansible.builtin.include_role:
