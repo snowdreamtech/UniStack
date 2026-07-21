@@ -58,9 +58,9 @@
   become: false
   tags: ["always"]
 
-- name: "Service (Systemd): Fault if systemctl missing"
-  ansible.builtin.fail:
-    msg: "System reports 'systemd' but 'systemctl' binary was not found."
+- name: "Service (Systemd): Warn if systemctl missing"
+  ansible.builtin.debug:
+    msg: "WARNING: System reports 'systemd' but 'systemctl' binary was not found (e.g. minimal container). Skipping service state change for '{{ service_name }}'."
   when: _systemctl_check.rc | default(1) != 0
   tags: ["always"]
 
@@ -78,6 +78,7 @@
   failed_when: false
   changed_when: false
   become: "{{ become_enabled | default(false, true) | bool }}"
+  when: _systemctl_check.rc | default(1) == 0
   tags: ["always"]
 
 - name: "Service (Systemd): Set existence fact"
@@ -89,6 +90,8 @@
   ansible.builtin.fail:
     msg: "Systemd service '{{ service_name }}' not found. Cannot start/restart."
   when:
+    - _systemctl_check.rc | default(1) == 0
+    - _systemd_running.stat.exists | default(false) | bool
     - not _service_unit_exists | bool
     - (service_state | default('started', true)) in ['started', 'restarted']
   tags: ["always"]
