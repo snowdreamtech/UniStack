@@ -1,2 +1,3 @@
+---
 os_paths: "/opt/homebrew/bin:/opt/homebrew/sbin:/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/bin:/sbin"
 os_pkg_mgr: "{{ ansible_pkg_mgr | default('unknown') }}"

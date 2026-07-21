@@ -74,6 +74,7 @@ RUN chmod +x /usr/local/bin/entrypoint.d/*
 HEALTHCHECK NONE
 
 # Process Execution
+# hadolint ignore=DL3002
 USER root
 WORKDIR /root
 ENTRYPOINT ["docker-entrypoint.sh"]
