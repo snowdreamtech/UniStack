@@ -21,9 +21,11 @@
   ansible.builtin.include_vars: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ os_family | default('default', true) }}.yml"
-        - "{{ os_distribution_id | default('default', true) }}.yml"
-        - "{{ os_distribution | default('default', true) }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
+        - "{{ os_family | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower }}.yml"
+        - "{{ os_distribution | default('default', true) | lower }}.yml"
         - "default.yml"
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('vars', true) }}"
@@ -35,9 +37,11 @@
   ansible.builtin.include_tasks: "{{ item }}"
   with_first_found:
     - files:
-        - "{{ os_family | default('default', true) }}.yml"
-        - "{{ os_distribution_id | default('default', true) }}.yml"
-        - "{{ os_distribution | default('default', true) }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
+        - "{{ os_family | default('default', true) | lower }}_{{ os_version_major | default('unknown', true) }}.yml"
+        - "{{ os_distribution_id | default('default', true) | lower }}.yml"
+        - "{{ os_family | default('default', true) | lower }}.yml"
+        - "{{ os_distribution | default('default', true) | lower }}.yml"
         - "default.yml"
       paths:
         - "{{ (ansible_parent_role_paths | default([role_path], true))[0] }}/{{ core_loader_path | default('tasks', true) }}"
