@@ -38,15 +38,23 @@
 # ---------------------------------------------------------------------
 - name: "Check for deb822 source file presence"
   ansible.builtin.stat:
-    path: "/etc/apt/sources.list.d/{{ os_distribution }}.sources"
+    path: "/etc/apt/sources.list.d/{{ os_distribution_id }}.sources"
   register: _deb822_file
   when: os_family == 'debian'
   tags: ["always"]
 
-- name: "Configure Debian/Ubuntu mirrors (DEB822 format)"
+- name: "Mirror (Debian): Remove original {{ os_distribution_id | default('', true) }}.sources"
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ os_distribution_id | default('', true) }}.sources"
+    state: "absent"
+  become: "{{ become_enabled | default(false, true) | bool }}"
+  when: >-
+    (ansible_facts.distribution_major_version | default('0', true) | int >= 24)
+
+- name: "Mirror (Debian): Deploy {{ mirror_schema }} mirror for deb822"
   ansible.builtin.template:
-    src: "{{ os_distribution }}.sources.j2"
-    dest: "/etc/apt/sources.list.d/{{ os_distribution }}.sources"
+    src: "{{ os_distribution_id | default('', true) }}.sources.j2"
+    dest: "/etc/apt/sources.list.d/{{ os_distribution_id | default('', true) }}.sources"
     mode: "0644"
   when:
     - os_family == 'debian'

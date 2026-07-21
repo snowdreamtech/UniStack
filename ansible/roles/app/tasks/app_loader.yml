@@ -162,7 +162,7 @@
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}-{{ version }}.yml" }
   vars:
-    distro: "{{ os_distribution | default('unknown', true) }}"
+    distro: "{{ os_distribution_id | default('unknown', true) }}"
     family: "{{ os_family | default('unknown', true) }}"
     version: "{{ os_version_major | default('0', true) }}"
     mode: "{{ app_delivery_mode }}"
@@ -257,7 +257,7 @@
   ansible.builtin.set_fact:
     app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
   vars:
-    distro: "{{ os_distribution | default('unknown', true) }}"
+    distro: "{{ os_distribution_id | default('unknown', true) }}"
     family: "{{ os_family | default('unknown', true) }}"
     version: "{{ os_version_major | default('0', true) }}"
     mode: "{{ app_delivery_mode }}"
@@ -306,7 +306,7 @@
 
       OS Context:
       - Family: {{ os_family | default('unknown', true) }}
-      - Distribution: {{ os_distribution | default('unknown', true) }}
+      - Distribution: {{ os_distribution_id | default('unknown', true) }}
       - Major Version: {{ os_version_major | default('0', true) }}
 
 # ---------------------------------------------------------------------

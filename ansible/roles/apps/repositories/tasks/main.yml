@@ -26,7 +26,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | int >= 8
-    - os_distribution not in ['fedora', 'amazon']
+    - os_distribution_id not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"
 
 - name: "Enable CRB/PowerTools repository for EPEL dependencies"
@@ -36,7 +36,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | int >= 8
-    - os_distribution not in ['fedora', 'amazon']
+    - os_distribution_id not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"
 
 - name: "Install EPEL repository"
@@ -45,5 +45,5 @@
     state: "present"
   when:
     - os_family == 'redhat'
-    - os_distribution not in ['fedora', 'amazon']
+    - os_distribution_id not in ['fedora', 'amazon']
   become: "{{ become_enabled }}"

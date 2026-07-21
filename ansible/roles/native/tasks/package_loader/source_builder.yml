@@ -33,7 +33,7 @@
         (['system.devel'] if (os_pkg_mgr | default('', true)) == 'eopkg' else
         (['os-core-update-dev'] if (os_pkg_mgr | default('', true)) == 'swupd' else
         (['build-essential'] if (os_pkg_mgr | default('', true)) == 'opkg' else
-        (['build-essential'] if (os_family == 'android' or os_distribution == 'android') else
+        (['build-essential'] if (os_family == 'android' or os_distribution_id == 'android') else
         (['gcc', 'make'] if (os_family | lower).endswith('bsd') else
         ['gcc', 'make']))))))))))))
 

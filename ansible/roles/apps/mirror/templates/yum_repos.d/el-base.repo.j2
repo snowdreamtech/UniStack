@@ -3,31 +3,31 @@
 # =====================================================================
 
 {% set base_url = "" %}
-{% if os_distribution == 'rocky' %}
+{% if os_distribution_id == 'rocky' %}
   {% set base_url = mirror_info.yum.rocky_url %}
-{% elif os_distribution == 'almalinux' %}
+{% elif os_distribution_id == 'almalinux' %}
   {% set base_url = mirror_info.yum.alma_url %}
-{% elif os_distribution == 'centos' or os_distribution == 'redhat' %}
+{% elif os_distribution_id == 'centos' or os_distribution_id == 'rhel' %}
   {% set base_url = mirror_info.yum.centos_url %}
 {% endif %}
 
 [baseos]
-name={{ os_distribution | capitalize }}-$releasever - BaseOS
+name={{ os_distribution_id | capitalize }}-$releasever - BaseOS
 baseurl={{ base_url }}/$releasever/BaseOS/$basearch/os/
 gpgcheck=1
 enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution_id | capitalize }}-{{ os_version_major }}
 
 [appstream]
-name={{ os_distribution | capitalize }}-$releasever - AppStream
+name={{ os_distribution_id | capitalize }}-$releasever - AppStream
 baseurl={{ base_url }}/$releasever/AppStream/$basearch/os/
 gpgcheck=1
 enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution_id | capitalize }}-{{ os_version_major }}
 
 [crb]
-name={{ os_distribution | capitalize }}-$releasever - CRB
+name={{ os_distribution_id | capitalize }}-$releasever - CRB
 baseurl={{ base_url }}/$releasever/CRB/$basearch/os/
 gpgcheck=1
 enabled=1
-gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution | capitalize }}-{{ os_version_major }}
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-{{ os_distribution_id | capitalize }}-{{ os_version_major }}
