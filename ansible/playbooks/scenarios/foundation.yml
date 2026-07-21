@@ -9,7 +9,14 @@
 
 - name: Deploy System Foundation
   hosts: all
-  become: "{{ become_enabled | default(false, true) | bool }}"
+  # WHY: Do NOT set become at the play level using become_enabled here.
+  # become_enabled is computed by the 'context' role, which runs AFTER
+  # the play starts. Play-level become is evaluated at startup, before
+  # context executes, so become_enabled would always default to false.
+  # Each role/task that needs privilege escalation uses its own
+  # become: "{{ become_enabled }}" which is evaluated at runtime, after
+  # context has correctly set the value.
+  become: false
   gather_facts: false
 
   tasks:
