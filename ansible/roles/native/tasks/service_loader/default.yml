@@ -32,7 +32,7 @@
 # is available, ensuring specialized logic is used where possible.
 
 ---
-- ansible.builtin.include_tasks: "{{ os_service_mgr | default('service', true) }}.yml"
+- ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
   when:
     - os_service_mgr is defined
     - os_service_mgr | length > 0

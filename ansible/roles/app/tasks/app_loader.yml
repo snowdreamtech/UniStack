@@ -158,6 +158,9 @@
     # 16. Architecture Only
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ arch }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ arch }}.yml" }
+    # 15. Generic Match: Distribution Name (Fallback if ID differs)
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro_name }}.yml" }
+    - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro_name }}.yml" }
     # 14. OS Family
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ family }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ family }}.yml" }
@@ -201,8 +204,9 @@
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ distro }}_{{ version_code }}_{{ arch }}.yml" }
     - { path: "{{ app_vars_path | default('', true) }}", file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml" }
   vars:
-    distro: "{{ os_distribution_id | default('unknown', true) | lower | replace(' ', '_') }}"
-    family: "{{ os_family | default('unknown', true) | lower | replace(' ', '_') }}"
+    distro: "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}"
+    distro_name: "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
     version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
@@ -211,7 +215,7 @@
   when:
     - app_loader_custom_exists | default(false, true)
     - loader_item.path | length > 0
-    - "lookup('first_found', {'paths': [loader_item.path], 'files': [loader_item.file]}, errors='ignore') != ''"
+    - "(lookup('first_found', {'paths': [loader_item.path], 'files': [loader_item.file]}, errors='ignore') | default('', true) | length) > 0"
   failed_when: false
   loop_control:
     loop_var: loader_item
@@ -299,8 +303,9 @@
   ansible.builtin.set_fact:
     app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
   vars:
-    distro: "{{ os_distribution_id | default('unknown', true) | lower | replace(' ', '_') }}"
-    family: "{{ os_family | default('unknown', true) | lower | replace(' ', '_') }}"
+    distro: "{{ os_distribution_id | default('default', true) | lower | replace(' ', '_') }}"
+    distro_name: "{{ os_distribution | default('default', true) | lower | replace(' ', '_') }}"
+    family: "{{ os_family | default('default', true) | lower | replace(' ', '_') }}"
     version_major: "{{ os_version_major | default('0', true) | string | lower | replace(' ', '_') }}"
     version_minor: "{{ os_version_minor | default('0', true) | string | lower | replace(' ', '_') }}"
     version_code: "{{ os_version_code | default('unknown', true) | lower | replace(' ', '_') }}"
@@ -351,6 +356,9 @@
         # 14. Generic Match: OS Family
         - "{{ mode }}/{{ family }}.yml"
         - "{{ family }}.yml"
+        # 15. Generic Match: Distribution Name (Fallback if ID differs)
+        - "{{ mode }}/{{ distro_name }}.yml"
+        - "{{ distro_name }}.yml"
         # 16. Generic Match: Architecture only
         - "{{ mode }}/{{ arch }}.yml"
         - "{{ arch }}.yml"
