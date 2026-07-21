@@ -27,6 +27,7 @@
   when:
     - (pkg_repo_list | length) > 0
     - not portage_tree.stat.exists | default(true)
+
 - name: "Package (Gentoo): Portage execution"
   community.general.portage:
     package: "{{ pkg_repo_list }}"
