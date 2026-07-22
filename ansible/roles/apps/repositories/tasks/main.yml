@@ -17,6 +17,28 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
+# Alibaba Cloud Linux: VPC Mirror Auto-Fallback
+# ---------------------------------------------------------------------
+- name: "Check if Alibaba Cloud internal mirror is reachable"
+  ansible.builtin.uri:
+    url: "http://mirrors.cloud.aliyuncs.com"
+    timeout: 3
+    method: HEAD
+  register: _aliyun_internal_mirror
+  ignore_errors: true
+  when:
+    - os_family == 'alibaba cloud linux' or os_distribution_id == 'alinux'
+
+- name: "Switch to public Alibaba Cloud mirror if internal is unreachable"
+  ansible.builtin.shell: >
+    sed -i 's/mirrors.cloud.aliyuncs.com/mirrors.aliyun.com/g' /etc/yum.repos.d/*.repo || true
+  changed_when: false
+  when:
+    - os_family == 'alibaba cloud linux' or os_distribution_id == 'alinux'
+    - _aliyun_internal_mirror.failed is defined and _aliyun_internal_mirror.failed
+  become: "{{ become_enabled }}"
+
+# ---------------------------------------------------------------------
 # RedHat: Enable EPEL Repository
 # ---------------------------------------------------------------------
 - name: "Install dnf-plugins-core for config-manager (EL8)"
