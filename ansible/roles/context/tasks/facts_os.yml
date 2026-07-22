@@ -73,3 +73,8 @@
         | default(ansible_facts.architecture, true)
       }}
   tags: ["always"]
+- name: "Fix unknown package manager for AzureLinux/Mariner (Ansible limitation)"
+  ansible.builtin.set_fact:
+    os_pkg_mgr: "tdnf"
+  when: ansible_facts.pkg_mgr | default('unknown', true) == 'unknown' and _os_release_id in ['azurelinux', 'mariner']
+  tags: ["always"]
