@@ -205,6 +205,7 @@ jobs:
           - "alinux:3"
           - "tencentos/tencentos_server:3.1"
           - "openeuler/openeuler:24.03-lts"
+          - "oraclelinux:9"
     permissions:
       contents: read
     steps:
