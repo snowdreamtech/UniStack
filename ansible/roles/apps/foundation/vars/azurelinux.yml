@@ -1,0 +1,27 @@
+---
+# Azure Linux 3.0 (formerly CBL-Mariner) - uses tdnf package manager
+# Package list verified against azurelinux-official-base repo
+# Note: No EPEL, packages sourced from Azure Linux official repos only
+base_dev_packages: []
+foundation_packages:
+  - bash-completion
+  - bzip2
+  - ca-certificates
+  - curl
+  - file
+  - git
+  - gnupg2
+  - gzip
+  - jq
+  - openssl
+  - patch
+  - procps-ng
+  - rsync
+  - sudo
+  - tmux
+  - tzdata
+  - unzip
+  - vim
+  - wget
+  - xz
+  - zip

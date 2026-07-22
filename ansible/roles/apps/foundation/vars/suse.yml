@@ -6,11 +6,9 @@ foundation_packages:
   - ca-certificates
   - curl
   - file
-  - fzf
   - git
   - gpg2
   - gzip
-  - htop
   - jq
   - openssl
   - patch
@@ -18,7 +16,6 @@ foundation_packages:
   - rsync
   - sudo
   - timezone
-  - tmux
   - unzip
   - vim
   - wget

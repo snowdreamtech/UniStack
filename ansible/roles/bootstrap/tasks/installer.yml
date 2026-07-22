@@ -34,6 +34,8 @@
       PM="apt"
     elif command -v microdnf >/dev/null 2>&1; then
       PM="microdnf"
+    elif command -v tdnf >/dev/null 2>&1; then
+      PM="tdnf"
     elif command -v dnf >/dev/null 2>&1; then
       PM="dnf"
     elif command -v yum >/dev/null 2>&1; then
@@ -83,9 +85,18 @@
       microdnf)
         microdnf install -y python3 python3-pip || microdnf install -y python3
         ;;
+      tdnf)
+        # Azure Linux / CBL-Mariner: use tdnf
+        tdnf install -y --nogpgcheck python3 python3-pip \
+          || tdnf install -y --nogpgcheck python3
+        ;;
       dnf)
         dnf install -y python3-libdnf5 || true
         dnf install -y python3-dnf || true
+        # Try python3.11+ first to avoid Python 3.6 on el8 family (too old for Ansible)
+        dnf install -y python3.11 python3.11-pip 2>/dev/null \
+          || dnf install -y python3.8 python3.8-pip 2>/dev/null \
+          || true
         dnf install -y python3 python3-pip \
           || dnf install -y python3 python3-pip-wheel \
           || dnf install -y python3 python3-wheel python3-pip

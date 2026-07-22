@@ -27,7 +27,6 @@ foundation_packages:
   - make
   - man-db
   - man-pages
-  - moreutils
   - mtr
   - ncdu
   - net-tools
