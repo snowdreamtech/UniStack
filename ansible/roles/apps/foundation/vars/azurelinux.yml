@@ -17,6 +17,7 @@ foundation_packages:
   - patch
   - procps-ng
   - rsync
+  - shadow-utils
   - sudo
   - tmux
   - tzdata

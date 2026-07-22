@@ -46,18 +46,29 @@
       when: os_pkg_mgr | default('', true) == 'rpm_ostree'
       register: package_result_ostree
 
-    - name: "Package (RedHat): Unified DNF/YUM execution"
-      ansible.builtin.package:
+    - name: "Package (RedHat EL8): Unified DNF execution via command (Bypass python 3.6 module error)"
+      ansible.builtin.command: "dnf install -y {{ (pkg_repo_list + pkg_file_list + pkg_url_list) | join(' ') }}"
+      when:
+        - os_pkg_mgr | default('', true) != 'rpm_ostree'
+        - os_version_major | default('0', true) == '8'
+      register: package_result_dnf_el8
+      changed_when: "'Nothing to do' not in package_result_dnf_el8.stdout"
+
+    - name: "Package (RedHat EL9+): Unified DNF/YUM execution"
+      ansible.builtin.dnf:
         name: "{{ (pkg_repo_list + pkg_file_list + pkg_url_list) }}"
         state: "{{ package_state | default('present', true) }}"
+        disable_gpg_check: "{{ ansible_virtualization_type | default('') in ['docker', 'container'] }}"
         update_cache: >-
           {{
             package_force_update_cache | default(false, true)
             or
             (not (package_caches_updated[os_pkg_mgr | default('yum', true)] | default(false, true)))
           }}
-      when: os_pkg_mgr | default('', true) != 'rpm_ostree'
-      register: package_result_dnf
+      when:
+        - os_pkg_mgr | default('', true) != 'rpm_ostree'
+        - os_version_major | default('0', true) != '8'
+      register: package_result_dnf_el9
 
     - name: "Package (RedHat): Mark cache as updated"
       ansible.builtin.set_fact:
@@ -68,7 +79,12 @@
 
     - name: "Package (RedHat): Consolidate results"
       ansible.builtin.set_fact:
-        package_result: "{{ package_result_ostree if (package_result_ostree is defined and not (package_result_ostree.skipped | default(false))) else package_result_dnf }}"
+        package_result: >-
+          {{
+            package_result_ostree if (package_result_ostree is defined and not (package_result_ostree.skipped | default(false)))
+            else (package_result_dnf_el8 if (package_result_dnf_el8 is defined and not (package_result_dnf_el8.skipped | default(false)))
+            else package_result_dnf_el9)
+          }}
       tags: ["always"]
 
   become: "{{ become_enabled | default(false, true) | bool }}"

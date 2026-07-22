@@ -1,0 +1,31 @@
+# =====================================================================
+# roles/native/tasks/package_loader/tdnf.yml
+#
+# Purpose:
+#   Azure Linux / CBL-Mariner specific package management via TDNF.
+#
+# Supported Installation Sources:
+#   - Repository packages    : Standard tdnf install
+#   - Local .rpm files       : /path/to/package.rpm
+#   - Remote .rpm URLs       : https://example.com/package.rpm
+#
+# =====================================================================
+
+---
+- name: "Package (TDNF): Unified execution"
+  ansible.builtin.command: "tdnf install -y {{ (pkg_repo_list + pkg_file_list + pkg_url_list) | join(' ') }}"
+  when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
+  register: package_result_tdnf
+  changed_when: "'Nothing to do' not in package_result_tdnf.stdout"
+  become: "{{ become_enabled | default(false, true) | bool }}"
+
+- name: "Package (TDNF): Consolidate results"
+  ansible.builtin.set_fact:
+    package_result: "{{ package_result_tdnf }}"
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
+# Execution: Source Branch
+# ---------------------------------------------------------------------
+- ansible.builtin.include_tasks: "source_builder.yml"
+  when: (pkg_src_list | length) > 0

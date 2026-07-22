@@ -34,9 +34,7 @@
 ---
 - ansible.builtin.include_tasks: "{{ os_service_mgr | default('systemd', true) }}.yml"
   when:
-    - os_service_mgr is defined
-    - os_service_mgr | length > 0
-    - os_service_mgr != 'service'
+    - os_service_mgr | default('systemd', true) != 'service'
 
 # ---------------------------------------------------------------------
 # --- Execution ---
@@ -51,9 +49,7 @@
     state: "{{ service_state | default('started', true) }}"
     enabled: "{{ service_enabled | default(true, true) | bool }}"
   when: >-
-    (os_service_mgr is not defined) or
-    (os_service_mgr | default('', true) | length == 0) or
-    (os_service_mgr == 'service')
+    (os_service_mgr | default('systemd', true) == 'service')
   become: "{{ become_enabled | default(false, true) | bool }}"
   vars:
     fingerprint: "service_default_exec_{{ service_name }}"

@@ -1,33 +1,41 @@
 ---
-# openEuler 24.03 LTS - RedHat-compatible, uses dnf
-# No EPEL available; packages from openEuler official repos only
-# openEuler has rich package ecosystem similar to RHEL9+
 base_dev_packages: []
 foundation_packages:
   - bash-completion
+  - bind-utils
   - bzip2
   - ca-certificates
-  - curl
+  - curl-minimal
   - file
   - git
-  - gnupg2
+  - git-lfs
+  - gnupg2-minimal
   - gzip
-  - htop
-  - iproute
+  - ipcalc
+  - iperf3
+  - iputils
   - jq
+  - libcap
   - lsof
   - make
+  - man-db
+  - mtr
+  - net-tools
+  - nmap-ncat
   - openssl
   - patch
+  - pinentry-curses
   - procps-ng
+  - psmisc
   - rsync
-  - shadow-utils
+  - socat
+  - strace
   - sudo
-  - tmux
-  - tree
+  - tcpdump
   - tzdata
   - unzip
   - vim-enhanced
   - wget
   - xz
   - zip
+  - zstd

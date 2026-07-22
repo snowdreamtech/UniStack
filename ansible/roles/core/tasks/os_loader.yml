@@ -36,6 +36,17 @@
 #  17. Ultimate Fallback                   (e.g., default.yml)
 # =====================================================================
 
+- name: "[Core] Debug OS Loader Variables"
+  ansible.builtin.debug:
+    msg: |
+      OS Loader Context:
+      Loader Type: {{ core_loader_type | default('vars', true) }}
+      Ansible Parent Role Paths: {{ ansible_parent_role_paths | default([role_path], true) }}
+      Calculated Base Path: {{ (ansible_parent_role_paths | default([role_path], true))[0] }}
+      Loader Path: {{ core_loader_path | default('vars', true) }}
+      OS Family: {{ os_family | default('__skip__', true) }}
+      OS Distribution ID: {{ os_distribution_id | default('__skip__', true) }}
+
 - name: "[Core] Load OS-specific variables"
   ansible.builtin.include_vars: "{{ _first_found_item }}"
   with_first_found:
