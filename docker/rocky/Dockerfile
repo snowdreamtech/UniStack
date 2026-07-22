@@ -46,7 +46,7 @@ LABEL org.opencontainers.image.authors="Snowdream Tech" \
     org.opencontainers.image.url="https://github.com/snowdreamtech/unistack"
 
 # x-release-please-start-version
-LABEL org.opencontainers.image.version="${VERSION:-0.0.3}"
+LABEL org.opencontainers.image.version="${VERSION:-0.0.4}"
 # x-release-please-end
 
 # Runtime Environment Configuration
