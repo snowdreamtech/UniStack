@@ -166,6 +166,8 @@ jobs:
           - "openeuler/openeuler:24.03-lts"
           - "oraclelinux:9"
           - "registry.suse.com/bci/bci-base:15.6"
+          - "registry.access.redhat.com/ubi9/ubi:latest"
+          - "quay.io/centos/centos:stream9"
     permissions:
       contents: read
     steps:
