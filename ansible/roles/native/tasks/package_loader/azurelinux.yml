@@ -16,7 +16,9 @@
   ansible.builtin.command: "tdnf install -y {{ (pkg_repo_list + pkg_file_list + pkg_url_list) | join(' ') }}"
   when: (pkg_repo_list + pkg_file_list + pkg_url_list) | length > 0
   register: package_result_tdnf
-  changed_when: "'Nothing to do' not in package_result_tdnf.stdout"
+  changed_when: >
+    'Nothing to do' not in (package_result_tdnf.stdout | default('')) and
+    'Nothing to do' not in (package_result_tdnf.stderr | default(''))
   become: "{{ become_enabled | default(false, true) | bool }}"
 
 - name: "Package (TDNF): Consolidate results"
