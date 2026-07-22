@@ -26,13 +26,7 @@
     native_app_packages: "{{ openssh_packages | default([], true) }}"
 
 - name: "Generate SSH host keys (Critical for Containers)"
-  ansible.builtin.command: "ssh-keygen -t {{ item.type }} -f {{ item.path }} -N ''"
-  args:
-    creates: "{{ item.path }}"
-  loop:
-    - { type: "rsa", path: "/etc/ssh/ssh_host_rsa_key" }
-    - { type: "ecdsa", path: "/etc/ssh/ssh_host_ecdsa_key" }
-    - { type: "ed25519", path: "/etc/ssh/ssh_host_ed25519_key" }
+  ansible.builtin.command: "ssh-keygen -A"
   become: "{{ become_enabled }}"
   changed_when: false
   when: "(os_family | default('') | lower) != 'darwin'"
