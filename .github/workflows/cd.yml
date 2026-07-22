@@ -170,6 +170,7 @@ jobs:
           - "quay.io/centos/centos:stream9"
           - "mcr.microsoft.com/azurelinux/base/core:3.0"
           - "openanolis/anolisos:8"
+          - "almalinux:9"
     permissions:
       contents: read
     steps:
