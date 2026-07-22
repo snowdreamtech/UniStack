@@ -168,6 +168,8 @@ jobs:
           - "registry.suse.com/bci/bci-base:15.6"
           - "registry.access.redhat.com/ubi9/ubi:latest"
           - "quay.io/centos/centos:stream9"
+          - "mcr.microsoft.com/azurelinux/base/core:3.0"
+          - "openanolis/anolisos:8"
     permissions:
       contents: read
     steps:
