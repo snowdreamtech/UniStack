@@ -21,3 +21,12 @@ architecture_map:
   "loongarch64": "loongarch64"
   "mips64": "mips64"
   "mips": "mips"
+
+# ---------------------------------------------------------------------
+# Fallback Package Manager Map
+# Used when Ansible natively fails to detect the package manager (returns "unknown").
+# Maps OS Release ID (e.g. from /etc/os-release) to the expected package manager.
+# ---------------------------------------------------------------------
+fallback_pkg_mgr_map:
+  "azurelinux": "tdnf"
+  "mariner": "tdnf"
