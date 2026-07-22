@@ -160,6 +160,10 @@ jobs:
           - "opensuse/leap:15.6"
           - "gentoo/stage3:latest"
           - "voidlinux/voidlinux:latest"
+          - "amazonlinux:2023"
+          - "alinux:3"
+          - "tencentos/tencentos_server:3.1"
+          - "openeuler/openeuler:24.03-lts"
     permissions:
       contents: read
     steps:
