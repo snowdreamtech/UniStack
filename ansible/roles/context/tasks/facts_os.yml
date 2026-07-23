@@ -51,7 +51,7 @@
   ansible.builtin.set_fact:
     os_family: "{{ ansible_facts.os_family | default('', true) | lower }}"
     os_distribution: "{{ ansible_facts.distribution | default('', true) | lower }}"
-    os_distribution_id: "{{ _os_release_id | default('', true) }}"
+    os_distribution_id: "{{ _os_release_id | default(ansible_facts.distribution | default('', true) | lower, true) }}"
     os_version_major: "{{ ansible_facts.distribution_major_version | default('0', true) | string }}"
     os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if ('distribution_version' in ansible_facts and '.' in ansible_facts.distribution_version) else '0' }}"
     os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
