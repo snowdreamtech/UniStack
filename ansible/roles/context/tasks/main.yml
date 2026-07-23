@@ -20,3 +20,9 @@
 
 # Stage 2: Identity & Permissions
 - ansible.builtin.import_tasks: facts_context.yml
+
+# Stage 3: Context Mark Loaded
+- name: "Mark context as fully loaded"
+  ansible.builtin.set_fact:
+    _unistack_context_loaded: true
+  tags: ["always"]

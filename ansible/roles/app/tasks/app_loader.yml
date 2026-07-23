@@ -13,7 +13,7 @@
 # ---------------------------------------------------------------------
 - ansible.builtin.include_role:
     name: "context"
-  when: os_distribution_id is not defined
+  when: _unistack_context_loaded is not defined
 
 # 1. Basic Validation (app_name only)
 # ---------------------------------------------------------------------
