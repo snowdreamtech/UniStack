@@ -31,209 +31,160 @@
 # Core Validation: Ensure mandatory fields (name, state, delivery mode)
 # are present and contain allowed values.
 # ---------------------------------------------------------------------
-- name: "Validate app_name"
+- name: "Validate all API fields for {{ app_name }}"
   ansible.builtin.assert:
     that:
-      - app_name is defined
-      - app_name is string
-      - (app_name | length) > 0
-    fail_msg: |
-      validate: app_name must be a non-empty string
-      Received type: {{ app_name | type_debug if app_name is defined else 'undefined' }}
-      Received value: {{ app_name | default('UNDEFINED', true) }}
-    success_msg: "validate: app_name validated ({{ app_name | default('UNDEFINED') }})"
-  tags: ["always"]
+      - (validation_errors | from_json) | length == 0
+    fail_msg: "API Validation Failed. Please check the following errors:\n{{ (validation_errors | from_json) | join('\n') }}"
+    success_msg: "validate: all fields successfully validated"
+  vars:
+    validation_errors: >-
+      {%- set errors = [] -%}
 
-- name: "Validate app_state"
-  ansible.builtin.assert:
-    that:
-      - (app_state is not defined) or (app_state in ['present', 'started', 'stopped', 'restarted', 'absent', 'purged'])
-    fail_msg: |
-      validate: app_state must be one of: present, started, stopped, restarted, absent, purged
-      Received value: {{ app_state | default('UNDEFINED', true) }}
-      Description:
-        - present: Install/create application
-        - started: Install and start application
-        - stopped: Stop application (keep installed)
-        - restarted: Restart application
-        - absent: Remove application
-        - purged: Remove application and data
-    success_msg: "validate: app_state validated ({{ app_state | default('not specified', true) }})"
-  tags: ["always"]
+      {# Core Validation #}
+      {%- if not (app_name is defined and app_name is string and (app_name | length) > 0) -%}
+        {%- set _ = errors.append("- app_name must be a non-empty string. Received type: " ~ (app_name | type_debug if app_name is defined else 'undefined')) -%}
+      {%- endif -%}
+      {%- if app_state is defined and app_state not in ['present', 'started', 'stopped', 'restarted', 'absent', 'purged'] -%}
+        {%- set _ = errors.append("- app_state must be one of: present, started, stopped, restarted, absent, purged. Received: " ~ app_state) -%}
+      {%- endif -%}
+      {%- if not (app_delivery_mode is defined and app_delivery_mode in ['container', 'native', 'compose', 'kube']) -%}
+        {%- set _ = errors.append("- app_delivery_mode must be one of: container, native, compose, kube. Received: " ~ (app_delivery_mode | default('UNDEFINED', true))) -%}
+      {%- endif -%}
 
-- name: "Validate app_delivery_mode"
-  ansible.builtin.assert:
-    that:
-      - (app_delivery_mode is defined) and (app_delivery_mode in ['container', 'native', 'compose', 'kube'])
-    fail_msg: |
-      validate: app_delivery_mode must be one of: container, native, compose, kube
-      Received value: {{ app_delivery_mode | default('UNDEFINED', true) }}
-      Description:
-        - container: Single container deployment
-        - native: Native package/binary installation
-        - compose: Docker Compose multi-container
-        - kube: Kubernetes manifest deployment
-    success_msg: "validate: app_delivery_mode validated ({{ app_delivery_mode | default('UNDEFINED') }})"
-  tags: ["always"]
+      {# Description Validation #}
+      {%- if app_desc is defined and not app_desc is string -%}
+        {%- set _ = errors.append("- app_desc must be a string. Received type: " ~ (app_desc | type_debug)) -%}
+      {%- endif -%}
+      {%- if app_homepage is defined and not app_homepage is string -%}
+        {%- set _ = errors.append("- app_homepage must be a string. Received type: " ~ (app_homepage | type_debug)) -%}
+      {%- endif -%}
+      {%- if app_license is defined and not app_license is string -%}
+        {%- set _ = errors.append("- app_license must be a string. Received type: " ~ (app_license | type_debug)) -%}
+      {%- endif -%}
 
-# ---------------------------------------------------------------------
-# Description Validation: Ensure that if a description is provided,
-# it is in string format.
-# ---------------------------------------------------------------------
-- name: "Validate app_desc"
-  ansible.builtin.assert:
-    that:
-      - app_desc is not defined or app_desc is string
-    fail_msg: |
-      validate: app_desc must be a string when defined
-      Received type: {{ app_desc | type_debug }}
-      Received value: {{ app_desc }}
-    success_msg: "validate: app_desc validated ({{ app_desc | default('not provided', true) }})"
-  tags: ["always"]
+      {# Container Validation #}
+      {%- if app_delivery_mode == 'container' -%}
+        {%- if app_image is defined and not app_image is string -%}
+          {%- set _ = errors.append("- container mode: app_image must be a string") -%}
+        {%- endif -%}
+      {%- endif -%}
 
-- name: "Validate app_homepage"
-  ansible.builtin.assert:
-    that:
-      - app_homepage is not defined or app_homepage is string
-    fail_msg: |
-      validate: app_homepage must be a string when defined
-      Received type: {{ app_homepage | type_debug }}
-      Received value: {{ app_homepage }}
-    success_msg: "validate: app_homepage validated ({{ app_homepage | default('not provided', true) }})"
-  tags: ["always"]
+      {# Compose Validation #}
+      {%- if app_delivery_mode == 'compose' -%}
+        {%- if not (app_compose_project_src is defined and (app_compose_project_src | trim | length) > 0) -%}
+          {%- set _ = errors.append("- compose mode requires app_compose_project_src (non-empty string)") -%}
+        {%- endif -%}
+        {%- if app_compose_files is defined and not app_compose_files is iterable -%}
+          {%- set _ = errors.append("- compose mode: app_compose_files must be iterable (a list)") -%}
+        {%- endif -%}
+      {%- endif -%}
 
-- name: "Validate app_license"
-  ansible.builtin.assert:
-    that:
-      - app_license is not defined or app_license is string
-    fail_msg: |
-      validate: app_license must be a string when defined
-      Received type: {{ app_license | type_debug }}
-      Received value: {{ app_license }}
-    success_msg: "validate: app_license validated ({{ app_license | default('not provided', true) }})"
-  tags: ["always"]
+      {# Kube Validation #}
+      {%- if app_delivery_mode == 'kube' -%}
+        {%- if not (app_kube_manifest is defined and (app_kube_manifest | trim | length) > 0) -%}
+          {%- set _ = errors.append("- kube mode requires app_kube_manifest (non-empty string)") -%}
+        {%- endif -%}
+      {%- endif -%}
 
-# ---------------------------------------------------------------------
-# Container Validation: Check container-specific parameters (like image)
-# to ensure they meet the backend requirements.
-# ---------------------------------------------------------------------
-- name: "Validate container-specific fields"
-  ansible.builtin.assert:
-    that:
-      - app_image is not defined or app_image is string
-    fail_msg: |
-      validate: container mode - app_image must be a string when defined
-      Received type: {{ app_image | type_debug if app_image is defined else 'undefined' }}
-      Received value: {{ app_image | default('not provided', true) }}
-    success_msg: "validate: container-specific fields validated"
-  when: app_delivery_mode == 'container'
-  tags: ["always"]
+      {# Native Validation #}
+      {%- if app_delivery_mode == 'native' -%}
+        {%- if app_packages is defined and not (app_packages is string or (app_packages is iterable and not app_packages is mapping)) -%}
+          {%- set _ = errors.append("- native mode: app_packages must be a string or a list (not dict)") -%}
+        {%- endif -%}
+        {%- if app_install_cmd is defined and not app_install_cmd is string -%}
+          {%- set _ = errors.append("- native mode: app_install_cmd must be a string") -%}
+        {%- endif -%}
+        {%- if app_install_creates is defined and not app_install_creates is string -%}
+          {%- set _ = errors.append("- native mode: app_install_creates must be a string") -%}
+        {%- endif -%}
+        {%- if app_install_env is defined and not app_install_env is mapping -%}
+          {%- set _ = errors.append("- native mode: app_install_env must be a dict") -%}
+        {%- endif -%}
+        {%- if app_install_user is defined and not app_install_user is string -%}
+          {%- set _ = errors.append("- native mode: app_install_user must be a string") -%}
+        {%- endif -%}
+        {%- if app_install_changed_when is defined and not (app_install_changed_when is none or app_install_changed_when is string or app_install_changed_when is boolean) -%}
+          {%- set _ = errors.append("- native mode: app_install_changed_when must be none/string/boolean") -%}
+        {%- endif -%}
+        {%- if app_install_failed_when is defined and not (app_install_failed_when is none or app_install_failed_when is string or app_install_failed_when is boolean) -%}
+          {%- set _ = errors.append("- native mode: app_install_failed_when must be none/string/boolean") -%}
+        {%- endif -%}
+        {%- if app_uninstall_cmd is defined and not app_uninstall_cmd is string -%}
+          {%- set _ = errors.append("- native mode: app_uninstall_cmd must be a string") -%}
+        {%- endif -%}
+        {%- if app_uninstall_changed_when is defined and not (app_uninstall_changed_when is none or app_uninstall_changed_when is string or app_uninstall_changed_when is boolean) -%}
+          {%- set _ = errors.append("- native mode: app_uninstall_changed_when must be none/string/boolean") -%}
+        {%- endif -%}
+        {%- if app_uninstall_failed_when is defined and not (app_uninstall_failed_when is none or app_uninstall_failed_when is string or app_uninstall_failed_when is boolean) -%}
+          {%- set _ = errors.append("- native mode: app_uninstall_failed_when must be none/string/boolean") -%}
+        {%- endif -%}
+        {%- if app_dmg_app_name is defined and not app_dmg_app_name is string -%}
+          {%- set _ = errors.append("- native mode: app_dmg_app_name must be a string") -%}
+        {%- endif -%}
+        {%- if app_pkg_id is defined and not app_pkg_id is string -%}
+          {%- set _ = errors.append("- native mode: app_pkg_id must be a string") -%}
+        {%- endif -%}
+        {%- if app_bundle_name is defined and not app_bundle_name is string -%}
+          {%- set _ = errors.append("- native mode: app_bundle_name must be a string") -%}
+        {%- endif -%}
+        {%- if app_is_cask is defined and not app_is_cask is boolean -%}
+          {%- set _ = errors.append("- native mode: app_is_cask must be a boolean") -%}
+        {%- endif -%}
+      {%- endif -%}
 
-# ---------------------------------------------------------------------
-# Compose Validation: Check compose-specific parameters.
-# ---------------------------------------------------------------------
-- name: "Validate compose-specific fields"
-  ansible.builtin.assert:
-    that:
-      - app_compose_project_src is defined
-      - (app_compose_project_src | trim | length) > 0
-      - app_compose_files is not defined or app_compose_files is iterable
-    fail_msg: |
-      validate: compose mode requires app_compose_project_src (non-empty string)
-      app_compose_project_src: {{ app_compose_project_src | default('UNDEFINED', true) }}
-      app_compose_files (optional): {{ app_compose_files | default('not provided', true) }}
-    success_msg: "validate: compose-specific fields validated"
-  when: app_delivery_mode == 'compose'
-  tags: ["always"]
+      {# Optional fields validation #}
+      {%- if app_env is defined and not app_env is mapping -%}
+        {%- set _ = errors.append("- app_env must be a dict") -%}
+      {%- endif -%}
+      {%- if app_env_file is defined and not app_env_file is string -%}
+        {%- set _ = errors.append("- app_env_file must be a string") -%}
+      {%- endif -%}
+      {%- if app_ports is defined and not app_ports is iterable -%}
+        {%- set _ = errors.append("- app_ports must be a list") -%}
+      {%- endif -%}
+      {%- if app_volumes is defined and not app_volumes is iterable -%}
+        {%- set _ = errors.append("- app_volumes must be a list") -%}
+      {%- endif -%}
+      {%- if app_networks is defined and not app_networks is iterable -%}
+        {%- set _ = errors.append("- app_networks must be a list") -%}
+      {%- endif -%}
+      {%- if app_labels is defined and not app_labels is mapping -%}
+        {%- set _ = errors.append("- app_labels must be a dict") -%}
+      {%- endif -%}
+      {%- if app_resources is defined and not app_resources is mapping -%}
+        {%- set _ = errors.append("- app_resources must be a dict") -%}
+      {%- endif -%}
+      {%- if app_hostname is defined and not app_hostname is string -%}
+        {%- set _ = errors.append("- app_hostname must be a string") -%}
+      {%- endif -%}
+      {%- if app_read_only is defined and not app_read_only is boolean -%}
+        {%- set _ = errors.append("- app_read_only must be a boolean") -%}
+      {%- endif -%}
+      {%- if app_tty is defined and not app_tty is boolean -%}
+        {%- set _ = errors.append("- app_tty must be a boolean") -%}
+      {%- endif -%}
+      {%- if app_interactive is defined and not app_interactive is boolean -%}
+        {%- set _ = errors.append("- app_interactive must be a boolean") -%}
+      {%- endif -%}
+      {%- if app_privileged is defined and not app_privileged is boolean -%}
+        {%- set _ = errors.append("- app_privileged must be a boolean") -%}
+      {%- endif -%}
+      {%- if app_memory is defined and not app_memory is string -%}
+        {%- set _ = errors.append("- app_memory must be a string") -%}
+      {%- endif -%}
+      {%- if app_cpus is defined and not app_cpus is number -%}
+        {%- set _ = errors.append("- app_cpus must be a number") -%}
+      {%- endif -%}
+      {%- if app_cpu_shares is defined and not app_cpu_shares is number -%}
+        {%- set _ = errors.append("- app_cpu_shares must be a number") -%}
+      {%- endif -%}
+      {%- if app_stop_timeout is defined and not (app_stop_timeout | int) is number -%}
+        {%- set _ = errors.append("- app_stop_timeout must be a number") -%}
+      {%- endif -%}
+      {%- if app_shm_size is defined and not app_shm_size is string -%}
+        {%- set _ = errors.append("- app_shm_size must be a string") -%}
+      {%- endif -%}
 
-# ---------------------------------------------------------------------
-# Kube Validation: Check Kubernetes-specific parameters.
-# ---------------------------------------------------------------------
-- name: "Validate kube-specific fields"
-  ansible.builtin.assert:
-    that:
-      - app_kube_manifest is defined
-      - (app_kube_manifest | trim | length) > 0
-    fail_msg: |
-      validate: kube mode requires app_kube_manifest (non-empty string)
-      Received: {{ app_kube_manifest | default('UNDEFINED', true) }}
-      Type: {{ app_kube_manifest | type_debug if app_kube_manifest is defined else 'undefined' }}
-    success_msg: "validate: kube-specific fields validated"
-  when: app_delivery_mode == 'kube'
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Native Validation: Check native deployment parameters.
-# ---------------------------------------------------------------------
-- name: "Validate native-specific fields"
-  ansible.builtin.assert:
-    that:
-      # Standard package validation
-      - (app_packages is not defined)
-        or (app_packages is string)
-        or (app_packages is iterable and app_packages is not mapping)
-      # Script-based installation validation
-      - (app_install_cmd is not defined or app_install_cmd is string)
-      - (app_install_creates is not defined or app_install_creates is string)
-      - (app_install_env is not defined or app_install_env is mapping)
-      - (app_install_user is not defined or app_install_user is string)
-      - (app_install_changed_when is not defined or app_install_changed_when is none or app_install_changed_when is string or app_install_changed_when is boolean)
-      - (app_install_failed_when is not defined or app_install_failed_when is none or app_install_failed_when is string or app_install_failed_when is boolean)
-      # Script-based uninstallation validation
-      - (app_uninstall_cmd is not defined or app_uninstall_cmd is string)
-      - (app_uninstall_changed_when is not defined or app_uninstall_changed_when is none or app_uninstall_changed_when is string or app_uninstall_changed_when is boolean)
-      - (app_uninstall_failed_when is not defined or app_uninstall_failed_when is none or app_uninstall_failed_when is string or app_uninstall_failed_when is boolean)
-      # macOS specialized metadata validation
-      - (app_dmg_app_name is not defined or app_dmg_app_name is string)
-      - (app_pkg_id is not defined or app_pkg_id is string)
-      - (app_bundle_name is not defined or app_bundle_name is string)
-      - (app_is_cask is not defined or app_is_cask is boolean)
-    fail_msg: |
-      validate: native mode field type validation failed
-      Please check:
-        - app_packages: string or list (not dict)
-        - app_install_cmd: string
-        - app_install_env: dict
-        - app_dmg_app_name: string (macOS)
-        - app_is_cask: boolean (macOS)
-      Review the failed assertion above for specific field
-    success_msg: "validate: native-specific fields validated"
-  when: app_delivery_mode == 'native'
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Type Enforcement: Validate data types for all optional shared fields
-# (e.g., env must be a mapping, ports must be iterable).
-# ---------------------------------------------------------------------
-- name: "Validate optional fields"
-  ansible.builtin.assert:
-    that:
-      - (app_env is not defined or app_env is mapping) or app_delivery_mode != 'container'
-      - (app_env_file is not defined or app_env_file is string) or app_delivery_mode != 'container'
-      - (app_ports is not defined or app_ports is iterable) or app_delivery_mode != 'container'
-      - (app_volumes is not defined or app_volumes is iterable) or app_delivery_mode != 'container'
-      - (app_networks is not defined or app_networks is iterable) or app_delivery_mode != 'container'
-      - (app_labels is not defined or app_labels is mapping) or app_delivery_mode != 'container'
-      - (app_resources is not defined or app_resources is mapping) or app_delivery_mode != 'container'
-      - (app_hostname is not defined or app_hostname is string) or app_delivery_mode != 'container'
-      - (app_read_only is not defined or app_read_only is boolean) or app_delivery_mode != 'container'
-      - (app_tty is not defined or app_tty is boolean) or app_delivery_mode != 'container'
-      - (app_interactive is not defined or app_interactive is boolean) or app_delivery_mode != 'container'
-      - (app_privileged is not defined or app_privileged is boolean) or app_delivery_mode != 'container'
-      - (app_memory is not defined or app_memory is string) or app_delivery_mode != 'container'
-      - (app_cpus is not defined or app_cpus is number) or app_delivery_mode != 'container'
-      - (app_cpu_shares is not defined or app_cpu_shares is number) or app_delivery_mode != 'container'
-      - (app_stop_timeout is not defined or (app_stop_timeout | int) is number) or app_delivery_mode != 'container'
-      - (app_shm_size is not defined or app_shm_size is string) or app_delivery_mode != 'container'
-    fail_msg: |
-      validate: container optional field type validation failed
-      Please check:
-        - app_env: dict
-        - app_ports: list
-        - app_volumes: list
-        - app_networks: list
-        - app_memory: string (e.g., "512m")
-        - app_cpus: number
-      Review the failed assertion above for specific field
-    success_msg: "validate: optional fields validated"
+      {{- errors | to_json -}}
   tags: ["always"]

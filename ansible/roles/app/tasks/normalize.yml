@@ -32,97 +32,31 @@
 # ---------------------------------------------------------------------
 # Set default description to empty string if not provided.
 # ---------------------------------------------------------------------
-- name: "Normalize app_desc"
+- name: "Normalize all API fields for {{ app_name }}"
   ansible.builtin.set_fact:
     app_desc: "{{ app_desc | default('', true) }}"
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Set default app_homepage to empty string if not provided.
-# ---------------------------------------------------------------------
-- name: "Normalize app_homepage"
-  ansible.builtin.set_fact:
     app_homepage: "{{ app_homepage | default('', true) }}"
-  tags: ["always"]
-
-- name: "Normalize app_license"
-  ansible.builtin.set_fact:
     app_license: "{{ app_license | default('', true) }}"
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Default app_pull to true to ensure latest images/packages are fetched.
-# ---------------------------------------------------------------------
-- name: "Normalize app_pull"
-  ansible.builtin.set_fact:
     app_pull: "{{ app_pull | default(true, true) }}"
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Set app_state defaults based on delivery mode:
-# - native: 'present' (package installed but not necessarily running)
-# - container/compose/kube: 'started' (container should be running)
-# ---------------------------------------------------------------------
-- name: "Normalize app_state"
-  ansible.builtin.set_fact:
-    app_state: >-
-      {{
-        app_state | default('present' if app_delivery_mode == 'native' else 'started', true)
-      }}
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# For container mode, map the application name to the image name
-# if no specific image is defined.
-# ---------------------------------------------------------------------
-- name: "Normalize app_image (container mode)"
-  ansible.builtin.set_fact:
-    app_image: "{{ app_image | default(app_name, true) }}"
-  when: app_delivery_mode == 'container'
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# For native mode, ensure the package list matches the application
-# name by default and is converted to a list format.
-# ---------------------------------------------------------------------
-- name: "Normalize app_packages (native mode)"
-  ansible.builtin.set_fact:
+    app_state: "{{ app_state | default('present' if app_delivery_mode == 'native' else 'started', true) }}"
+    
+    app_image: "{{ app_image | default(app_name, true) if app_delivery_mode == 'container' else omit }}"
+    
     app_packages: >-
       {{
-        [app_packages | default(app_name, true)]
-        if (app_packages | default(app_name, true)) is string
-        else (app_packages | default(app_name, true) | list)
+        ([app_packages | default(app_name, true)]
+         if (app_packages | default(app_name, true)) is string
+         else (app_packages | default(app_name, true) | list))
+        if app_delivery_mode == 'native' else omit
       }}
-  when: app_delivery_mode == 'native'
-  tags: ["always"]
+      
+    app_compose_files: "{{ app_compose_files | default(['docker-compose.yml'], true) if app_delivery_mode == 'compose' else omit }}"
+    app_compose_project_name: "{{ app_compose_project_name | default(app_name, true) if app_delivery_mode == 'compose' else omit }}"
+    app_kube_manifest: "{{ app_kube_manifest | default(omit) if app_delivery_mode == 'kube' else omit }}"
 
-# ---------------------------------------------------------------------
-# For compose mode, set defaults for project name and files.
-# ---------------------------------------------------------------------
-- name: "Normalize compose fields (compose mode)"
-  ansible.builtin.set_fact:
-    app_compose_files: "{{ app_compose_files | default(['docker-compose.yml'], true) }}"
-    app_compose_project_name: "{{ app_compose_project_name | default(app_name, true) }}"
-  when: app_delivery_mode == 'compose'
-  tags: ["always"]
-
-- name: "Normalize kube-specific fields"
-  ansible.builtin.set_fact:
-    app_kube_manifest: "{{ app_kube_manifest | default(omit) }}"
-  when: app_delivery_mode == 'kube'
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Global Normalization: Set defaults for all optional shared fields
-# to prevent "undefined variable" errors in downstream templates.
-# ---------------------------------------------------------------------
-- name: "Normalize optional shared fields"
-  ansible.builtin.set_fact:
-    # Generic Lifecycle
     app_env: "{{ app_env | default({}, true) }}"
     app_env_file: "{{ app_env_file | default(omit, true) }}"
 
-    # Native: Script-based Installation
     app_install_cmd: "{{ app_install_cmd | default('', true) }}"
     app_install_creates: "{{ app_install_creates | default('', true) }}"
     app_install_env: "{{ app_install_env | default(app_env | default({}, true), true) }}"
@@ -133,7 +67,6 @@
     app_uninstall_changed_when: "{{ app_uninstall_changed_when | default(none, true) }}"
     app_uninstall_failed_when: "{{ app_uninstall_failed_when | default(none, true) }}"
 
-    # Native: macOS Specialized Meta
     app_dmg_app_name: "{{ app_dmg_app_name | default('', true) }}"
     app_pkg_id: "{{ app_pkg_id | default('', true) }}"
     app_pkg_uninstall_script: "{{ app_pkg_uninstall_script | default('', true) }}"
@@ -143,10 +76,9 @@
     app_kext_name: "{{ app_kext_name | default('', true) }}"
     app_is_cask: "{{ app_is_cask | default(false, true) }}"
 
-    # Containers: Shared Orchestration
-    app_ports: "{{ app_ports | default([], true) }}"
-    app_volumes: "{{ app_volumes | default([], true) }}"
-    app_networks: "{{ app_networks | default([], true) }}"
+    app_ports: "{{ [app_ports] if (app_ports | default([], true)) is string else (app_ports | default([], true)) }}"
+    app_volumes: "{{ [app_volumes] if (app_volumes | default([], true)) is string else (app_volumes | default([], true)) }}"
+    app_networks: "{{ [app_networks] if (app_networks | default([], true)) is string else (app_networks | default([], true)) }}"
 
     app_labels: "{{ app_labels | default({}, true) }}"
     app_restart_policy: "{{ app_restart_policy | default('unless-stopped', true) }}"
@@ -159,27 +91,4 @@
     app_privileged: "{{ app_privileged | default(false, true) }}"
 
     app_stop_timeout: "{{ (app_stop_timeout | default(10, true)) | int }}"
-
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Type Conversion: Ensure ports, volumes, and networks are always
-# in list format, even if the user provided a single string.
-# ---------------------------------------------------------------------
-- name: "Normalize ports to list"
-  ansible.builtin.set_fact:
-    app_ports: "{{ [app_ports] if app_ports is string else app_ports }}"
-  when: app_ports is defined and app_ports is string
-  tags: ["always"]
-
-- name: "Normalize volumes to list"
-  ansible.builtin.set_fact:
-    app_volumes: "{{ [app_volumes] if app_volumes is string else app_volumes }}"
-  when: app_volumes is defined and app_volumes is string
-  tags: ["always"]
-
-- name: "Normalize networks to list"
-  ansible.builtin.set_fact:
-    app_networks: "{{ [app_networks] if app_networks is string else app_networks }}"
-  when: app_networks is defined and app_networks is string
   tags: ["always"]

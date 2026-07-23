@@ -141,108 +141,61 @@
 # ---------------------------------------------------------------------
 # 7. Variable Hierarchy Loading (Additive)
 # ---------------------------------------------------------------------
-- name: "Load hierarchical variables for {{ app_name }}"
-  ansible.builtin.include_vars:
-    file: "{{ loader_item.path }}/{{ loader_item.file }}"
-  loop:
-    # Lowest Priority
-    - path: "{{ app_defaults_path | default('', true) }}"
-      file: "main.yml"
-    - path: "{{ app_defaults_path | default('', true) }}"
-      file: "default.yml"
-    - path: "{{ app_defaults_path | default('', true) }}"
-      file: "{{ app_name }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "main.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "default.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ app_name }}.yml"
-    # 17. Ultimate Fallback (App context)
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/default.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}.yml"
-    # 16. Architecture Only
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ arch }}.yml"
-    # 15. Generic Match: Distribution Name (Fallback if ID differs)
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro_name }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro_name }}.yml"
-    # 14. OS Family
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}.yml"
-    # 13. Distro ID
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}.yml"
-    # 12. OS Family + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}_{{ arch }}.yml"
-    # 11. Distro ID + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ arch }}.yml"
-    # 10. OS Family + Major Version
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}_{{ version_major }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}_{{ version_major }}.yml"
-    # 9. OS Family + Full Version
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}.yml"
-    # 8. Distro ID + Major Version
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_major }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_major }}.yml"
-    # 7. Distro ID + Full Version
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}.yml"
-    # 6. Distro ID + Version Code
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_code }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_code }}.yml"
-    # 5. OS Family + Major Version + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}_{{ version_major }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}_{{ version_major }}_{{ arch }}.yml"
-    # 4. OS Family + Full Version + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ family }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
-    # 3. Distro ID + Major Version + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_major }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_major }}_{{ arch }}.yml"
-    # 2. Distro ID + Full Version + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_major }}.{{ version_minor }}_{{ arch }}.yml"
-    # 1. Distro ID + Version Code + Arch
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ distro }}_{{ version_code }}_{{ arch }}.yml"
-    - path: "{{ app_vars_path | default('', true) }}"
-      file: "{{ mode }}/{{ distro }}_{{ version_code }}_{{ arch }}.yml"
+- name: "Pre-calculate existing variable files for {{ app_name }}"
+  ansible.builtin.set_fact:
+    _existing_vars_files: >-
+      {% set results = [] %}
+      {% set paths = [
+        {"p": app_defaults_path | default('', true), "f": "main.yml"},
+        {"p": app_defaults_path | default('', true), "f": "default.yml"},
+        {"p": app_defaults_path | default('', true), "f": app_name ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": "main.yml"},
+        {"p": app_vars_path | default('', true), "f": "default.yml"},
+        {"p": app_vars_path | default('', true), "f": app_name ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/default.yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro_name ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro_name ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ "_" ~ version_major ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ "_" ~ version_major ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ "_" ~ version_major ~ "." ~ version_minor ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ "_" ~ version_major ~ "." ~ version_minor ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_major ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_major ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_major ~ "." ~ version_minor ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_major ~ "." ~ version_minor ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_code ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_code ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ "_" ~ version_major ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ "_" ~ version_major ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": family ~ "_" ~ version_major ~ "." ~ version_minor ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ family ~ "_" ~ version_major ~ "." ~ version_minor ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_major ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_major ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_major ~ "." ~ version_minor ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_major ~ "." ~ version_minor ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": distro ~ "_" ~ version_code ~ "_" ~ arch ~ ".yml"},
+        {"p": app_vars_path | default('', true), "f": mode ~ "/" ~ distro ~ "_" ~ version_code ~ "_" ~ arch ~ ".yml"}
+      ] %}
+      {% for item in paths %}
+        {% if item.p | length > 0 %}
+          {% set f = q('first_found', {'paths': [item.p], 'files': [item.f]}, errors='ignore') %}
+          {% if f %}
+            {% set _ = results.append(f[0]) %}
+          {% endif %}
+        {% endif %}
+      {% endfor %}
+      {{ results | to_json }}
   vars:
     distro: "{{ os_distribution_id | default('__skip__', true) | lower | replace(' ', '_') }}"
     distro_name: "{{ os_distribution | default('__skip__', true) | lower | replace(' ', '_') }}"
@@ -252,10 +205,14 @@
     version_code: "{{ os_version_code | default('__skip__', true) | lower | replace(' ', '_') }}"
     arch: "{{ os_architecture_oci | default('__skip__', true) | lower }}"
     mode: "{{ app_delivery_mode }}"
-  when:
-    - app_loader_custom_exists | default(false, true)
-    - loader_item.path | length > 0
-    - "(lookup('first_found', {'paths': [loader_item.path], 'files': [loader_item.file]}, errors='ignore') | default('', true) | length) > 0"
+  when: app_loader_custom_exists | default(false, true)
+  tags: ["always"]
+
+- name: "Load hierarchical variables for {{ app_name }}"
+  ansible.builtin.include_vars:
+    file: "{{ loader_item }}"
+  loop: "{{ (_existing_vars_files | default('[]', true)) | from_json }}"
+  when: app_loader_custom_exists | default(false, true)
   failed_when: false
   loop_control:
     loop_var: loader_item
