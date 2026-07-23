@@ -7,11 +7,11 @@
 # =====================================================================
 
 # ---------------------------------------------------------------------
-# System Root Identity
+# System Identity and Permissions
 # ---------------------------------------------------------------------
-- name: "Build system root user and group"
+- name: "Build context identity facts"
   ansible.builtin.set_fact:
-    unistack_root_user: "{{ 'Administrator' if (os_family | default('') | lower) == 'windows' else 'root' }}"
+    unistack_root_user: "{{ computed_root_user }}"
     unistack_root_group: >-
       {%- if (os_family | default('') | lower) == 'windows' -%}
         Administrators
@@ -20,32 +20,16 @@
       {%- else -%}
         root
       {%- endif -%}
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Identity Detection
-# ---------------------------------------------------------------------
-- name: "Build is_root_user"
-  ansible.builtin.set_fact:
-    is_root_user: "{{ (ansible_user_id | default(ansible_env.USER | default('unknown', true), true)) == unistack_root_user }}"
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Permission Strategy
-# ---------------------------------------------------------------------
-- name: "Build become_enabled"
-  ansible.builtin.set_fact:
-    # -----------------------------------------------------------------
-    # become_enabled evaluates to True ONLY if all constraints pass:
-    # 1. Not already running as root.
-    # 2. Not running macOS with Homebrew (Homebrew strictly forbids sudo).
-    # -----------------------------------------------------------------
+    is_root_user: "{{ current_user == computed_root_user }}"
     become_enabled: >-
       {{
-        (not (is_root_user | default(false, true)))
+        (not (current_user == computed_root_user))
         and not (
           (ansible_facts.os_family | default('') | lower) == 'darwin'
           and (ansible_pkg_mgr | default('homebrew') | lower) == 'homebrew'
         )
       }}
+  vars:
+    computed_root_user: "{{ 'Administrator' if (os_family | default('') | lower) == 'windows' else 'root' }}"
+    current_user: "{{ ansible_user_id | default(ansible_env.USER | default('unknown', true), true) }}"
   tags: ["always"]

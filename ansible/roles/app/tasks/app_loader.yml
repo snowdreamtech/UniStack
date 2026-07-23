@@ -37,24 +37,20 @@
     file: "vars/api_schema.yml"
   tags: ["always"]
 
-# 2. Reset Loader & API State
+# 2. Reset Loader & API State & Base Discovery
 #    Prevent fact leakage from previous calls on the same host.
-#    Only reset internal state variables, NOT user input parameters.
 # ---------------------------------------------------------------------
-- ansible.builtin.set_fact:
-    "{{ loader_internal_item }}": null
-  loop: "{{ app_api_internal_vars }}"
-  loop_control:
-    loop_var: loader_internal_item
-    label: "reset {{ loader_internal_item }} (null)"
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# 3. Path Resolution & Base Discovery
-#    Identify the source directory for application definitions.
-# ---------------------------------------------------------------------
-- name: "Resolve apps role base path"
+- name: "Initialize internal state and resolve app base path"
   ansible.builtin.set_fact:
+    resolved_apps_path: null
+    app_loader_root_mode: null
+    app_loader_custom_exists: null
+    app_loader_effective_prefixes: null
+    app_vars_path: null
+    app_tasks_path: null
+    app_tasks_file: null
+    app_vars_dir: null
+    app_tasks_dir: null
     resolved_app_source_path: >-
       {{
         app_source_path | default(
@@ -119,23 +115,17 @@
       tags: ["always"]
 
 # ---------------------------------------------------------------------
-# 5. State Initialization
+# 5. State Initialization & Mode Auto-Detection
 # ---------------------------------------------------------------------
-- name: "Initialize app loader state for {{ app_name }}"
+- name: "Initialize app state and detect delivery mode for {{ app_name }}"
   ansible.builtin.set_fact:
     app_tasks_file: ""
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# 6. Mode Auto-Detection
-# ---------------------------------------------------------------------
-- name: "Auto-detect app_delivery_mode for {{ app_name }}"
-  ansible.builtin.set_fact:
     app_delivery_mode: >-
-      {{
-        'container' if (container_engine_available | default(false, true)) else 'native'
-      }}
-  when: (app_delivery_mode | default('auto', true)) == 'auto'
+      {%- if (app_delivery_mode | default('auto', true)) == 'auto' -%}
+        {{ 'container' if (container_engine_available | default(false, true)) else 'native' }}
+      {%- else -%}
+        {{ app_delivery_mode }}
+      {%- endif -%}
   tags: ["always"]
 
 # ---------------------------------------------------------------------

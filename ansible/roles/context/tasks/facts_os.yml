@@ -29,9 +29,38 @@
   when: os_release_stat.stat.exists
   tags: ["always"]
 
-- name: "Parse OS Release ID"
+# ---------------------------------------------------------------------
+# OS Basics & Architecture Normalization
+# ---------------------------------------------------------------------
+- name: "Parse and build essential OS facts"
   ansible.builtin.set_fact:
-    _os_release_id: >-
+    _os_release_id: "{{ computed_id }}"
+    os_family: "{{ ansible_facts.os_family | default('', true) | lower }}"
+    os_distribution: "{{ ansible_facts.distribution | default('', true) | lower }}"
+    os_distribution_id: "{{ computed_id | default(ansible_facts.distribution | default('', true) | lower, true) }}"
+    os_version_major: "{{ ansible_facts.distribution_major_version | default('0', true) | string }}"
+    os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if ('distribution_version' in ansible_facts and '.' in ansible_facts.distribution_version) else '0' }}"
+    os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
+    is_container: >-
+      {{
+        ansible_facts.virtualization_type | default('', true)
+        in ['docker', 'lxc', 'container', 'containerd', 'podman', 'proot']
+      }}
+    os_architecture_oci: >-
+      {{
+        architecture_map[ansible_facts.architecture]
+        | default(ansible_facts.architecture, true)
+      }}
+    # When Ansible cannot detect pkg_mgr (returns 'unknown'), look up the distro
+    # in the fallback map. Otherwise pass through the already-detected value.
+    os_pkg_mgr: >-
+      {%- if ansible_facts.pkg_mgr | default('unknown', true) == 'unknown' -%}
+        {{ fallback_pkg_mgr_map[computed_id] | default('', true) }}
+      {%- else -%}
+        {{ ansible_facts.pkg_mgr }}
+      {%- endif -%}
+  vars:
+    computed_id: >-
       {%- if 'content' in os_release_file -%}
         {%- set decoded = os_release_file.content | b64decode -%}
         {%- set match = decoded | regex_search('(?m)^ID=["\x27]?([^"\x27\n]+)["\x27]?', '\\1') -%}
@@ -43,40 +72,4 @@
       {%- else -%}
         {{ '' }}
       {%- endif -%}
-  tags: ["always"]
-
-# OS Basics: Only what downstream tasks truly need
-# ---------------------------------------------------------------------
-- name: "Build essential OS facts"
-  ansible.builtin.set_fact:
-    os_family: "{{ ansible_facts.os_family | default('', true) | lower }}"
-    os_distribution: "{{ ansible_facts.distribution | default('', true) | lower }}"
-    os_distribution_id: "{{ _os_release_id | default(ansible_facts.distribution | default('', true) | lower, true) }}"
-    os_version_major: "{{ ansible_facts.distribution_major_version | default('0', true) | string }}"
-    os_version_minor: "{{ (ansible_facts.distribution_version.split('.')[1] | default('0', true)) if ('distribution_version' in ansible_facts and '.' in ansible_facts.distribution_version) else '0' }}"
-    os_version_code: "{{ ansible_facts.distribution_release | default('', true) | lower }}"
-    is_container: >-
-      {{
-        ansible_facts.virtualization_type | default('', true)
-        in ['docker', 'lxc', 'container', 'containerd', 'podman', 'proot']
-      }}
-  tags: ["always"]
-
-# ---------------------------------------------------------------------
-# Architecture Normalization
-# ---------------------------------------------------------------------
-- name: "Set normalized architecture (OCI/Docker/Go style)"
-  ansible.builtin.set_fact:
-    os_architecture_oci: >-
-      {{
-        architecture_map[ansible_facts.architecture]
-        | default(ansible_facts.architecture, true)
-      }}
-  tags: ["always"]
-- name: "Fix unknown package manager via fallback map (Ansible limitation)"
-  ansible.builtin.set_fact:
-    os_pkg_mgr: "{{ fallback_pkg_mgr_map[_os_release_id] }}"
-  when: 
-    - ansible_facts.pkg_mgr | default('unknown', true) == 'unknown'
-    - _os_release_id in fallback_pkg_mgr_map
   tags: ["always"]
