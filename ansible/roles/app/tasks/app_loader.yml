@@ -13,7 +13,7 @@
 # ---------------------------------------------------------------------
 - ansible.builtin.include_role:
     name: "context"
-  when: os_fingerprint is not defined
+  when: os_distribution_id is not defined
 
 # 1. Basic Validation (app_name only)
 # ---------------------------------------------------------------------
