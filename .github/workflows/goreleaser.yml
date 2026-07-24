@@ -246,7 +246,7 @@ jobs:
           echo "Warming up Go Proxy for ${TAG}..."
           # Wait up to 60 seconds for Go proxy to sync the new tag
           for i in $(seq 1 12); do
-            if curl -s -f "https://proxy.golang.org/github.com/snowdreamtech/unigo/@v/${TAG}.info" > /dev/null; then
+            if curl -s -f "https://proxy.golang.org/github.com/snowdreamtech/unistack/@v/${TAG}.info" > /dev/null; then
               echo "✅ Go Proxy is ready!"
               exit 0
             fi

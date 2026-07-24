@@ -54,13 +54,13 @@ UniStack 旨在解决每次启动新的 Go CLI 项目时遇到的模板化和重
 **通过 NPM 安装**:
 
 ```sh-session
-npm install -g @snowdreamtech/unigo
+npm install -g @snowdreamtech/unistack
 ```
 
 **通过 PyPI 安装**:
 
 ```sh-session
-pip install snowdreamtech-unigo
+pip install snowdreamtech-unistack
 ```
 
 ### 快速开始

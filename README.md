@@ -54,13 +54,13 @@ UniStack is engineered to solve the boilerplate problem when starting new Go CLI
 **Via NPM**:
 
 ```sh-session
-npm install -g @snowdreamtech/unigo
+npm install -g @snowdreamtech/unistack
 ```
 
 **Via PyPI**:
 
 ```sh-session
-pip install snowdreamtech-unigo
+pip install snowdreamtech-unistack
 ```
 
 ### Quick Start
