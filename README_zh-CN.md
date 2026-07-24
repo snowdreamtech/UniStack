@@ -49,6 +49,20 @@ UniStack 旨在解决每次启动新的 Go CLI 项目时遇到的模板化和重
 - **Git**: 需要全局安装 git。
 - **UniRTM**: 必须安装以执行任务编排。
 
+### 安装
+
+**通过 NPM 安装**:
+
+```sh-session
+npm install -g @snowdreamtech/unigo
+```
+
+**通过 PyPI 安装**:
+
+```sh-session
+pip install snowdreamtech-unigo
+```
+
 ### 快速开始
 
 1. **安装 UniRTM**：请确保系统已安装 `unirtm`。

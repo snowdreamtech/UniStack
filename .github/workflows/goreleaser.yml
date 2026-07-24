@@ -194,9 +194,9 @@ jobs:
           persist-credentials: false
 
       - name: "⚡ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@3de054956dc845d374ab5a1a0fa5b4d242afa9de # v0.5.0
+        uses: snowdreamtech/setup-unirtm@7711c9fc506ca29a54cba2d7d8181d2b146f00d9 # v0.6.0
         with:
-          unirtm-version: "0.25.3"
+          unirtm-version: "0.25.7"
           install: true
           trust: true
         env:
@@ -238,7 +238,24 @@ jobs:
         uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
-      - name: "�🚀 Distribute Artifacts (GoReleaser)"
+      - name: "🌡️ Warm up Go Proxy"
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: sh
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          echo "Warming up Go Proxy for ${TAG}..."
+          # Wait up to 60 seconds for Go proxy to sync the new tag
+          for i in $(seq 1 12); do
+            if curl -s -f "https://proxy.golang.org/github.com/snowdreamtech/unigo/@v/${TAG}.info" > /dev/null; then
+              echo "✅ Go Proxy is ready!"
+              exit 0
+            fi
+            echo "⏳ Waiting for proxy to sync (attempt $i/12)..."
+            sleep 5
+          done
+          echo "⚠️ Proxy might not be ready, but proceeding anyway..."
+
+      - name: "🚀 Distribute Artifacts (GoReleaser)"
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
@@ -291,6 +308,34 @@ jobs:
 
           echo ""
           echo '[done] All npm packages published successfully!'
+
+      - name: "🐍 Setup Python for PyPI Publishing"
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
+        with:
+          python-version: "3.12"
+
+      - name: "📦 Install Python Build Tools"
+        if: startsWith(github.ref, 'refs/tags/')
+        run: pip install build twine wheel setuptools
+
+      - name: "🔨 Build PyPI Platform Packages (Wheels)"
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: sh
+        run: |
+          VERSION=$(node -p "require('./dist/metadata.json').version")
+          echo "Building PyPI packages for version: ${VERSION}"
+          sh pypi/scripts/build.sh --version "${VERSION}"
+
+      - name: "🚀 Publish PyPI Packages"
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          echo "Publishing wheels to PyPI..."
+          # The build.sh script outputs wheels into pypi/dist/
+          twine upload pypi/dist/*.whl --skip-existing
 
       - name: "🛡️ Attest Build Provenance (SLSA)"
         if: startsWith(github.ref, 'refs/tags/')
