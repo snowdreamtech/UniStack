@@ -13,7 +13,7 @@
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Rename directory `pypi/snowdreamtech_unigo` to `pypi/snowdreamtech_unistack`
+- [x] T001 Rename directory `pypi/snowdreamtech_unigo` to `pypi/snowdreamtech_unistack`
 
 ---
 
@@ -33,11 +33,11 @@
 
 ### Implementation for User Story 1
 
-- [ ] T012 [P] [US1] Replace `unigo` with `unistack` in `pypi/pyproject.toml`
-- [ ] T013 [P] [US1] Replace `unigo` with `unistack` in `pypi/setup.py`
-- [ ] T014 [P] [US1] Replace `unigo` with `unistack` in `pypi/scripts/build.sh`
-- [ ] T015 [P] [US1] Replace `unigo` with `unistack` in `pypi/snowdreamtech_unistack/__init__.py` (if any references exist)
-- [ ] T016 [P] [US1] Replace `unigo` with `unistack` in `pypi/snowdreamtech_unistack/cli.py`
+- [x] T012 [P] [US1] Replace `unigo` with `unistack` in `pypi/pyproject.toml`
+- [x] T013 [P] [US1] Replace `unigo` with `unistack` in `pypi/setup.py`
+- [x] T014 [P] [US1] Replace `unigo` with `unistack` in `pypi/scripts/build.sh`
+- [x] T015 [P] [US1] Replace `unigo` with `unistack` in `pypi/snowdreamtech_unistack/__init__.py` (if any references exist)
+- [x] T016 [P] [US1] Replace `unigo` with `unistack` in `pypi/snowdreamtech_unistack/cli.py`
 
 **Checkpoint**: At this point, PyPI package references are updated.
 
@@ -51,9 +51,9 @@
 
 ### Implementation for User Story 2
 
-- [ ] T020 [P] [US2] Replace `unigo` with `unistack` in `.github/workflows/goreleaser.yml` (proxy warmup URL)
-- [ ] T021 [P] [US2] Replace `unigo` with `unistack` in `README.md`
-- [ ] T022 [P] [US2] Replace `unigo` with `unistack` in `README_zh-CN.md`
+- [x] T020 [P] [US2] Replace `unigo` with `unistack` in `.github/workflows/goreleaser.yml` (proxy warmup URL)
+- [x] T021 [P] [US2] Replace `unigo` with `unistack` in `README.md`
+- [x] T022 [P] [US2] Replace `unigo` with `unistack` in `README_zh-CN.md`
 
 **Checkpoint**: At this point, all CI and documentation references are updated.
 

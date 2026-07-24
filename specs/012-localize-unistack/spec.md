@@ -67,7 +67,7 @@ As a developer releasing a new version, I want the CI/CD pipeline to properly wa
 - **FR-005**: System MUST update the README documentation (both English and Chinese) to use the correct installation commands for both NPM and PyPI.
 - **FR-006**: System MUST update the `goreleaser.yml` workflow to use the correct URL for the Go proxy warmup ping (`github.com/snowdreamtech/unistack`).
 
-### Key Entities 
+### Key Entities
 
 - **PyPI Package Configuration**: The metadata that defines how the Python wrapper is distributed.
 - **CI/CD Workflow**: The GitHub Actions setup that builds and releases the software.
