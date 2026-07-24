@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "snowdreamtech-unigo"
+name = "snowdreamtech-unistack"
 version = "0.0.0" # This will be replaced during build
-description = "UniGo: A fast, flexible, and enterprise-grade Golang CLI template"
+description = "UniStack: A fast, flexible, and enterprise-grade Golang CLI template"
 readme = "README.md"
 requires-python = ">=3.7"
 authors = [{ name = "snowdreamtech", email = "snowdreamtech@qq.com" }]
@@ -18,4 +18,4 @@ classifiers = [
 ]
 
 [project.scripts]
-unigo = "snowdreamtech_unigo.cli:main"
+unistack = "snowdreamtech_unistack.cli:main"

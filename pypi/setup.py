@@ -19,7 +19,7 @@ if bdist_wheel:
     cmdclass["bdist_wheel"] = bdist_wheel
 
 setup(
-    packages=["snowdreamtech_unigo"],
-    package_data={"snowdreamtech_unigo": ["bin/*"]},
+    packages=["snowdreamtech_unistack"],
+    package_data={"snowdreamtech_unistack": ["bin/*"]},
     cmdclass=cmdclass,
 )

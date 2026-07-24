@@ -33,7 +33,7 @@ sed -i.bak "s/version = \"0.0.0\"/version = \"${VERSION_PY}\"/g" "${PYPI_DIR}/py
 rm -f "${PYPI_DIR}/pyproject.toml.bak"
 
 # Ensure bin directory exists
-mkdir -p "${PYPI_DIR}/snowdreamtech_unigo/bin"
+mkdir -p "${PYPI_DIR}/snowdreamtech_unistack/bin"
 # Copy README
 cp "${PROJECT_ROOT}/README.md" "${PYPI_DIR}/"
 
@@ -41,22 +41,22 @@ cd "${PYPI_DIR}"
 
 # map format: "dist_dir|pypi_plat|binary"
 PLATFORMS="
-unigo_darwin_arm64_v8.0|macosx_11_0_arm64|unigo
-unigo_darwin_amd64_v1|macosx_10_9_x86_64|unigo
-unigo_linux_amd64_v1|manylinux2014_x86_64|unigo
-unigo_linux_arm64_v8.0|manylinux2014_aarch64|unigo
-unigo_linux_386_sse2|manylinux2014_i686|unigo
-unigo_linux_arm_7|manylinux2014_armv7l|unigo
-unigo_linux_ppc64le_power8|manylinux2014_ppc64le|unigo
-unigo_linux_s390x|manylinux2014_s390x|unigo
-unigo_windows_amd64_v1|win_amd64|unigo.exe
-unigo_windows_arm64_v8.0|win_arm64|unigo.exe
-unigo_windows_386_sse2|win32|unigo.exe
+unistack_darwin_arm64_v8.0|macosx_11_0_arm64|unistack
+unistack_darwin_amd64_v1|macosx_10_9_x86_64|unistack
+unistack_linux_amd64_v1|manylinux2014_x86_64|unistack
+unistack_linux_arm64_v8.0|manylinux2014_aarch64|unistack
+unistack_linux_386_sse2|manylinux2014_i686|unistack
+unistack_linux_arm_7|manylinux2014_armv7l|unistack
+unistack_linux_ppc64le_power8|manylinux2014_ppc64le|unistack
+unistack_linux_s390x|manylinux2014_s390x|unistack
+unistack_windows_amd64_v1|win_amd64|unistack.exe
+unistack_windows_arm64_v8.0|win_arm64|unistack.exe
+unistack_windows_386_sse2|win32|unistack.exe
 "
 
 echo "${PLATFORMS}" | grep -v '^$' | while IFS='|' read -r _dist_subdir _pypi_plat _binary; do
   _src_binary="${DIST_DIR}/${_dist_subdir}/${_binary}"
-  _dst_binary="snowdreamtech_unigo/bin/${_binary}"
+  _dst_binary="snowdreamtech_unistack/bin/${_binary}"
 
   if [ ! -f "${_src_binary}" ]; then
     echo "  ❌ Source binary not found: ${_src_binary}"
@@ -66,7 +66,7 @@ echo "${PLATFORMS}" | grep -v '^$' | while IFS='|' read -r _dist_subdir _pypi_pl
   echo "🔧 Building wheel for ${_pypi_plat}..."
 
   # Clean up previous binary
-  rm -f snowdreamtech_unigo/bin/*
+  rm -f snowdreamtech_unistack/bin/*
 
   # Copy the binary
   cp "${_src_binary}" "${_dst_binary}"

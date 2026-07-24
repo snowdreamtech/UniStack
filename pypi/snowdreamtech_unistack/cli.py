@@ -5,11 +5,11 @@ import sys
 
 def main():
     package_dir = os.path.dirname(os.path.abspath(__file__))
-    binary_name = "unigo.exe" if os.name == "nt" else "unigo"
+    binary_name = "unistack.exe" if os.name == "nt" else "unistack"
     binary_path = os.path.join(package_dir, "bin", binary_name)
 
     if not os.path.exists(binary_path):
-        print(f"Error: UniGo binary not found at {binary_path}", file=sys.stderr)
+        print(f"Error: UniStack binary not found at {binary_path}", file=sys.stderr)
         sys.exit(1)
 
     try:
