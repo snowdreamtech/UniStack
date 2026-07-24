@@ -1,5 +1,61 @@
 # Changelog
 
+## [0.0.5](https://github.com/snowdreamtech/UniStack/compare/v0.0.4...v0.0.5) (2026-07-24)
+
+
+### 🚀 Features
+
+* **pypi:** implement multi-architecture python wheel packaging ([59c1e4a](https://github.com/snowdreamtech/UniStack/commit/59c1e4ad485621910a820b892f638250d35ee17a))
+
+
+### 🐛 Bug Fixes
+
+* **app:** correct context inclusion guard to prevent redundant setup runs ([06f6f43](https://github.com/snowdreamtech/UniStack/commit/06f6f43556f2b7df4464a352ef87e99e998f80e9))
+* fallback os_distribution_id to lowercase distribution when _os_release_id is missing ([e1d21f2](https://github.com/snowdreamtech/UniStack/commit/e1d21f246288865aa59faf9bed6bcb055361a13f))
+* **normalize:** replace all omit usage with type-safe default values ([d5ff157](https://github.com/snowdreamtech/UniStack/commit/d5ff15777ac33be31a0823b1f48135c2febe1ab8))
+* **pypi:** remove unsupported loongarch64 and riscv64 architectures ([e96b285](https://github.com/snowdreamtech/UniStack/commit/e96b28526c29e99d69266099c32c09f7edee5417))
+
+
+### ⚡️ Performance Improvements
+
+* **ansible:** consolidate OS and context fact tasks for extreme speed gain ([58ee33d](https://github.com/snowdreamtech/UniStack/commit/58ee33d4c9da3a801b16c0dbda2bba20d4ce8966))
+* **app:** optimize task execution via Jinja2 memory consolidation ([2f46942](https://github.com/snowdreamtech/UniStack/commit/2f46942a00775bc2aad7906b83438c85eccd95b1))
+
+
+### 🛠 Refactoring
+
+* **context:** implement explicit include guard for context loading ([a804343](https://github.com/snowdreamtech/UniStack/commit/a804343ff83c7c17dc0d9139e5cb25c0caf8fa83))
+* **pypi:** localize package namespace to unistack ([a3e21a5](https://github.com/snowdreamtech/UniStack/commit/a3e21a5a183d4262935940b6b397070b284056eb))
+
+
+### 📖 Documentation
+
+* add PyPI and NPM installation instructions to README ([886e70c](https://github.com/snowdreamtech/UniStack/commit/886e70ca0e3aefa632405c08a44436f882f8b3b7))
+* localize project references to unistack ([84800e1](https://github.com/snowdreamtech/UniStack/commit/84800e100b0db61020f3d1088d177f11cea091ee))
+* **speckit:** add implementation plan ([d0db4eb](https://github.com/snowdreamtech/UniStack/commit/d0db4eb48f82cfc90326fcf66a28b975a72f4a92))
+* **speckit:** add specification ([351e2f8](https://github.com/snowdreamtech/UniStack/commit/351e2f8e8daf18528a238372ee4ffc0b00d6859e))
+* **speckit:** add tasks ([44fdd66](https://github.com/snowdreamtech/UniStack/commit/44fdd665c2748b12b92792fb0f14a863effe81c2))
+* **specs:** update progress for 012-localize-unistack ([4843698](https://github.com/snowdreamtech/UniStack/commit/48436980e4381311f7c7cca01d48e06038890bf1))
+
+
+### ♻️ Miscellaneous Chores
+
+* bump github.com/klauspost/compress to v1.19.1 ([02c96e4](https://github.com/snowdreamtech/UniStack/commit/02c96e47a6ddfb6cca8d1f359355dee5647e62ec))
+* **deps:** fix vulnerabilities reported by osv-scanner and update go modules ([e99bbbe](https://github.com/snowdreamtech/UniStack/commit/e99bbbe7c690c8861a9b3b102f301e32a690ca84))
+* **deps:** sync dependabot config and unirtm toolchain ([8140fd9](https://github.com/snowdreamtech/UniStack/commit/8140fd91e3128604ac2df153f1137e1ca4ff66c7))
+* **deps:** sync dependabot config for PyPI ([e1533a8](https://github.com/snowdreamtech/UniStack/commit/e1533a8d8147765aa049b97ccd8a4f3d2b963efe))
+* **deps:** sync upstream dependency updates for CI actions and docs tooling ([841e790](https://github.com/snowdreamtech/UniStack/commit/841e79091a9321bd6cb4449d631c3212c21a0f9f))
+* **deps:** update go.mod and go.sum ([28a6203](https://github.com/snowdreamtech/UniStack/commit/28a620342b43535a907ea46f6c0d7ee106dcf0ed))
+* **docker:** remove default VERSION and release-please markers ([5d5e128](https://github.com/snowdreamtech/UniStack/commit/5d5e128a0322aa5dc5145dbe85e5a6ab91b48dc8))
+* merge upstream dev branch to sync dependency updates ([0ed315d](https://github.com/snowdreamtech/UniStack/commit/0ed315d8fbe95207d909a004b5b44e17743fbffb))
+* **merge:** merge upstream dev into dev ([dc626af](https://github.com/snowdreamtech/UniStack/commit/dc626af0f5999b4e4c882acb8e2cfeff3fb750b4))
+* **pypi:** add missing docstring to __init__.py ([7f597b1](https://github.com/snowdreamtech/UniStack/commit/7f597b1a3c46e078d67e1c175c180b2a99414964))
+* release main ([ae2ad23](https://github.com/snowdreamtech/UniStack/commit/ae2ad23e7aedaa5f06f0881dc5636ded8360e5b9))
+* **release:** remove hardcoded release-as version ([37b2a5b](https://github.com/snowdreamtech/UniStack/commit/37b2a5b95adb08abac7e70180fe1dd251f6b7daa))
+* **release:** remove hardcoded release-as version ([105dc81](https://github.com/snowdreamtech/UniStack/commit/105dc81f183d9c471cb6ea888284d159d3ffd135))
+* update base images to alpine 3.24.1 and debian 13.6.0 ([a1096c2](https://github.com/snowdreamtech/UniStack/commit/a1096c27797f144b45bc1ce0eefaa44c38b16a27))
+* upgrade setup-unirtm action to v0.6.0 and UniRTM to v0.25.7 in workflows ([1088902](https://github.com/snowdreamtech/UniStack/commit/10889026cbc7ce16ab41407a099d74cf6a6eb89f))
+
 ## [0.0.4](https://github.com/snowdreamtech/UniStack/compare/v0.0.3...v0.0.4) (2026-07-22)
 
 
