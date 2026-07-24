@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.0.7](https://github.com/snowdreamtech/UniGo/compare/v0.0.6...v0.0.7) (2026-07-24)
+
+
+### 🚀 Features
+
+* **pypi:** implement multi-architecture python wheel packaging ([59c1e4a](https://github.com/snowdreamtech/UniGo/commit/59c1e4ad485621910a820b892f638250d35ee17a))
+
+
+### 🐛 Bug Fixes
+
+* **pypi:** remove unsupported loongarch64 and riscv64 architectures ([e96b285](https://github.com/snowdreamtech/UniGo/commit/e96b28526c29e99d69266099c32c09f7edee5417))
+
+
+### 📖 Documentation
+
+* add PyPI and NPM installation instructions to README ([886e70c](https://github.com/snowdreamtech/UniGo/commit/886e70ca0e3aefa632405c08a44436f882f8b3b7))
+
+
+### ♻️ Miscellaneous Chores
+
+* **deps:** bump vite in /docs in the all-dependencies group ([bcad411](https://github.com/snowdreamtech/UniGo/commit/bcad411a69b84ae6eb1db8cb71e8e8a3f54f48d6))
+* **deps:** fix vulnerabilities reported by osv-scanner and update go modules ([e99bbbe](https://github.com/snowdreamtech/UniGo/commit/e99bbbe7c690c8861a9b3b102f301e32a690ca84))
+* **deps:** sync dependabot config for PyPI ([e1533a8](https://github.com/snowdreamtech/UniGo/commit/e1533a8d8147765aa049b97ccd8a4f3d2b963efe))
+* **deps:** sync upstream dependency updates for CI actions and docs tooling ([841e790](https://github.com/snowdreamtech/UniGo/commit/841e79091a9321bd6cb4449d631c3212c21a0f9f))
+* **docker:** remove default VERSION and release-please markers ([5d5e128](https://github.com/snowdreamtech/UniGo/commit/5d5e128a0322aa5dc5145dbe85e5a6ab91b48dc8))
+* merge upstream dev branch to sync dependency updates ([0ed315d](https://github.com/snowdreamtech/UniGo/commit/0ed315d8fbe95207d909a004b5b44e17743fbffb))
+* **pypi:** add missing docstring to __init__.py ([7f597b1](https://github.com/snowdreamtech/UniGo/commit/7f597b1a3c46e078d67e1c175c180b2a99414964))
+* **release:** remove hardcoded release-as version ([105dc81](https://github.com/snowdreamtech/UniGo/commit/105dc81f183d9c471cb6ea888284d159d3ffd135))
+* upgrade setup-unirtm action to v0.6.0 and UniRTM to v0.25.7 in workflows ([1088902](https://github.com/snowdreamtech/UniGo/commit/10889026cbc7ce16ab41407a099d74cf6a6eb89f))
+
 ## [0.0.6](https://github.com/snowdreamtech/UniGo/compare/v0.0.6...v0.0.6) (2026-07-15)
 
 
