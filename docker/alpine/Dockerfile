@@ -15,7 +15,7 @@ RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build -trimpath -ldfl
 # Base Image (Alpine Variant)
 # Extends snowdreamtech/alpine with additional tooling and configuration.
 
-FROM ghcr.io/snowdreamtech/alpine:3.24.0
+FROM ghcr.io/snowdreamtech/alpine:3.24.1
 
 # Build-time Configuration
 ARG BUILDTIME \
