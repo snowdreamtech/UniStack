@@ -17,7 +17,7 @@
 
 [English](README.md) | [简体中文](README_zh-CN.md)
 
-UniStack 是一个快速、灵活且企业级的 Golang CLI 模板，深受 UniRTM 和 helloworld 的启发。它为构建现代 Go 命令行应用程序提供了一个坚实的基础，内置了精美的终端输出、结构化日志、缓存管理机制以及全套的 CI/CD 流水线。
+UniStack 是一个单体二进制、跨平台的编排工具，它为容器化和原生基础设施部署带来了类似 Docker Compose 的体验。
 
 ## 🌟 特性
 
