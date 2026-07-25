@@ -3,9 +3,17 @@
 # roles/apps/foundation/tasks/post_tasks.yml
 #
 # Purpose:
-#   Initialize openssh after the base system packages have been 
-#   installed by the native engine.
+#   Configure sudo, provision users, and initialize openssh after the
+#   base system packages have been installed by the native engine.
 # =====================================================================
+
+- name: "Foundation: Configure Sudo"
+  ansible.builtin.include_role:
+    name: "apps/sudo"
+
+- name: "Foundation: Provision User"
+  ansible.builtin.include_role:
+    name: "apps/user"
 
 - name: "Foundation: Configure OpenSSH"
   ansible.builtin.include_role:
