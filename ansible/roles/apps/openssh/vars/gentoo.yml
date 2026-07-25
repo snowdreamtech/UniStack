@@ -1,4 +1,4 @@
 ---
-openssh_packages:
+app_packages:
   - net-misc/openssh
-openssh_sshd_service: sshd
+app_service: sshd

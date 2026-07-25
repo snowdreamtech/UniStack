@@ -1,7 +1,7 @@
 ---
-# tasks/main.yml for the template package
+# tasks/pre_tasks.yml for the template package
 #
-# This is the main entry point for the Ansible role.
+# This is the pre_tasks lifecycle hook for the Ansible role.
 # Add your installation, configuration, and setup tasks here.
 
 - name: Example task for template package

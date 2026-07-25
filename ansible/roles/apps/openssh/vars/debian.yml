@@ -1,6 +1,6 @@
 ---
-openssh_packages:
+app_packages:
   - openssh-server
   - openssh-client
-openssh_sshd_service: ssh
+app_service: ssh
 openssh_sshd_use_pam: "yes"

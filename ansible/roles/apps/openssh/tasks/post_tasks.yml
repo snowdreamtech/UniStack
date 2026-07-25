@@ -1,29 +1,11 @@
 ---
-- name: "Load OS-specific variables for this role"
-  ansible.builtin.include_role:
-    name: core
-    tasks_from: os_loader
-  vars:
-    core_loader_type: "vars"
-    core_loader_path: "vars"
-
 # =====================================================================
-# roles/init/tasks/openssh.yml
+# roles/init/tasks/post_tasks.yml
 #
 # Purpose:
-#   Install and secure the OpenSSH daemon.
+#   Secure the OpenSSH daemon and restart if configuration changed.
+#   (Base installation is handled automatically by the lifecycle engine)
 # =====================================================================
-
-- name: "DEBUG openssh_packages"
-  ansible.builtin.debug:
-    msg: "openssh_packages IS {{ openssh_packages | default('NOT_DEFINED') }}"
-
-- name: "Install OpenSSH Packages via Native Engine"
-  ansible.builtin.include_role:
-    name: native
-  vars:
-    native_app_name: "openssh"
-    native_app_packages: "{{ openssh_packages | default([], true) }}"
 
 - name: "Generate SSH host keys (Critical for Containers)"
   ansible.builtin.command: "ssh-keygen -A"
@@ -88,7 +70,7 @@
     name: native
   vars:
     native_app_name: "openssh"
-    native_app_packages: "{{ openssh_packages | default([], true) }}"
+    native_app_packages: "{{ app_packages | default([], true) }}"
     native_app_state: "{{ 'restarted' if (sshd_config_main is changed or sshd_config_hardening is changed) else 'started' }}"
-    native_app_service: "{{ openssh_sshd_service | default('sshd') }}"
+    native_app_service: "{{ app_service | default('sshd') }}"
     native_app_service_enabled: true

@@ -48,7 +48,7 @@
     app_loader_effective_prefixes: null
     app_vars_path: null
     app_tasks_path: null
-    app_tasks_file: null
+    app_override_file: null
     app_vars_dir: null
     app_tasks_dir: null
     resolved_app_source_path: >-
@@ -119,7 +119,7 @@
 # ---------------------------------------------------------------------
 - name: "Initialize app state and detect delivery mode for {{ app_name }}"
   ansible.builtin.set_fact:
-    app_tasks_file: ""
+    app_override_file: ""
     app_delivery_mode: >-
       {%- if (app_delivery_mode | default('auto', true)) == 'auto' -%}
         {{ 'container' if (container_engine_available | default(false, true)) else 'native' }}
@@ -286,9 +286,9 @@
 # ---------------------------------------------------------------------
 # 13. Task Resolution (Best Match)
 # ---------------------------------------------------------------------
-- name: "Resolve tasks file for {{ app_name }} ({{ app_delivery_mode }})"
+- name: "Resolve override tasks file for {{ app_name }} ({{ app_delivery_mode }})"
   ansible.builtin.set_fact:
-    app_tasks_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
+    app_override_file: "{{ lookup('first_found', params_tasks, errors='ignore') | default('', true) }}"
   vars:
     distro: "{{ os_distribution_id | default('__skip__', true) | lower | replace(' ', '_') }}"
     distro_name: "{{ os_distribution | default('__skip__', true) | lower | replace(' ', '_') }}"
@@ -364,12 +364,37 @@
   tags: ["always"]
 
 # ---------------------------------------------------------------------
+# 13.5 Lifecycle Hooks Probing
+# ---------------------------------------------------------------------
+- name: "Probe for lifecycle hooks (pre/post)"
+  ansible.builtin.stat:
+    path: "{{ app_tasks_path }}/{{ item }}"
+  loop:
+    - "pre_tasks.yml"
+    - "post_tasks.yml"
+  register: _app_hooks_stat
+  delegate_to: localhost
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+  when:
+    - app_loader_custom_exists | default(false, true)
+    - app_tasks_path is defined
+  tags: ["always"]
+
+- name: "Set lifecycle hooks facts for {{ app_name }}"
+  ansible.builtin.set_fact:
+    has_pre_tasks: "{{ (_app_hooks_stat.results[0].stat.exists | default(false, true)) if _app_hooks_stat is defined and 'results' in _app_hooks_stat else false }}"
+    has_post_tasks: "{{ (_app_hooks_stat.results[1].stat.exists | default(false, true)) if _app_hooks_stat is defined and 'results' in _app_hooks_stat else false }}"
+  when: app_loader_custom_exists | default(false, true)
+  tags: ["always"]
+
+# ---------------------------------------------------------------------
 # 14. Audit Logging
 # ---------------------------------------------------------------------
 - ansible.builtin.debug:
     msg: |
       [APP_LOADER] {{ app_name }}
-      Status: {{ 'Custom-Tasks' if (app_tasks_file | default('', true) | length > 0) else 'Generic-Logic' }}
+      Status: {{ 'Override' if (app_override_file | default('', true) | length > 0) else 'Lifecycle' }}
       Delivery Mode: {{ app_delivery_mode }}
 
       Discovery Context:
@@ -381,7 +406,9 @@
       Path Context:
       - Variables Root: {{ app_vars_path }}
       - Tasks Root: {{ app_tasks_path }}
-      - Resolved Task: {{ app_tasks_file | default('NONE', true) }}
+      - Resolved Override: {{ app_override_file | default('NONE', true) }}
+      - Pre Tasks: {{ has_pre_tasks | default(false, true) }}
+      - Post Tasks: {{ has_post_tasks | default(false, true) }}
 
       OS Context:
       - Family: {{ os_family | default('__skip__', true) }}
@@ -391,16 +418,30 @@
 # ---------------------------------------------------------------------
 # 15. Execution
 # ---------------------------------------------------------------------
-- name: "Execute resolved tasks for {{ app_name }}"
+- name: "Execute override tasks for {{ app_name }}"
   ansible.builtin.include_role:
     name: "{{ resolved_app_source_path }}"
-    tasks_from: "{{ app_tasks_file | relpath(app_tasks_path) }}"
+    tasks_from: "{{ app_override_file | relpath(app_tasks_path) }}"
   when:
-    - app_tasks_file is defined
-    - app_tasks_file | default('', true) | length > 0
+    - app_override_file is defined
+    - app_override_file | default('', true) | length > 0
 
-- name: "Execute generic deployment logic for {{ app_name }}"
-  ansible.builtin.include_tasks: "dispatch.yml"
+- name: "Execute lifecycle for {{ app_name }}"
   when:
-    - app_tasks_file is defined
-    - app_tasks_file | default('', true) | length == 0
+    - app_override_file is defined
+    - app_override_file | default('', true) | length == 0
+  block:
+    - name: "Execute pre_tasks for {{ app_name }}"
+      ansible.builtin.include_role:
+        name: "{{ resolved_app_source_path }}"
+        tasks_from: "pre_tasks.yml"
+      when: has_pre_tasks | default(false, true)
+
+    - name: "Execute generic deployment logic for {{ app_name }}"
+      ansible.builtin.include_tasks: "dispatch.yml"
+
+    - name: "Execute post_tasks for {{ app_name }}"
+      ansible.builtin.include_role:
+        name: "{{ resolved_app_source_path }}"
+        tasks_from: "post_tasks.yml"
+      when: has_post_tasks | default(false, true)
