@@ -8,13 +8,7 @@
 #   installation to the L2 native engine.
 # =====================================================================
 
-- name: "Foundation: Load OS-specific variables"
-  ansible.builtin.include_role:
-    name: core
-    tasks_from: os_loader
-  vars:
-    core_loader_type: "vars"
-    core_loader_path: "vars"
+
 
 # ---------------------------------------------------------------------
 # Foundation Stages (Metapackage Execution)
