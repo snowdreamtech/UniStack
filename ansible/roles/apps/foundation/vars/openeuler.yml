@@ -3,7 +3,7 @@
 # No EPEL available; packages from openEuler official repos only
 # openEuler has rich package ecosystem similar to RHEL9+
 base_dev_packages: []
-foundation_packages:
+app_packages:
   - bash-completion
   - bzip2
   - ca-certificates

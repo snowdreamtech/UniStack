@@ -1,6 +1,6 @@
 ---
 base_dev_packages: []
-foundation_packages:
+app_packages:
   - ca-certificates
   - curl
   - file

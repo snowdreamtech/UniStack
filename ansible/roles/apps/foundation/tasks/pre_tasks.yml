@@ -1,0 +1,25 @@
+---
+# =====================================================================
+# roles/apps/foundation/tasks/pre_tasks.yml
+#
+# Purpose:
+#   Configure system mirrors, repositories, sudo and provision users
+#   before base packages are installed by the native engine.
+# =====================================================================
+
+- name: "Foundation: Configure Mirror"
+  ansible.builtin.include_role:
+    name: "apps/mirror"
+  when: init_mirror_enabled | default(false, true)
+
+- name: "Foundation: Configure Repositories"
+  ansible.builtin.include_role:
+    name: "apps/repositories"
+
+- name: "Foundation: Configure Sudo"
+  ansible.builtin.include_role:
+    name: "apps/sudo"
+
+- name: "Foundation: Provision User"
+  ansible.builtin.include_role:
+    name: "apps/user"

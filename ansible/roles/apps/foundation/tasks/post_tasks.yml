@@ -1,0 +1,12 @@
+---
+# =====================================================================
+# roles/apps/foundation/tasks/post_tasks.yml
+#
+# Purpose:
+#   Initialize openssh after the base system packages have been 
+#   installed by the native engine.
+# =====================================================================
+
+- name: "Foundation: Configure OpenSSH"
+  ansible.builtin.include_role:
+    name: "apps/openssh"
