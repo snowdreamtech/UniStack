@@ -8,7 +8,6 @@ _darwin_pkg_ca: "{{ 'curl-ca-bundle' if (os_pkg_mgr | default('', true) == 'macp
 _darwin_pkg_patch: gpatch
 _darwin_pkg_make: "{{ 'gmake' if (os_pkg_mgr | default('', true) == 'macports')
   else 'make' }}"
-base_dev_packages: []
 app_packages:
   - aria2
   - bat

@@ -1,5 +1,4 @@
 ---
-base_dev_packages: []
 app_packages:
   - bzip2
   - ca-certificates

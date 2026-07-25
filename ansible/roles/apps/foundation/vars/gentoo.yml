@@ -1,5 +1,4 @@
 ---
-base_dev_packages: []
 app_packages:
   - app-admin/sudo
   - app-arch/bzip2

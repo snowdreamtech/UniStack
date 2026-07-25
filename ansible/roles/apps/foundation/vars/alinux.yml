@@ -2,7 +2,6 @@
 # Alibaba Cloud Linux 3 (alinux) - RedHat compatible
 # fzf is not available in the default repos without EPEL
 # (And we exclude EPEL for alinux in repositories/tasks/main.yml)
-base_dev_packages: []
 app_packages:
   - bash-completion
   - bzip2
