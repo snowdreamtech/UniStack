@@ -169,14 +169,11 @@ has_tasks: true                      # 表明自带额外配置逻辑(如 sudo/s
 ### 3.1 仓库初始化与管理
 
 ```bash
-# 1. 初始化空仓库
-unistack repo init /opt/my-registry
+# 1. 批量打包 Roles 并构建索引 (生成 packages.db 和 repomd.json)
+unistack registry pack /path/to/ansible/roles /opt/my-registry
 
-# 2. 添加包 (自动校验格式、计算哈希并放入正确目录)
-unistack repo add /opt/my-registry vim-1.0.0.tar.gz
-
-# 3. 构建索引 (生成 SQLite 数据库 packages.db)
-unistack repo build /opt/my-registry
+# 2. 或者直接对已有的压缩包目录构建索引
+unistack registry build /path/to/packages /opt/my-registry
 ```
 
 ### 3.2 两种托管方式
@@ -187,7 +184,7 @@ unistack repo build /opt/my-registry
 **方式 B：UniStack 内置服务**
 
 ```bash
-unistack repo serve /opt/my-registry --port 8080
+unistack registry serve /opt/my-registry --port 8080
 ```
 
 启动自带的轻量 HTTP 服务器，支持 ETag 增量同步、私有库 BasicAuth/Bearer 认证。
@@ -292,7 +289,7 @@ var BuiltinPackages embed.FS
 
 1. **Core 核心包**：独占全局顶层命名空间，**绝对不允许**带有任何前缀（例如 `vim`，`nginx`）。
 2. **Community / 第三方包**：**必须**带有作者或组织的命名空间前缀（例如 `community/vim`，`snowdreamtech/nginx`）。
-在打包构建阶段（`unistack repo build`），如果发现第三方仓库试图提交无前缀的核心包，构建程序将直接抛出致命错误拒绝打包。
+在打包构建阶段（`unistack registry pack` / `build`），如果发现第三方仓库试图提交无前缀的核心包，构建程序将直接抛出致命错误拒绝打包。
 
 ### 9.2 优先级锁 (Priority Pinning)
 

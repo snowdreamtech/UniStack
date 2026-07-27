@@ -163,14 +163,11 @@ dependencies:
 ### 3.1 Registry Initialization and Management
 
 ```bash
-# 1. Initialize empty registry
-unistack repo init /opt/my-registry
+# 1. Pack Ansible roles in bulk and build index (Generates packages.db and repomd.json)
+unistack registry pack /path/to/ansible/roles /opt/my-registry
 
-# 2. Add package (Automatically validates format, calculates hash, and places in correct directory)
-unistack repo add /opt/my-registry vim-1.0.0.tar.gz
-
-# 3. Build index (Generates SQLite database packages.db)
-unistack repo build /opt/my-registry
+# 2. Or build index directly from an existing directory of archives
+unistack registry build /path/to/packages /opt/my-registry
 ```
 
 ### 3.2 Hosting Methods
@@ -181,7 +178,7 @@ Directly host the `/opt/my-registry` directory using Nginx, or `rsync` to S3/Git
 **Method B: UniStack Built-in Service**
 
 ```bash
-unistack repo serve /opt/my-registry --port 8080
+unistack registry serve /opt/my-registry --port 8080
 ```
 
 Starts a built-in lightweight HTTP server, supporting ETag incremental sync and private registry BasicAuth/Bearer authentication.
@@ -283,7 +280,7 @@ To completely crush "dependency confusion" attacks (where malicious high-version
 
 1. **Core Packages**: Exclusively occupy the global top-level namespace and are **strictly forbidden** from having any prefixes (e.g., `vim`, `nginx`).
 2. **Community / Third-Party Packages**: **MUST** have an author or organization namespace prefix (e.g., `community/vim`, `snowdreamtech/nginx`).
-During the build phase (`unistack repo build`), if a third-party repository attempts to submit an unprefixed core package, the builder will throw a fatal error and reject the package.
+During the build phase (`unistack registry pack` / `build`), if a third-party repository attempts to submit an unprefixed core package, the builder will throw a fatal error and reject the package.
 
 ### 9.2 Priority Pinning
 
