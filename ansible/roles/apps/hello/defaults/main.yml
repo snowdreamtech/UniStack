@@ -3,3 +3,6 @@
 
 app_name: "hello"
 app_version: "2.12.x"
+
+# Container mode specific variables
+app_image: "hello-world"
