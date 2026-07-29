@@ -1,5 +1,39 @@
 # Changelog
 
+## [0.0.6](https://github.com/snowdreamtech/UniStack/compare/v0.0.5...v0.0.6) (2026-07-29)
+
+
+### 🚀 Features
+
+* add app_image variable to hello role defaults ([9fdad5a](https://github.com/snowdreamtech/UniStack/commit/9fdad5ab34cc9c28236f78d0a06db2e16af48c3c))
+* **app_loader:** implement lifecycle hooks and migrate apps ([0b92044](https://github.com/snowdreamtech/UniStack/commit/0b920442b9c1dcac073382599519117137cf397e))
+
+
+### 🐛 Bug Fixes
+
+* **foundation:** restore correct execution order for sudo and user ([10c76a9](https://github.com/snowdreamtech/UniStack/commit/10c76a959f351ed7531c7dff1b2f6cd91fb1e030))
+* **registry:** unify namespace package storage to use safeName (replace slash with underscore) ([a795146](https://github.com/snowdreamtech/UniStack/commit/a79514645d6ca1a6f5679ae2a61a5b9964df4380))
+
+
+### 🛠 Refactoring
+
+* **ansible:** remove custom tasks for hello app to leverage smart app engine ([cb0786e](https://github.com/snowdreamtech/UniStack/commit/cb0786e3e63b53bc1c944c3ea0a7d3032f0476bd))
+* **apps:** remove redundant os_loader calls in tasks/main.yml ([ca6483b](https://github.com/snowdreamtech/UniStack/commit/ca6483bc4b75cceea3f6a7d2eed5bde9f3a28dc6))
+* **foundation:** migrate to app_loader lifecycle hooks ([edd0a5f](https://github.com/snowdreamtech/UniStack/commit/edd0a5f56c2ff05e0c708227c1df5a86f374c666))
+
+
+### 📖 Documentation
+
+* update registry research spec to use registry pack instead of deprecated repo commands ([0c178d1](https://github.com/snowdreamtech/UniStack/commit/0c178d1cf11acf7666985bc55c26270bb4b2de1a))
+* update unistack project description ([9837cb2](https://github.com/snowdreamtech/UniStack/commit/9837cb2324c7ba264e658e6d3358cb1ca7a1d7c2))
+
+
+### ♻️ Miscellaneous Chores
+
+* **foundation:** remove redundant base_dev_packages and legacy defaults ([cd315b0](https://github.com/snowdreamtech/UniStack/commit/cd315b03071cd517a2c9d1fa62f5e7712edbae81))
+* **foundation:** remove redundant base_dev_packages and legacy defaults ([ef9cfc8](https://github.com/snowdreamtech/UniStack/commit/ef9cfc863d2dfb9e2c661f015cc23c3e823f8f10))
+* import strings package in downloader_pkg.go ([b8d23e1](https://github.com/snowdreamtech/UniStack/commit/b8d23e1cf7994b59f8aa85a3e26e13387230af4a))
+
 ## [0.0.5](https://github.com/snowdreamtech/UniStack/compare/v0.0.4...v0.0.5) (2026-07-24)
 
 
