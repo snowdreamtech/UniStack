@@ -19,8 +19,9 @@ import (
 // and saves it to the local cache.
 func (d *Downloader) DownloadPackage(ctx context.Context, registryBaseURL string, meta *registry.PackageMetadata) (string, error) {
 	// Construct the URL. e.g. http://localhost:8080/packages/h/hello-1.0.0.tar.gz
-	pkgFilename := fmt.Sprintf("%s-%s.tar.gz", meta.Name, meta.Version)
-	initial := string(meta.Name[0])
+	safeName := strings.ReplaceAll(meta.Name, "/", "_")
+	pkgFilename := fmt.Sprintf("%s-%s.tar.gz", safeName, meta.Version)
+	initial := strings.ToLower(string(safeName[0]))
 	url := fmt.Sprintf("%s/packages/%s/%s", registryBaseURL, initial, pkgFilename)
 
 	slog.Info("Downloading package", "name", meta.Name, "version", meta.Version, "url", url)

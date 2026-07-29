@@ -85,16 +85,17 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 			return nil
 		}
 
-		// First character of the package name
+		// First character of the package name (before replacing slashes to ensure it's the organization's initial)
 		firstChar := strings.ToLower(string(name[0]))
-
-		// Target filename: packages/<first_char>/<name>-<version>.tar.gz
+		safeName := strings.ReplaceAll(name, "/", "_")
+		
+		// Target filename: packages/<first_char>/<safeName>-<version>.tar.gz
 		targetDir := filepath.Join(packagesDir, firstChar)
 		if err := os.MkdirAll(targetDir, 0755); err != nil {
 			return fmt.Errorf("failed to create target directory %s: %w", targetDir, err)
 		}
 
-		targetFile := filepath.Join(targetDir, fmt.Sprintf("%s-%s.tar.gz", name, version))
+		targetFile := filepath.Join(targetDir, fmt.Sprintf("%s-%s.tar.gz", safeName, version))
 		slog.Info("Packaging role", "name", name, "version", version, "source", roleDir, "target", targetFile)
 
 		if err := tarGzDir(roleDir, targetFile, globalVersion); err != nil {
