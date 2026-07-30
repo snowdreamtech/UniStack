@@ -8,7 +8,7 @@ Stored at `~/.config/unistack/sources.json`.
 [
   {
     "name": "default",
-    "url": "https://registry.unistack.org"
+    "url": "https://registry.unistack.sn0wdr1am.com"
   },
   {
     "name": "private",

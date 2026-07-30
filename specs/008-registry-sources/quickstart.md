@@ -14,7 +14,7 @@ This guide explains how to validate the client-side sources feature from end-to-
 ```bash
 # Verify initial state
 go run main.go source list
-# Output should show 'default' -> 'https://registry.unistack.org'
+# Output should show 'default' -> 'https://registry.unistack.sn0wdr1am.com'
 
 # Add a custom source
 go run main.go source add custom http://localhost:8080

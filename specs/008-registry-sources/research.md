@@ -5,5 +5,5 @@
 - Alternatives considered: One massive `packages.db` that tags each package row with the source name. This adds complex migrations and merge logic.
 
 - Decision: Default source behavior.
-- Rationale: If `sources.json` does not exist, the `sources` package will mock a default source pointing to `https://registry.unistack.org`. If the user adds their own, the default is preserved unless explicitly removed.
+- Rationale: If `sources.json` does not exist, the `sources` package will mock a default source pointing to `https://registry.unistack.sn0wdr1am.com`. If the user adds their own, the default is preserved unless explicitly removed.
 - Alternatives considered: Having no default source. Rejected because it breaks out-of-the-box user experience for zero-config installations.

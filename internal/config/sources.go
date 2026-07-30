@@ -30,11 +30,11 @@ func GetDefaultSources() []Source {
 	return []Source{
 		{
 			Name: "core",
-			URL:  "https://registry.unistack.org/core",
+			URL:  "https://registry.unistack.sn0wdr1am.com/core",
 		},
 		{
 			Name: "community",
-			URL:  "https://registry.unistack.org/community",
+			URL:  "https://registry.unistack.sn0wdr1am.com/community",
 		},
 	}
 }

@@ -194,7 +194,7 @@ unistack registry serve /opt/my-registry --port 8080
 ## 四、仓库目录结构与 URL 规则
 
 ```
-https://registry.unistack.dev/              # 仓库根 URL
+https://registry.unistack.sn0wdr1am.com/              # 仓库根 URL
 │
 ├── repodata/                                # 索引目录
 │   ├── packages.db                          # DNF-style SQLite 索引

@@ -188,7 +188,7 @@ Starts a built-in lightweight HTTP server, supporting ETag incremental sync and 
 ## 4. Registry Directory Structure and URL Rules
 
 ```
-https://registry.unistack.dev/              # Registry Base URL
+https://registry.unistack.sn0wdr1am.com/              # Registry Base URL
 │
 ├── repodata/                                # Index Directory
 │   ├── packages.db                          # DNF-style SQLite index
