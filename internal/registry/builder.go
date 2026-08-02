@@ -46,7 +46,9 @@ func NewBuilder(dbPath string) (*Builder, error) {
 	// Remove existing db if we are rebuilding
 	os.Remove(dbPath)
 
-	db, err := sql.Open("sqlite", dbPath)
+	// Use pragmas for better performance and reliability
+	dsn := fmt.Sprintf("file:%s?_pragma=journal_mode(WAL)&_pragma=synchronous(NORMAL)", dbPath)
+	db, err := sql.Open("sqlite", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open sqlite database: %w", err)
 	}
@@ -201,15 +203,35 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 		expectedRelPath := filepath.Join("packages", firstChar, fmt.Sprintf("%s-%s.tar.gz", safeName, maxFile.Pkg.Metadata.Version))
 		expectedAbsPath := filepath.Join(destDir, expectedRelPath)
 
-		// Before moving/copying, glob the destDir for old versions of THIS package and delete them
-		globPattern := filepath.Join(packagesDir, firstChar, safeName+"-*.tar.gz")
-		matches, _ := filepath.Glob(globPattern)
-		for _, match := range matches {
-			if filepath.Clean(match) == filepath.Clean(expectedAbsPath) {
-				continue // Don't delete the file if it's already exactly the max file
+		// Before moving/copying, delete old versions of THIS package in destDir
+		targetDir := filepath.Join(packagesDir, firstChar)
+		entries, err := os.ReadDir(targetDir)
+		if err == nil {
+			for _, entry := range entries {
+				if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".tar.gz") {
+					continue
+				}
+				// Verify it's exactly this package by checking the prefix
+				if !strings.HasPrefix(entry.Name(), safeName+"-") {
+					continue
+				}
+				
+				versionPart := strings.TrimPrefix(entry.Name(), safeName+"-")
+				versionPart = strings.TrimSuffix(versionPart, ".tar.gz")
+				
+				// Validate that versionPart is a semver, ensuring it's not another package
+				if _, err := semver.NewVersion(versionPart); err != nil {
+					continue 
+				}
+				
+				matchPath := filepath.Join(targetDir, entry.Name())
+				if filepath.Clean(matchPath) == filepath.Clean(expectedAbsPath) {
+					continue
+				}
+				
+				slog.Info("Deleting existing older version in registry", "path", matchPath)
+				os.Remove(matchPath)
 			}
-			slog.Info("Deleting existing older version in registry", "path", match)
-			os.Remove(match)
 		}
 
 		// Now move/copy the maxFile to expectedAbsPath if it's not already there
@@ -264,7 +286,7 @@ func (b *Builder) insertPackages(ctx context.Context, entries []*PackageEntry) e
 	if err != nil {
 		return err
 	}
-	defer tx.Rollback()
+	defer func() { tx.Rollback() }()
 
 	pkgStmt, err := tx.PrepareContext(ctx, `
 		INSERT OR REPLACE INTO packages (name, version, description, authors, homepage, license, hash, relative_path)
@@ -284,35 +306,66 @@ func (b *Builder) insertPackages(ctx context.Context, entries []*PackageEntry) e
 	}
 	defer depStmt.Close()
 
-	for _, entry := range entries {
-		pkg := entry.Pkg
-		authors := strings.Join(pkg.Metadata.Authors, ",")
+	// Commit in batches to prevent SQLite from locking up on massive transactions
+	const batchSize = 1000
+	var count int
 
+	for _, entry := range entries {
+		// Insert into packages
 		_, err := pkgStmt.ExecContext(ctx,
-			pkg.Metadata.Name,
-			pkg.Metadata.Version,
-			pkg.Metadata.Description,
-			authors,
-			pkg.Metadata.Homepage,
-			pkg.Metadata.License,
+			entry.Pkg.Metadata.Name,
+			entry.Pkg.Metadata.Version,
+			entry.Pkg.Metadata.Description,
+			strings.Join(entry.Pkg.Metadata.Authors, ", "),
+			entry.Pkg.Metadata.Homepage,
+			entry.Pkg.Metadata.License,
 			entry.Hash,
 			entry.RelativePath,
 		)
 		if err != nil {
-			return fmt.Errorf("failed to insert package %s: %w", pkg.Metadata.Name, err)
+			return fmt.Errorf("failed to insert package %s: %w", entry.Pkg.Metadata.Name, err)
 		}
 
-		for depName, constraint := range pkg.Dependencies.Required {
-			_, err := depStmt.ExecContext(ctx, pkg.Metadata.Name, pkg.Metadata.Version, depName, constraint, false)
+		// Insert dependencies
+		for depName, constraint := range entry.Pkg.Dependencies.Required {
+			_, err = depStmt.ExecContext(ctx, entry.Pkg.Metadata.Name, entry.Pkg.Metadata.Version, depName, constraint, false)
 			if err != nil {
-				return fmt.Errorf("failed to insert dependency for %s: %w", pkg.Metadata.Name, err)
+				return fmt.Errorf("failed to insert required dependency %s for %s: %w", depName, entry.Pkg.Metadata.Name, err)
 			}
 		}
 
-		for depName, constraint := range pkg.Dependencies.Recommended {
-			_, err := depStmt.ExecContext(ctx, pkg.Metadata.Name, pkg.Metadata.Version, depName, constraint, true)
+		for depName, constraint := range entry.Pkg.Dependencies.Recommended {
+			_, err = depStmt.ExecContext(ctx, entry.Pkg.Metadata.Name, entry.Pkg.Metadata.Version, depName, constraint, true)
 			if err != nil {
-				return fmt.Errorf("failed to insert recommended dependency for %s: %w", pkg.Metadata.Name, err)
+				return fmt.Errorf("failed to insert recommended dependency %s for %s: %w", depName, entry.Pkg.Metadata.Name, err)
+			}
+		}
+
+		count++
+		if count%batchSize == 0 {
+			if err := tx.Commit(); err != nil {
+				return err
+			}
+			tx, err = b.db.BeginTx(ctx, nil)
+			if err != nil {
+				return err
+			}
+			// We need to re-prepare statements for the new transaction
+			pkgStmt.Close()
+			depStmt.Close()
+			pkgStmt, err = tx.PrepareContext(ctx, `
+				INSERT OR REPLACE INTO packages (name, version, description, authors, homepage, license, hash, relative_path)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+			`)
+			if err != nil {
+				return err
+			}
+			depStmt, err = tx.PrepareContext(ctx, `
+				INSERT OR REPLACE INTO dependencies (package_name, package_version, dependency_name, version_constraint, is_recommended)
+				VALUES (?, ?, ?, ?, ?)
+			`)
+			if err != nil {
+				return err
 			}
 		}
 	}

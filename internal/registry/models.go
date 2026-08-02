@@ -27,8 +27,9 @@ type Metadata struct {
 
 // Compatibility specifies supported OS and architectures
 type Compatibility struct {
-	OS   string   `yaml:"os"`
-	Arch []string `yaml:"arch"`
+	OS           string   `yaml:"os"`
+	Arch         []string `yaml:"arch"`
+	Environments []string `yaml:"environments,omitempty"`
 }
 
 // Delivery dictates how the package is delivered/installed
