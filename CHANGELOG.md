@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.0.8](https://github.com/snowdreamtech/UniStack/compare/v0.0.6...v0.0.8) (2026-08-02)
+
+
+### 🚀 Features
+
+* **registry:** optimize builder performance and add environments to compatibility ([13ba4d3](https://github.com/snowdreamtech/UniStack/commit/13ba4d3bf117f95d744acc7b01d16cc456881352))
+
+
+### 🐛 Bug Fixes
+
+* **registry:** resolve variable shadowing bug in builder package deletion ([71f5d7d](https://github.com/snowdreamtech/UniStack/commit/71f5d7d7f7c68b3172a26d0677c0162d0ee572b7))
+
+
+### ♻️ Miscellaneous Chores
+
+* ignore SQLite database and temporary WAL/SHM files ([2f6ec0f](https://github.com/snowdreamtech/UniStack/commit/2f6ec0f33bcd5d5b303798ce38fd0e6e734c7ffa))
+* trigger release ([f957279](https://github.com/snowdreamtech/UniStack/commit/f9572791f85db51cfa228471fbf55b79f6ad9f0a))
+* update default registry URL to registry.unistack.sn0wdr1am.com across codebase and documentation ([7183cf8](https://github.com/snowdreamtech/UniStack/commit/7183cf8c9b38ae7d93079c33dc6f358cd89443a9))
+* update registry base URL from registry.unistack to registry-unistack ([14ad84f](https://github.com/snowdreamtech/UniStack/commit/14ad84fc6a4f28a75dac2ba4eb34cd6c5b41306a))
+
 ## [0.0.6](https://github.com/snowdreamtech/UniStack/compare/v0.0.5...v0.0.6) (2026-07-29)
 
 
