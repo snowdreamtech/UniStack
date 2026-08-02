@@ -205,9 +205,9 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 
 		// Before moving/copying, delete old versions of THIS package in destDir
 		targetDir := filepath.Join(packagesDir, firstChar)
-		entries, err := os.ReadDir(targetDir)
+		dirEntries, err := os.ReadDir(targetDir)
 		if err == nil {
-			for _, entry := range entries {
+			for _, entry := range dirEntries {
 				if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".tar.gz") {
 					continue
 				}
