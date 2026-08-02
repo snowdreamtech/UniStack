@@ -755,3 +755,10 @@ local_repo/
 unistack_bin
 unistack_test
 public/
+
+### SQLite ###
+*.db
+*.sqlite
+*.sqlite3
+*-wal
+*-shm
