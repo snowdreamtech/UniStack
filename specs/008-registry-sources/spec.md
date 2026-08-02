@@ -82,4 +82,4 @@ As a user, I want to remove sources that are no longer maintained, so that I do 
 
 - Users have write permissions to their local configuration directory.
 - The URLs provided by the user are valid endpoints.
-- The default registry provided out-of-the-box is "<https://registry.unistack.sn0wdr1am.com>".
+- The default registry provided out-of-the-box is "<https://registry-unistack.sn0wdr1am.com>".

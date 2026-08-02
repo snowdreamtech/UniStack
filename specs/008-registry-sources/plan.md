@@ -27,7 +27,7 @@ This feature provides client-side "Source/Repo" management for UniStack. The use
 
 **Performance Goals**: <1s for configuration changes.
 
-**Constraints**: Seamless backwards compatibility if no configuration exists (default to `https://registry.unistack.sn0wdr1am.com`).
+**Constraints**: Seamless backwards compatibility if no configuration exists (default to `https://registry-unistack.sn0wdr1am.com`).
 
 **Scale/Scope**: <10 package sources expected per user.
 
