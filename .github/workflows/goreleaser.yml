@@ -255,8 +255,9 @@ jobs:
           done
           echo "⚠️ Proxy might not be ready, but proceeding anyway..."
 
-      - name: "🚀 Distribute Core Artifacts (GoReleaser)"
+      - name: "🚀 Distribute Artifacts (GoReleaser)"
         uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
+        continue-on-error: true # We manually check status below to allow third-party failures but catch core failures
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
           WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
@@ -266,41 +267,17 @@ jobs:
           # Orchestrates the optimized build and distribution of cross-compiled Go binaries.
           distribution: goreleaser
           version: "~> v2" # Pins to the latest stable v2 series binary
-          # First step: Only publish to GitHub Releases and Linux native packages. Skip all third-party channels.
-          # If this step fails (e.g. compilation error), the CI will immediately halt.
-          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release --clean --timeout 60m --skip=homebrew,winget,scoop,nix,aur,snapcraft' || 'release --snapshot --clean --skip=publish --timeout 60m' }}
+          # Run full release but continue if a specific publisher fails.
+          args: ${{ startsWith(github.ref, 'refs/tags/') && 'release --clean --timeout 60m --fail-fast=false' || 'release --snapshot --clean --skip=publish --timeout 60m' }}
 
-      - name: "💾 Backup Core Artifacts"
+      - name: "🔍 Verify Core Artifacts Generation"
         if: startsWith(github.ref, 'refs/tags/')
-        run: cp -a dist /tmp/core_dist_backup
-
-      - name: "🧹 Reset Git State (Between GoReleaser runs)"
-        if: startsWith(github.ref, 'refs/tags/')
-        run: git reset --hard && git clean -fd
-
-      - name: "🚀 Distribute Third-Party Artifacts (GoReleaser)"
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: goreleaser/goreleaser-action@5daf1e915a5f0af01ddbcd89a43b8061ff4f1a89 # v7.2.2
-        continue-on-error: true # Allow failures for third-party releases without breaking the CI
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
-          WORKFLOW_SECRET: ${{ secrets.WORKFLOW_SECRET }}
-          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
-          AUR_KEY: ${{ secrets.AUR_KEY }}
-        with:
-          distribution: goreleaser
-          version: "~> v2"
-          # Second step: Retry full release with fail-fast=false so all third-party channels are attempted even if one fails.
-          args: release --clean --timeout 60m --fail-fast=false
-
-      - name: "♻️ Restore Core Artifacts (Fallback)"
-        if: startsWith(github.ref, 'refs/tags/') && always()
         run: |
           if [ ! -f dist/metadata.json ]; then
-            echo "Third-Party GoReleaser failed to generate metadata.json, restoring from Core Artifacts backup..."
-            rm -rf dist
-            cp -a /tmp/core_dist_backup dist
+            echo "❌ GoReleaser failed to compile or generate core artifacts!"
+            exit 1
           fi
+          echo "✅ Core artifacts successfully generated. Proceeding to downstream publishers."
 
       - name: "📦 Setup Node.js for npm Publishing"
         if: startsWith(github.ref, 'refs/tags/')
