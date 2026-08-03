@@ -270,6 +270,10 @@ jobs:
           # If this step fails (e.g. compilation error), the CI will immediately halt.
           args: ${{ startsWith(github.ref, 'refs/tags/') && 'release --clean --timeout 60m --skip=homebrew,winget,scoop,nix,aur,snapcraft' || 'release --snapshot --clean --skip=publish --timeout 60m' }}
 
+      - name: "💾 Backup Core Artifacts"
+        if: startsWith(github.ref, 'refs/tags/')
+        run: cp -a dist /tmp/core_dist_backup
+
       - name: "🧹 Reset Git State (Between GoReleaser runs)"
         if: startsWith(github.ref, 'refs/tags/')
         run: git reset --hard && git clean -fd
@@ -288,6 +292,15 @@ jobs:
           version: "~> v2"
           # Second step: Retry full release with fail-fast=false so all third-party channels are attempted even if one fails.
           args: release --clean --timeout 60m --fail-fast=false
+
+      - name: "♻️ Restore Core Artifacts (Fallback)"
+        if: startsWith(github.ref, 'refs/tags/') && always()
+        run: |
+          if [ ! -f dist/metadata.json ]; then
+            echo "Third-Party GoReleaser failed to generate metadata.json, restoring from Core Artifacts backup..."
+            rm -rf dist
+            cp -a /tmp/core_dist_backup dist
+          fi
 
       - name: "📦 Setup Node.js for npm Publishing"
         if: startsWith(github.ref, 'refs/tags/')
