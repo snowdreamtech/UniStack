@@ -88,7 +88,7 @@ func Pack(ctx context.Context, sourceDir, destDir string) error {
 		// First character of the package name (before replacing slashes to ensure it's the organization's initial)
 		firstChar := strings.ToLower(string(name[0]))
 		safeName := strings.ReplaceAll(name, "/", "_")
-		
+
 		// Target filename: packages/<first_char>/<safeName>-<version>.tar.gz
 		targetDir := filepath.Join(packagesDir, firstChar)
 		if err := os.MkdirAll(targetDir, 0755); err != nil {

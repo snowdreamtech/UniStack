@@ -38,7 +38,7 @@ jobs:
       contents: read
     steps:
       - name: "📂 Checkout Repository Code"
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
@@ -69,19 +69,20 @@ jobs:
       STEP_SECURITY_DISABLE: ${{ matrix.os != 'ubuntu-latest' }}
     steps:
       - name: "📂 Checkout Repository Code"
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: "⚡ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@7711c9fc506ca29a54cba2d7d8181d2b146f00d9 # v0.6.0
+        uses: snowdreamtech/setup-unirtm@663cc55933eafea30cd63f43e837cecd4a587f45 # v0.7.0
         with:
-          unirtm-version: "0.25.7"
+          unirtm-version: "0.25.8"
           install: true
           trust: true
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
           UNIRTM_VERIFY_PROVENANCE: "0"
+
       - name: "🔍 Inspect Code Quality (Lint)"
         shell: sh
         run: |
@@ -115,19 +116,20 @@ jobs:
       PYTHONUTF8: 1
     steps:
       - name: "📂 Checkout Repository Code"
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: "⚡ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@7711c9fc506ca29a54cba2d7d8181d2b146f00d9 # v0.6.0
+        uses: snowdreamtech/setup-unirtm@663cc55933eafea30cd63f43e837cecd4a587f45 # v0.7.0
         with:
-          unirtm-version: "0.25.7"
+          unirtm-version: "0.25.8"
           install: true
           trust: true
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
           UNIRTM_VERIFY_PROVENANCE: "0"
+
       - name: "📦 Cache Language Dependencies (Advanced)"
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -334,20 +336,21 @@ jobs:
       PYTHONUTF8: 1
     steps:
       - name: "📂 Checkout Repository Code"
-        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           fetch-depth: 0
 
       - name: "⚡ Setup UniRTM"
-        uses: snowdreamtech/setup-unirtm@7711c9fc506ca29a54cba2d7d8181d2b146f00d9 # v0.6.0
+        uses: snowdreamtech/setup-unirtm@663cc55933eafea30cd63f43e837cecd4a587f45 # v0.7.0
         with:
-          unirtm-version: "0.25.7"
+          unirtm-version: "0.25.8"
           install: true
           trust: true
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_SECRET || secrets.GITHUB_TOKEN }}
           UNIRTM_VERIFY_PROVENANCE: "0"
+
       - name: "📝 Validate Commit Convention (Commitlint)"
         shell: sh
         env:
@@ -407,7 +410,7 @@ jobs:
           skip-dirs: "unirtm_data,cmd/unirtm_data"
 
       - name: "📤 Upload Security Audit (SARIF)"
-        uses: github/codeql-action/upload-sarif@99df26d4f13ea111d4ec1a7dddef6063f76b97e9 # v4.37.0
+        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
         if: always()
         with:
           sarif_file: "."

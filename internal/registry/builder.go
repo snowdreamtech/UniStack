@@ -215,20 +215,20 @@ func (b *Builder) scanAndArrangePackages(sourceDir, destDir string) ([]*PackageE
 				if !strings.HasPrefix(entry.Name(), safeName+"-") {
 					continue
 				}
-				
+
 				versionPart := strings.TrimPrefix(entry.Name(), safeName+"-")
 				versionPart = strings.TrimSuffix(versionPart, ".tar.gz")
-				
+
 				// Validate that versionPart is a semver, ensuring it's not another package
 				if _, err := semver.NewVersion(versionPart); err != nil {
-					continue 
+					continue
 				}
-				
+
 				matchPath := filepath.Join(targetDir, entry.Name())
 				if filepath.Clean(matchPath) == filepath.Clean(expectedAbsPath) {
 					continue
 				}
-				
+
 				slog.Info("Deleting existing older version in registry", "path", matchPath)
 				os.Remove(matchPath)
 			}
