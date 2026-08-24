@@ -59,7 +59,7 @@ jobs:
       - name: "⚡ Setup UniRTM"
         uses: snowdreamtech/setup-unirtm@663cc55933eafea30cd63f43e837cecd4a587f45 # v0.7.0
         with:
-          unirtm-version: "0.25.8"
+          unirtm-version: "0.28.0"
           install: true
           trust: true
         env:
@@ -134,7 +134,7 @@ jobs:
           skip-dirs: "unirtm_data,cmd/unirtm_data"
 
       - name: "📤 Upload Security Audit (SARIF)"
-        uses: github/codeql-action/upload-sarif@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v4.37.3
+        uses: github/codeql-action/upload-sarif@ff2f1c621b7f889edc0d3c761ac2e6a3f8cdb0dd # v4.37.7
         if: always() && matrix.os == 'ubuntu-latest'
         with:
           sarif_file: "trivy-results.sarif"

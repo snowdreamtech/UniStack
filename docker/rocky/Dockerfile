@@ -1,4 +1,4 @@
-FROM --platform=$BUILDPLATFORM snowdreamtech/golang:1.26.5-rocky AS builder
+FROM --platform=$BUILDPLATFORM snowdreamtech/golang:1.27.0-rocky AS builder
 
 ARG TARGETOS
 ARG TARGETARCH
