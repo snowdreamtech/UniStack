@@ -1,59 +1,31 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
   "packages": {
-    ".": {}
+    ".": {
+      "release-type": "go",
+      "include-component-in-tag": false,
+      "release-as": "0.1.1",
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": ".github/workflows/docker.yml",
+          "jsonpath": "$.jobs.buildx.strategy.matrix.include[0].version"
+        },
+        {
+          "type": "yaml",
+          "path": ".github/workflows/docker.yml",
+          "jsonpath": "$.jobs.buildx.strategy.matrix.include[1].version"
+        },
+        {
+          "type": "yaml",
+          "path": ".github/workflows/docker.yml",
+          "jsonpath": "$.jobs.buildx.strategy.matrix.include[2].version"
+        }
+      ]
+    }
   },
-  "release-type": "go",
-  "changelog-path": "CHANGELOG.md",
   "include-v-in-tag": true,
-  "extra-files": [
-    "*.csproj",
-    "*.fsproj",
-    "*.gemspec",
-    "*.vbproj",
-    "app.json",
-    "appsettings.json",
-    "bower.json",
-    "build.gradle",
-    "build.gradle.kts",
-    "Cargo.lock",
-    "Cargo.toml",
-    "Chart.yaml",
-    "CMakeLists.txt",
-    "composer.json",
-    "composer.lock",
-    "deno.json",
-    "deno.jsonc",
-    "docker-compose.yaml",
-    "docker-compose.yml",
-    "docker/alpine/Dockerfile",
-    "docker/debian/Dockerfile",
-    "docker/rocky/Dockerfile",
-    ".github/workflows/docker.yml",
-    "Gemfile.lock",
-    "go.mod",
-    "gradle.properties",
-    "kustomization.yaml",
-    "lerna.json",
-    "manifest.json",
-    "mix.exs",
-    "mkdocs.yml",
-    "npm-shrinkwrap.json",
-    "Package.swift",
-    "package.json",
-    "package-lock.json",
-    "pnpm-lock.yaml",
-    "pom.xml",
-    "Project.toml",
-    "pubspec.yaml",
-    "pyproject.toml",
-    "requirements.txt",
-    "setup.py",
-    "shard.yml",
-    "sonar-project.properties",
-    "VERSION",
-    "yarn.lock"
-  ],
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": false,
   "pull-request-title-pattern": "chore(release): ${version} 🚀",
