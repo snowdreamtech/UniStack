@@ -226,12 +226,12 @@ output = "interleaved"
 env = { GOTOOLCHAIN = 'local', CGO_ENABLED = '0' }
 
 [tasks."test:ansible"]
-description = 'Run Ansible playbook syntax checks and linting'
+description = "Run Ansible playbook syntax checks and linting"
 run = '''
 unirtm exec -- ansible-playbook --syntax-check ansible/playbooks/bootstrap.yml ansible/playbooks/healthcheck.yml
 unirtm exec -- ansible-lint ansible/
 '''
-output = 'interleaved'
+output = "interleaved"
 
 [tasks."test:shell"]
 description = "Run Bats tests for install.sh"
