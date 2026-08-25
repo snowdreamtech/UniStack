@@ -6,23 +6,7 @@
       "include-component-in-tag": false,
       "release-as": "0.1.1",
       "changelog-path": "CHANGELOG.md",
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": ".github/workflows/docker.yml",
-          "jsonpath": "$.jobs.buildx.strategy.matrix.include[0].version"
-        },
-        {
-          "type": "yaml",
-          "path": ".github/workflows/docker.yml",
-          "jsonpath": "$.jobs.buildx.strategy.matrix.include[1].version"
-        },
-        {
-          "type": "yaml",
-          "path": ".github/workflows/docker.yml",
-          "jsonpath": "$.jobs.buildx.strategy.matrix.include[2].version"
-        }
-      ]
+      "extra-files": [".github/workflows/docker.yml"]
     }
   },
   "include-v-in-tag": true,
