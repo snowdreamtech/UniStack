@@ -304,16 +304,40 @@ jobs:
           # npm/scripts/build.sh was already executed by GoReleaser after_hooks.
           # Platform packages (npm/unistack-*/bin/) and package.json files are ready.
           echo '=== Publishing platform sub-packages ==='
-          for pkg in npm/unistack-*/; do
-            pkg_name=$(node -p "require('./${pkg}package.json').name" 2>/dev/null || echo "${pkg}")
-            echo "[publish] ${pkg_name} ..."
-            npm publish "${pkg}" --access public --provenance --registry=https://registry.npmjs.org
+          for pkg in npm/*/; do
+            [ -f "${pkg}package.json" ] || continue
+            case "${pkg}" in
+              *-*/)
+                pkg_name=$(node -p "require('./${pkg}package.json').name" 2>/dev/null || echo "${pkg}")
+                pkg_ver=$(node -p "require('./${pkg}package.json').version" 2>/dev/null || echo "")
+                if [ -n "${pkg_name}" ] && [ -n "${pkg_ver}" ] && npm view "${pkg_name}@${pkg_ver}" version >/dev/null 2>&1; then
+                  echo "⚠️  [skip] ${pkg_name}@${pkg_ver} is already published on npm."
+                  continue
+                fi
+                echo "[publish] ${pkg_name} (${pkg_ver}) ..."
+                npm publish "${pkg}" --access public --provenance --registry=https://registry.npmjs.org
+                ;;
+            esac
           done
 
           echo ""
           echo '=== Publishing root package ==='
-          echo '[publish] @snowdreamtech/unistack ...'
-          npm publish npm/unistack/ --access public --provenance --registry=https://registry.npmjs.org
+          for pkg in npm/*/; do
+            [ -f "${pkg}package.json" ] || continue
+            case "${pkg}" in
+              *-*/) ;;
+              *)
+                root_name=$(node -p "require('./${pkg}package.json').name" 2>/dev/null || echo "${pkg}")
+                root_ver=$(node -p "require('./${pkg}package.json').version" 2>/dev/null || echo "")
+                if [ -n "${root_name}" ] && [ -n "${root_ver}" ] && npm view "${root_name}@${root_ver}" version >/dev/null 2>&1; then
+                  echo "⚠️  [skip] ${root_name}@${root_ver} is already published on npm."
+                else
+                  echo "[publish] ${root_name} (${root_ver}) ..."
+                  npm publish "${pkg}" --access public --provenance --registry=https://registry.npmjs.org
+                fi
+                ;;
+            esac
+          done
 
           echo ""
           echo '[done] All npm packages published successfully!'
