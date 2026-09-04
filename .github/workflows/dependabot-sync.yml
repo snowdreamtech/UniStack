@@ -94,7 +94,7 @@ jobs:
           # 2. Format .unirtm.toml with canonical section and key ordering
           unirtm fmt
           # 3. Update lockfile for all platforms
-          unirtm lock --all-platforms
+          unirtm lock --all-platforms --allow-incomplete
           # 4. Double-check lockfile integrity (fails if tools are omitted due to API errors)
           unirtm lock --check
         env:
