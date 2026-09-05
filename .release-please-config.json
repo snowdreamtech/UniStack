@@ -4,7 +4,6 @@
     ".": {
       "release-type": "go",
       "include-component-in-tag": false,
-      "release-as": "0.1.1",
       "changelog-path": "CHANGELOG.md",
       "extra-files": [".github/workflows/docker.yml"]
     }
