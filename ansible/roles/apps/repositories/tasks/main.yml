@@ -55,7 +55,7 @@
   become: "{{ become_enabled }}"
 
 - name: "Enable CRB/PowerTools repository for EPEL dependencies"
-  ansible.builtin.command: "dnf config-manager --set-enabled crb"
+  ansible.builtin.command: "dnf config-manager --set-enabled {{ repo_crb_name }}"
   changed_when: false
   failed_when: false
   when:
@@ -65,7 +65,7 @@
   become: "{{ become_enabled }}"
 
 - name: "Install EPEL repository (EL8)"
-  ansible.builtin.command: "dnf install -y epel-release"
+  ansible.builtin.command: "dnf install -y {{ repo_epel_name }}"
   changed_when: "'Nothing to do' not in _result.stdout"
   register: _result
   when:
@@ -76,7 +76,7 @@
 
 - name: "Install EPEL repository (EL9+)"
   ansible.builtin.package:
-    name: "epel-release"
+    name: "{{ repo_epel_name }}"
     state: "present"
   when:
     - os_family == 'redhat'

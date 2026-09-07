@@ -1,0 +1,20 @@
+---
+# defaults/main.yml for apps/repositories
+
+repo_crb_name: >-
+  {%- if (os_distribution | default('') in ['oraclelinux', 'ol']) or (os_distribution_id | default('') in ['oraclelinux', 'ol']) -%}
+    ol{{ os_version_major | default('9', true) }}_codeready_builder
+  {%- elif os_version_major | default('0', true) | int >= 9 -%}
+    crb
+  {%- elif (os_distribution | default('') in ['rocky', 'almalinux']) or (os_distribution_id | default('') in ['rocky', 'almalinux']) -%}
+    powertools
+  {%- else -%}
+    PowerTools
+  {%- endif -%}
+
+repo_epel_name: >-
+  {%- if (os_distribution | default('') in ['oraclelinux', 'ol']) or (os_distribution_id | default('') in ['oraclelinux', 'ol']) -%}
+    oracle-epel-release-el{{ os_version_major | default('9', true) }}
+  {%- else -%}
+    epel-release
+  {%- endif -%}
