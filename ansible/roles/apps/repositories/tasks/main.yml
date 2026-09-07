@@ -40,7 +40,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | default('0', true) == '8'
-    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'rhel', 'openeuler', 'alinux']
+    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'openeuler', 'alinux']
   become: "{{ become_enabled }}"
 
 - name: "Install dnf-plugins-core for config-manager (EL9+)"
@@ -51,7 +51,7 @@
     - os_family == 'redhat'
     - os_version_major | default('0', true) != '8'
     - os_version_major | int >= 8
-    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'rhel', 'openeuler', 'alinux']
+    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'openeuler', 'alinux']
   become: "{{ become_enabled }}"
 
 - name: "Enable CRB/PowerTools repository for EPEL dependencies"
@@ -61,7 +61,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | int >= 8
-    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'rhel', 'openeuler', 'alinux']
+    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'openeuler', 'alinux']
   become: "{{ become_enabled }}"
 
 - name: "Install EPEL repository (EL8)"
@@ -71,7 +71,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | default('0', true) == '8'
-    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'rhel', 'openeuler', 'alinux']
+    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'openeuler', 'alinux']
   become: "{{ become_enabled }}"
 
 - name: "Install EPEL repository (EL9+)"
@@ -82,28 +82,7 @@
   when:
     - os_family == 'redhat'
     - os_version_major | default('0', true) != '8'
-    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'rhel', 'openeuler', 'alinux']
-  become: "{{ become_enabled }}"
-
-- name: "Install EPEL repository (RHEL/UBI fallback EL8)"
-  ansible.builtin.command: "dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm"
-  changed_when: "'Nothing to do' not in _result.stdout"
-  register: _result
-  when:
-    - os_family == 'redhat'
-    - os_version_major | default('0', true) == '8'
-    - os_distribution_id == 'rhel'
-  become: "{{ become_enabled }}"
-
-- name: "Install EPEL repository (RHEL/UBI fallback EL9+)"
-  ansible.builtin.package:
-    name: "https://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ os_version_major | default('9', true) }}.noarch.rpm"
-    state: "present"
-    disable_gpg_check: true
-  when:
-    - os_family == 'redhat'
-    - os_version_major | default('0', true) != '8'
-    - os_distribution_id == 'rhel'
+    - os_distribution_id not in ['fedora', 'amzn', 'amazon', 'openeuler', 'alinux']
   become: "{{ become_enabled }}"
 
 - name: "Configure Repositories Context"
