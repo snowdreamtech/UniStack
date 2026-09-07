@@ -78,6 +78,7 @@
   ansible.builtin.package:
     name: "{{ repo_epel_name }}"
     state: "present"
+    disable_gpg_check: "{{ true if repo_epel_name.startswith('http') else omit }}"
   when:
     - os_family == 'redhat'
     - os_version_major | default('0', true) != '8'
