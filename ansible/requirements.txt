@@ -3,7 +3,7 @@ ansible-compat==26.6.0
 ansible-core==2.21.1
 ansible-lint==26.6.0
 attrs==26.1.0
-black==26.5.1
+black==26.10.1
 bracex==3.0
 certifi==2026.6.17
 cffi==2.1.0
@@ -34,7 +34,7 @@ rpds-py==2026.6.3
 ruamel.yaml==0.19.1
 ruamel.yaml.clibz==0.3.7
 subprocess-tee==0.4.2
-urllib3==2.7.0
+urllib3==2.8.0
 wcmatch==10.2.1
 yamllint==1.38.0
 yarg==0.1.9
